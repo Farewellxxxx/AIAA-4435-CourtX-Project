@@ -1,0 +1,31 @@
+PASS  BallHandler has a distinct foot-level spawn
+PASS  Screener has a distinct foot-level spawn
+PASS  CornerShooter has a distinct foot-level spawn
+PASS  OnBallDefender has a distinct foot-level spawn
+PASS  ScreenDefender has a distinct foot-level spawn
+PASS  HelpDefender has a distinct foot-level spawn
+PASS  all four tactical anchors resolve
+PASS  five replaceable NPC stand-ins
+PASS  NPC at assigned spawn: HelpDefender
+PASS  NPC at assigned spawn: CornerShooter
+PASS  NPC at assigned spawn: OnBallDefender
+PASS  NPC at assigned spawn: Screener
+PASS  NPC at assigned spawn: ScreenDefender
+PASS  first person starts at ball handler
+PASS  walk on court (0.00, 1.00)
+PASS  walk on court (0.00, -1.00)
+PASS  walk on court (1.00, 0.00)
+PASS  walk on court (-1.00, 0.00)
+PASS  yaw and pitch
+PASS  back wall blocks travel; floor supports player
+PASS  overview switches camera and displays ball handler
+PASS  plan contains all six role badges
+PASS  live map position: BallHandler
+PASS  live map position: Screener
+PASS  live map position: CornerShooter
+PASS  live map position: OnBallDefender
+PASS  live map position: ScreenDefender
+PASS  live map position: HelpDefender
+PASS  map heading after movement and turn
+PASS  reset restores start and first-person view
+PASS  first-person view hides plan badges
