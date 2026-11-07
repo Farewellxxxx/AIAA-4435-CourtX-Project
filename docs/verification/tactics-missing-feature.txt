@@ -1,0 +1,1 @@
+FAIL tactical session cannot start drills or request a teammate pass (feature absent)
