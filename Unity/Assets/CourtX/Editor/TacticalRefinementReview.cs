@@ -49,6 +49,12 @@ public sealed class TacticalInteractionChecks:MonoBehaviour
         for(int i=2;i<6;i++){s.actors[i].SetPosition(new Vector3(i-4,0,-2));s.actors[i].transform.rotation=Quaternion.LookRotation(Vector3.left);}
         s.ball.ResetBall(0);Physics.SyncTransforms();
     }
+    void BlockedRequest()
+    {
+        Fixture(true);s.offenseSpeed=s.defenseSpeed=0;
+        s.actors[0].SetPosition(new Vector3(-6,0,-12));s.TeleportPlayer(new Vector3(6,0,-2),0);
+        s.RequestPass();
+    }
     void Snapshot(string name)
     {
         s.player.SetOverview(true);s.ball.Pose();s.player.planSymbols.Refresh();
@@ -106,6 +112,21 @@ public sealed class TacticalInteractionChecks:MonoBehaviour
             s.OpenMenu();var catchPaused=s.ball.Position;yield return Wait(.3f);
             Check(Vector3.Distance(catchPaused,s.ball.Position)<.001f,"menu freezes the catch blend");
             s.Resume();yield return Wait(.25f);Check(s.ball.Holder==1,"resuming catch blend preserves singular possession");
+        }
+        if(stage>=3)
+        {
+            BlockedRequest();yield return Wait(3.8f);
+            Check(string.IsNullOrEmpty(s.PassReason)&&s.Message.Contains("过期"),"expired blocked request clears its reason and explains expiry");
+            BlockedRequest();yield return Wait(.2f);s.OpenMenu();yield return Wait(4);s.Resume();
+            s.actors[0].SetPosition(new Vector3(-3,0,-10));s.TeleportPlayer(new Vector3(3,0,-10),0);
+            yield return Wait(1.6f);Check(s.ball.Holder==1,"menu pause preserves request time and AI passes after the lane opens");
+            BlockedRequest();s.actors[2].SetPosition(new Vector3(-3,0,-10));s.TeleportPlayer(new Vector3(3,0,-10),0);
+            s.ball.ResetBall(2);yield return Wait(1.6f);
+            Check(s.ball.Holder==2&&!s.ball.Flying,"request bound to previous passer cannot make a different holder pass");
+            Fixture();bool released=s.ball.Release(1);
+            Check(!released&&s.ball.Holder==0,"release without an owned charge cannot command an AI holder");
+            Fixture(true);s.ball.Launch(1);s.RequestPass();
+            Check(s.Message.Contains("传递中"),"request during flight reports that the ball is already travelling");
         }
         lines.Add("Stage "+stage+": "+failures+" failures");
         File.WriteAllLines(path+"/"+label+"-checks.txt",lines);EditorApplication.Exit(failures==0?0:1);

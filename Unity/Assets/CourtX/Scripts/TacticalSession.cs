@@ -29,7 +29,9 @@ namespace CourtX
         public event Action<TacticalPhase> PhaseChanged;
         readonly Vector3[] targets=new Vector3[6];
         readonly Vector3[] motionPositions=new Vector3[6],velocities=new Vector3[6];
-        float phaseTime,screenHold,think,requestUntil,aiPassCooldown,noticeUntil;
+        float phaseTime,screenHold,think,requestRemaining,aiPassCooldown,noticeUntil;
+        int requestOwner=-1;
+        public float RequestSeconds=>requestRemaining;
         Vector3 screen;
         Vector3 passStep;
         float passStepUntil;
@@ -63,7 +65,7 @@ namespace CourtX
             Drill=drill;Controlled=offBall?1:0;Running=true;MenuOpen=false;
             menuDrill=(int)drill;menuRole=offBall?1:0;
             Phase=drill==TacticalDrill.PickAndRoll?TacticalPhase.Assemble:TacticalPhase.HighPost;
-            PhaseChanges=0;phaseTime=screenHold=think=requestUntil=aiPassCooldown=0;
+            PhaseChanges=0;phaseTime=screenHold=think=requestRemaining=aiPassCooldown=0;requestOwner=-1;
             passStepUntil=0;passStepActor=-1;
             lastPasser=-1;postReceived=rollReceived=cutReceived=false;
             player.basketball=null;player.ResetView();
@@ -120,11 +122,20 @@ namespace CourtX
             if(!Running)return;
             if(ball.Holder==Controlled){Notify("球已在你手上。1 / 2 选择队友，松开 Q 传球。");return;}
             if(ball.Holder>=3||Phase==TacticalPhase.Turnover){Notify("本回合结束，按 R 重试。");return;}
-            requestUntil=Time.time+3.5f;
+            if(ball.Flying||ball.Holder<0){Notify("球在传递中，先靠近接球光圈；接稳后再要球。");return;}
+            requestRemaining=3.5f;requestOwner=ball.Holder;
             string reason;
             bool possible=CanPass(ball.Holder,Controlled,out reason);
             PassReason=possible?"已举手要球，队友会在传球窗口出球。":reason;
             Notify(PassReason);aiPassCooldown=Mathf.Min(aiPassCooldown,.22f);
+        }
+        void ClearRequest(){requestRemaining=0;requestOwner=-1;PassReason="";}
+        void UpdateRequest(float dt)
+        {
+            if(requestRemaining<=0)return;
+            if(ball.Holder!=requestOwner){ClearRequest();Notify("球权已变化，之前的要球已取消。需要时再按 E。");return;}
+            requestRemaining=Mathf.Max(0,requestRemaining-dt);
+            if(requestRemaining==0){ClearRequest();Notify("本次要球已过期：先拉开空当，需要时再按 E。");}
         }
         public bool CanPass(int from,int to,out string reason,float speed=8f)
         {
@@ -143,16 +154,16 @@ namespace CourtX
                     var d1=Position(i)+Vector3.ClampMagnitude(Velocity(i)*(duration*t1),.65f);
                     float entry;bool secured;
                     if(TacticalRules.DefensiveContact(TacticalRules.PassPoint(start,end,t0),TacticalRules.PassPoint(start,end,t1),d0,d1,Facing(i),out entry,out secured,.15f))
-                    {reason="传球线被 "+Number(i)+" 挡住：横移拉开角度，再按 E。";return false;}
+                    {reason="传球线被 "+Number(i)+" 挡住：横移拉开角度。";return false;}
                 }
             }
             reason="传球窗口开放";return true;
         }
         public void ReportPass(int from,int to)
-        {lastPasser=from;Notify(Number(from)+" → "+Number(to)+"：球在空中，靠近落点接球。");aiPassCooldown=1.1f;PassStarted?.Invoke(from,to);}
+        {lastPasser=from;ClearRequest();Notify(Number(from)+" → "+Number(to)+"：球在空中，靠近落点接球。");aiPassCooldown=1.1f;PassStarted?.Invoke(from,to);}
         public void ReportCatch(int id)
         {
-            PassReason="";
+            ClearRequest();
             Notify(Number(id)+" 接球。"+(id==Controlled?"你现在持球。":"你仍控制 "+Number(Controlled)+"，继续跑位。"));
             if(Drill==TacticalDrill.HighPostCut && id==1 && lastPasser==0 && Phase==TacticalPhase.HighPost)
             {
@@ -166,7 +177,7 @@ namespace CourtX
             {rollReceived=true;if(Position(1).z>-6.7f)Complete();}
             BallReceived?.Invoke(id);
         }
-        public void Turnover(string reason){ChangePhase(TacticalPhase.Turnover);Notify(reason);if(guidanceRing)guidanceRing.gameObject.SetActive(false);}
+        public void Turnover(string reason){ClearRequest();ChangePhase(TacticalPhase.Turnover);Notify(reason);if(guidanceRing)guidanceRing.gameObject.SetActive(false);}
         void Complete(){ChangePhase(TacticalPhase.Complete);Notify("配合完成：已创造接球空间。可以继续传球，或按 R 再练一次。");}
         void Notify(string text){Message=text;noticeUntil=Time.time+4;}
         void ChangePhase(TacticalPhase phase)
@@ -191,6 +202,7 @@ namespace CourtX
                 if(Input.GetKeyUp(KeyCode.Q)&&ball.Charging)ball.Release(SelectedReceiver);
             }
             SampleMotion();
+            UpdateRequest(Time.deltaTime);
             if(Phase==TacticalPhase.Turnover)return;
             phaseTime+=Time.deltaTime;aiPassCooldown-=Time.deltaTime;
             AdvancePhase();
@@ -242,7 +254,7 @@ namespace CourtX
             if(Phase==TacticalPhase.Roll)actors[1].Action=ActorAction.Roll;
             if(Phase==TacticalPhase.Cut)actors[0].Action=ActorAction.Cut;
             if(ball.Flying)actors[ball.Target].Action=ActorAction.Receive;
-            if(requestUntil>Time.time&&Controlled!=ball.Holder)actors[Controlled].Action=ActorAction.Receive;
+            if(requestRemaining>0&&Controlled!=ball.Holder)actors[Controlled].Action=ActorAction.Receive;
             Vector3 rim=new Vector3(0,0,-1.575f);
             int owner=ball.Holder>=0?ball.Holder:ball.Target;
             for(int i=3;i<6;i++)
@@ -263,16 +275,16 @@ namespace CourtX
         {
             if(ball.Holder<0||ball.Holder>=3||ball.Holder==Controlled||aiPassCooldown>0)return;
             int to=-1;
-            if(requestUntil>Time.time)to=Controlled;
+            if(requestRemaining>0&&requestOwner==ball.Holder)to=Controlled;
             else if(Drill==TacticalDrill.HighPostCut&&Phase==TacticalPhase.HighPost&&ball.Holder==0&&TacticalRules.Distance(Position(1),new Vector3(.1f,0,-5.8f))<.8f)to=1;
             else if(Drill==TacticalDrill.HighPostCut&&Phase==TacticalPhase.Cut&&ball.Holder==1&&Position(0).z>-5.8f)to=0;
             else if(Drill==TacticalDrill.PickAndRoll&&Phase==TacticalPhase.Roll&&ball.Holder==0&&Position(1).z>-6.8f)to=1;
             if(to<0)return;
             string reason;
-            if(CanPass(ball.Holder,to,out reason)){ball.Launch(to);requestUntil=0;PassReason="";}
+            if(CanPass(ball.Holder,to,out reason)){ball.Launch(to);ClearRequest();}
             else
             {
-                if(requestUntil>Time.time)PassReason=reason;
+                if(requestRemaining>0)PassReason=reason;
                 // An AI passer may change its angle, but does not move the human receiver or gift possession.
                 if(Time.time>=passStepUntil)
                 {

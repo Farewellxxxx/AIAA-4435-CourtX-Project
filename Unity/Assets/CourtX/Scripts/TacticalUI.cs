@@ -52,13 +52,13 @@ namespace CourtX
                 string phase=new[]{"集结 / 04 准备掩护","掩护站定 / 01 绕过","顺下 / 寻找传球窗口","高位接应 / 传给 04","传切 / 01 空切接回传","配合完成 / R 再练一次","回合结束 / R 重试"}[(int)s.Phase];
                 GUI.Label(new Rect(43,30,panelWidth-38,map?62:30),"COURTX"+(map?"\n":"   ")+(s.Drill==TacticalDrill.PickAndRoll?"高位挡拆":"高位接应 · 传切"),body);
                 GUI.Label(new Rect(43,map?102:66,panelWidth-38,map?53:30),phase,map?small:body);
-                string owner=s.ball.Holder<0?(s.ball.Flying?"传递中":"无人持球"):s.Number(s.ball.Holder);
+                string owner=s.ball.Holder<0?(s.ball.Flying?"传递中":s.ball.Deflected?"球被弹开":"无人持球"):s.Number(s.ball.Holder);
                 GUI.Label(new Rect(43,map?164:103,panelWidth-38,map?60:25),"你："+s.Number(s.Controlled)+"    球权："+owner+(map?"\n":"    ")+"接球目标："+s.Number(s.SelectedReceiver),small);
-                float messageY=map?249:153,messageHeight=map?125:72;
+                float messageY=map?249:153,messageHeight=map?145:96;
                 Panel(new Rect(24,messageY,panelWidth,messageHeight),ink);
-                GUI.Label(new Rect(43,messageY+11,panelWidth-38,messageHeight-16),s.Message,small);
+                GUI.Label(new Rect(43,messageY+11,panelWidth-38,messageHeight-16),s.Message+(s.RequestSeconds>0?"\n要球剩余 "+s.RequestSeconds.ToString("F1")+" 秒":""),small);
                 if(!string.IsNullOrEmpty(s.PassReason)&&s.PassReason!=s.Message)
-                {float y=map?387:236;Panel(new Rect(24,y,panelWidth,map?112:53),ink);GUI.Label(new Rect(43,y+9,panelWidth-38,map?96:42),s.PassReason,small);}
+                {float y=map?407:260;Panel(new Rect(24,y,panelWidth,map?112:53),ink);GUI.Label(new Rect(43,y+9,panelWidth-38,map?96:42),s.PassReason,small);}
                 if(help)
                 {
                     Panel(new Rect(180,628,920,72),ink);

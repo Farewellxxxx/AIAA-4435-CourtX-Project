@@ -40,7 +40,8 @@ namespace CourtX
         public void CancelCharge() {Charging=false;Charge=0;}
         public bool Release(int target)
         {
-            float speed=Mathf.Lerp(6.8f,10.5f,Charge);CancelCharge();
+            if(!Charging||Holder!=session.Controlled||!session.Running){CancelCharge();return false;}
+            float speed=ReleaseSpeed;CancelCharge();
             return Launch(target,speed);
         }
         public bool Launch(int target,float speed=8f)
