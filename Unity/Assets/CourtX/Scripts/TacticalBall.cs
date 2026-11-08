@@ -25,6 +25,7 @@ namespace CourtX
         Vector3 dropPosition,dropVelocity;
         bool dropping;
         readonly Vector3[] previousDefenders=new Vector3[6];
+        Vector3 previousReceiver;
         float elapsed,duration,heldTime,bounce;
         public Vector3 Position=>dropping?dropPosition:Flying?FlightPosition():visual.ball.transform.position;
         public void ResetBall(int holder)
@@ -52,6 +53,7 @@ namespace CourtX
             elapsed=0;Target=target;Holder=-1;Charging=false;
             dropping=false;Deflected=false;LastContactActor=-1;
             for(int i=3;i<6;i++)previousDefenders[i]=session.Position(i);
+            previousReceiver=session.Position(target);
             session.ReportPass(passer,target);Pose();return true;
         }
         public TacticalPassPlan PlanPass(int from,int to,float speed=8f)
@@ -76,14 +78,22 @@ namespace CourtX
             catchBlend=Mathf.Min(1,catchBlend+Time.deltaTime/.16f);
             if(Charging)Charge=Mathf.Clamp01(Charge+Time.deltaTime/1.1f);
             if(!Flying){heldTime+=Time.deltaTime;bounce+=Time.deltaTime*(7.5f+session.player.Speed*.6f);return;}
-            Vector3 previous=FlightPosition();elapsed+=Time.deltaTime;
+            Vector3 previous=FlightPosition();
+            float flightStep=Mathf.Min(Time.deltaTime,duration-elapsed);
+            float frameFraction=flightStep/Mathf.Max(Time.deltaTime,.000001f);
+            elapsed=Mathf.Min(duration,elapsed+Time.deltaTime);
             Vector3 next=FlightPosition();
+            // Ball and players must share the same arrival instant on a partial final frame.
+            Vector3 receiverAtArrival=Vector3.Lerp(previousReceiver,session.Position(Target),frameFraction);
+            previousReceiver=session.Position(Target);
+            Vector3 contactRoot=Vector3.zero;
             float earliest=float.PositiveInfinity;int contact=-1;bool secured=false;
             for(int i=3;i<6;i++)
             {
                 float entry;bool caught;
-                if(TacticalRules.DefensiveContact(previous,next,previousDefenders[i],session.Position(i),session.Facing(i),out entry,out caught)&&entry<earliest)
-                {earliest=entry;contact=i;secured=caught;}
+                var defenderAtArrival=Vector3.Lerp(previousDefenders[i],session.Position(i),frameFraction);
+                if(TacticalRules.DefensiveContact(previous,next,previousDefenders[i],defenderAtArrival,session.Facing(i),out entry,out caught)&&entry<earliest)
+                {earliest=entry;contact=i;secured=caught;contactRoot=Vector3.Lerp(previousDefenders[i],defenderAtArrival,entry);}
                 previousDefenders[i]=session.Position(i);
             }
             if(contact>=0)
@@ -99,8 +109,8 @@ namespace CourtX
                 else
                 {
                     Deflected=true;Deflections++;
-                    Vector3 normal=TacticalRules.Flat(point-session.Position(contact)).normalized;
-                    Vector3 velocity=Vector3.Reflect((next-previous)/Mathf.Max(Time.deltaTime,.001f),normal)*.28f+Vector3.up;
+                    Vector3 normal=TacticalRules.Flat(point-contactRoot).normalized;
+                    Vector3 velocity=Vector3.Reflect((next-previous)/Mathf.Max(flightStep,.001f),normal)*.28f+Vector3.up;
                     Drop(point,velocity,"球碰到 "+session.Number(contact)+" 被弹开，防守人没有接稳。R 重试。");
                 }
                 return;
@@ -108,9 +118,9 @@ namespace CourtX
             if(elapsed<duration)return;
             int receiver=Target;
             // The target point is fixed at release; running away can genuinely miss the catch.
-            if(TacticalRules.Distance(session.Position(receiver),end)>.78f)
+            if(TacticalRules.Distance(receiverAtArrival,end)>.78f)
             {
-                Drop(end,(next-previous)/Mathf.Max(Time.deltaTime,.001f)*.22f,"传球落空。接球时靠近落点，按 R 重试。");return;
+                Drop(end,(next-previous)/Mathf.Max(flightStep,.001f)*.22f,"传球落空。接球时靠近落点，按 R 重试。");return;
             }
             Holder=receiver;Target=-1;heldTime=0;catchOrigin=end;catchBlend=0;CompletedPasses++;session.ReportCatch(receiver);
         }

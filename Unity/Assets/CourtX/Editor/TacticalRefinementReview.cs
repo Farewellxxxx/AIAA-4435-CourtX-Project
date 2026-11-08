@@ -127,6 +127,25 @@ public sealed class TacticalInteractionChecks:MonoBehaviour
             Check(!released&&s.ball.Holder==0,"release without an owned charge cannot command an AI holder");
             Fixture(true);s.ball.Launch(1);s.RequestPass();
             Check(s.Message.Contains("传递中"),"request during flight reports that the ball is already travelling");
+            foreach(int rate in new[]{15,30,60})
+            {
+                fps=rate;Time.captureFramerate=fps;Fixture();
+                s.actors[3].SetPosition(new Vector3(3.2f,0,-7.905f));s.ball.Launch(1,8);
+                for(int step=1;step<2*fps&&s.ball.Flying;step++)
+                {s.actors[3].SetPosition(new Vector3(3.2f,0,-7.905f-2.25f*step/fps));yield return null;}
+                Check(s.ball.Holder==1,rate+" fps: a defender arriving after the ball cannot steal a completed catch");
+            }
+            fps=15;Time.captureFramerate=fps;
+            foreach(bool departing in new[]{true,false})
+            {
+                Fixture();s.ball.Launch(1,8);
+                for(int step=1;step<30&&s.ball.Flying;step++)
+                {
+                    float offset=departing?(step<=10?.62f:.85f):(step<=10?1f:.70f);
+                    s.TeleportPlayer(new Vector3(3+offset,0,-10),270);yield return null;
+                }
+                Check(departing?s.ball.Holder==1:s.ball.Holder==-1,"receiver position is judged at arrival, "+(departing?"leaving after catch":"arriving too late"));
+            }
         }
         lines.Add("Stage "+stage+": "+failures+" failures");
         File.WriteAllLines(path+"/"+label+"-checks.txt",lines);EditorApplication.Exit(failures==0?0:1);
