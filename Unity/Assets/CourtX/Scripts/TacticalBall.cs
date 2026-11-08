@@ -14,16 +14,22 @@ namespace CourtX
         public float Charge { get; private set; }
         public int CompletedPasses { get; private set; }
         public int Interceptions { get; private set; }
+        public int Deflections { get; private set; }
+        public int LastContactActor { get; private set; }=-1;
+        public bool Deflected { get; private set; }
         Vector3 start,end;
+        Vector3 dropPosition,dropVelocity;
+        bool dropping;
+        readonly Vector3[] previousDefenders=new Vector3[6];
         float elapsed,duration,heldTime,bounce;
-        public Vector3 Position=>visual.ball.position;
+        public Vector3 Position=>dropping?dropPosition:Flying?FlightPosition():visual.ball.transform.position;
         public void ResetBall(int holder)
         {
             Holder=holder;Target=-1;Charging=false;Charge=0;heldTime=0;bounce=0;
-            CompletedPasses=Interceptions=0;
+            CompletedPasses=Interceptions=Deflections=0;LastContactActor=-1;Deflected=false;dropping=false;
             var body=visual.ball;
             if(!body.isKinematic) {body.velocity=Vector3.zero;body.angularVelocity=Vector3.zero;}
-            body.isKinematic=true;body.detectCollisions=false;Pose();
+            body.isKinematic=true;body.detectCollisions=false;body.interpolation=RigidbodyInterpolation.None;Pose();
         }
         public void BeginCharge()
         {if(Holder==session.Controlled && session.Running){Charging=true;Charge=0;}}
@@ -42,46 +48,82 @@ namespace CourtX
             end=session.Position(target)+Vector3.up*1.27f;
             duration=Mathf.Clamp(Vector3.Distance(start,end)/Mathf.Max(4,speed),.25f,1.4f);
             elapsed=0;Target=target;Holder=-1;Charging=false;
+            dropping=false;Deflected=false;LastContactActor=-1;
+            for(int i=3;i<6;i++)previousDefenders[i]=session.Position(i);
             session.ReportPass(passer,target);Pose();return true;
         }
         void Update()
         {
             if(!session.Running)return;
+            if(dropping){AdvanceDrop(Time.deltaTime);return;}
             if(Charging)Charge=Mathf.Clamp01(Charge+Time.deltaTime/1.1f);
             if(!Flying){heldTime+=Time.deltaTime;bounce+=Time.deltaTime*(7.5f+session.player.Speed*.6f);return;}
             Vector3 previous=FlightPosition();elapsed+=Time.deltaTime;
             Vector3 next=FlightPosition();
-            // Swept segment prevents fast passes tunnelling through a defender.
+            float earliest=float.PositiveInfinity;int contact=-1;bool secured=false;
             for(int i=3;i<6;i++)
+            {
+                float entry;bool caught;
+                if(TacticalRules.DefensiveContact(previous,next,previousDefenders[i],session.Position(i),session.Facing(i),out entry,out caught)&&entry<earliest)
+                {earliest=entry;contact=i;secured=caught;}
+                previousDefenders[i]=session.Position(i);
+            }
+            if(contact>=0)
+            {
+                LastContactActor=contact;var point=Vector3.Lerp(previous,next,earliest);
+                if(secured)
                 {
-                    float along;float d=TacticalRules.SegmentDistance(session.Position(i),previous,next,out along);
-                    if(d<.43f && next.y<2.15f)
-                    {
-                        Holder=i;Target=-1;Interceptions++;heldTime=0;
-                        session.Turnover("被 "+session.Number(i)+" 截断了。观察传球线，按 R 重试。");return;
-                    }
+                    Holder=contact;Target=-1;Interceptions++;heldTime=0;
+                    session.actors[contact].Action=ActorAction.Receive;
+                    session.Turnover(session.Number(contact)+" 看到了传球并接稳了。横移改变角度，R 重试。");
                 }
+                else
+                {
+                    Deflected=true;Deflections++;
+                    Vector3 normal=TacticalRules.Flat(point-session.Position(contact)).normalized;
+                    Vector3 velocity=Vector3.Reflect((next-previous)/Mathf.Max(Time.deltaTime,.001f),normal)*.28f+Vector3.up;
+                    Drop(point,velocity,"球碰到 "+session.Number(contact)+" 被弹开，防守人没有接稳。R 重试。");
+                }
+                return;
+            }
             if(elapsed<duration)return;
             int receiver=Target;
             // The target point is fixed at release; running away can genuinely miss the catch.
             if(TacticalRules.Distance(session.Position(receiver),end)>1.05f)
             {
-                Holder=-1;Target=-1;visual.ball.position=end;
-                session.Turnover("传球落空。接球时靠近落点，按 R 重试。");return;
+                Drop(end,(next-previous)/Mathf.Max(Time.deltaTime,.001f)*.22f,"传球落空。接球时靠近落点，按 R 重试。");return;
             }
             Holder=receiver;Target=-1;heldTime=0;CompletedPasses++;session.ReportCatch(receiver);
         }
         Vector3 FlightPosition()
         {
             float t=Mathf.Clamp01(elapsed/Mathf.Max(duration,.01f));
-            return Vector3.Lerp(start,end,t)+Vector3.up*(Mathf.Sin(t*Mathf.PI)*.34f);
+            return TacticalRules.PassPoint(start,end,t);
+        }
+        void Drop(Vector3 point,Vector3 velocity,string reason)
+        {
+            Holder=-1;Target=-1;Charging=false;dropping=true;dropPosition=point;dropVelocity=velocity;
+            visual.ball.position=point;session.Turnover(reason);
+        }
+        void AdvanceDrop(float dt)
+        {
+            dropPosition+=dropVelocity*dt+Vector3.down*(4.905f*dt*dt);dropVelocity+=Vector3.down*(9.81f*dt);
+            if(dropPosition.y<.122f)
+            {
+                dropPosition.y=.122f;dropVelocity.y=Mathf.Abs(dropVelocity.y)<.7f?0:-dropVelocity.y*.24f;
+                dropVelocity.x*=.72f;dropVelocity.z*=.72f;
+            }
+            dropVelocity.x*=Mathf.Exp(-dt);dropVelocity.z*=Mathf.Exp(-dt);
+            if(Mathf.Abs(dropPosition.x)>7.25f){dropPosition.x=Mathf.Clamp(dropPosition.x,-7.25f,7.25f);dropVelocity.x*=-.3f;}
+            if(dropPosition.z< -13.7f||dropPosition.z>-.3f){dropPosition.z=Mathf.Clamp(dropPosition.z,-13.7f,-.3f);dropVelocity.z*=-.3f;}
         }
         void LateUpdate()=>Pose();
         public void Pose()
         {
             if(!visual||!session.player)return;
             var ball=visual.ball.transform;
-            if(Flying)ball.position=FlightPosition();
+            if(dropping){ball.position=dropPosition;if(session.Running)ball.Rotate(dropVelocity.z*40*Time.deltaTime,0,-dropVelocity.x*40*Time.deltaTime,Space.World);}
+            else if(Flying)ball.position=FlightPosition();
             else if(Holder>=0)
             {
                 bool mine=Holder==session.Controlled;
@@ -89,7 +131,7 @@ namespace CourtX
                 if(Charging&&mine)ball.position=session.player.eyes.transform.TransformPoint(.12f,-.28f,.67f);
                 else if(Holder>=3||heldTime<.3f)ball.position=root.TransformPoint(.12f,1.27f,.48f);
                 else ball.position=root.TransformPoint(.43f,.14f+Mathf.Abs(Mathf.Sin(bounce))*1.10f,mine?1.02f:.52f);
-                ball.Rotate(40*Time.deltaTime,0,55*Time.deltaTime,Space.World);
+                if(session.Running)ball.Rotate(40*Time.deltaTime,0,55*Time.deltaTime,Space.World);
             }
             bool showHand=session.Running&&Holder==session.Controlled&&!session.player.overview.enabled;
             visual.forearm.gameObject.SetActive(showHand);visual.palm.gameObject.SetActive(showHand);

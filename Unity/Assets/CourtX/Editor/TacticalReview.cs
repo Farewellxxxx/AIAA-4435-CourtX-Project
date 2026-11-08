@@ -71,6 +71,7 @@ public sealed class TacticalChecks:MonoBehaviour
     IEnumerator PassWhenOpen(int receiver,float limit=5)
     {
         string reason;float until=Time.time+limit;
+        s.ball.BeginCharge();yield return Wait(.1f);
         while(Time.time<until&&s.ball.Holder==s.Controlled&&!s.CanPass(s.Controlled,receiver,out reason))
         {
             // A player-like lateral adjustment, through the same CharacterController as WASD.
@@ -79,17 +80,21 @@ public sealed class TacticalChecks:MonoBehaviour
             s.player.Drive(new Vector2(move.x,move.z),Vector2.zero,1f/30,true,false);yield return null;
         }
         if(s.ball.Holder!=s.Controlled)yield break;
-        s.ball.BeginCharge();yield return Wait(.1f);s.ball.Release(receiver);
+        s.ball.Release(receiver);
     }
     IEnumerator Start()
     {
         Application.logMessageReceived+=Error;
         round=Environment.GetCommandLineArgs().SkipWhile(a=>a!="-tacticsRound").Skip(1).FirstOrDefault()??"round1";
         if(!new[]{"round1","round2","final"}.Contains(round))throw new ArgumentException("Unknown review round");
-        path=Path.GetFullPath("../Preview/Playtests/Tactics");Directory.CreateDirectory(path);
+        path=Path.GetFullPath("../Preview/Playtests/Tactics"+(Environment.GetCommandLineArgs().Contains("-refinement")?"/Refinement-20261108":""));Directory.CreateDirectory(path);
         Time.captureFramerate=30;QualitySettings.vSyncCount=0;
         s=FindObjectOfType<TacticalSession>();s.acceptsInput=false;
-        s.PassStarted+=(from,to)=>results.Add("TRACE frame "+frame+" pass "+from+" > "+to+" positions "+string.Join(";",Enumerable.Range(0,6).Select(i=>s.Position(i).ToString("F2"))));
+        s.PassStarted+=(from,to)=>
+        {
+            string reason;bool open=s.CanPass(from,to,out reason);
+            results.Add("TRACE frame "+frame+" pass "+from+" > "+to+" open="+open+" "+reason+" positions "+string.Join(";",Enumerable.Range(0,6).Select(i=>s.Position(i).ToString("F2"))));
+        };
         rt=new RenderTexture(1280,720,24){antiAliasing=4};readback=new Texture2D(1280,720,TextureFormat.RGB24,false);
         encoder=new Process{StartInfo=new System.Diagnostics.ProcessStartInfo("ffmpeg.exe",
             "-hide_banner -loglevel error -y -f rawvideo -pixel_format rgb24 -video_size 1280x720 -framerate 30 -i pipe:0 -vf vflip -an -c:v libx264 -preset veryfast -crf 19 -pix_fmt yuv420p -movflags +faststart \""+path+"/"+round+".mp4\"")
@@ -191,6 +196,7 @@ public sealed class TacticalChecks:MonoBehaviour
         s.StartDrill(TacticalDrill.PickAndRoll,true);s.offenseSpeed=s.defenseSpeed=0;
         s.actors[0].SetPosition(new Vector3(-3,0,-10));s.TeleportPlayer(new Vector3(3,0,-10),0);
         s.actors[3].SetPosition(new Vector3(-2.1f,0,-10));
+        s.actors[3].transform.rotation=Quaternion.LookRotation(Vector3.left);
         for(int i=4;i<6;i++)s.actors[i].SetPosition(new Vector3(i-4,0,-2));
         s.ball.Launch(1,10.5f);yield return Wait(.8f);
         Check(s.ball.Holder==3&&s.ball.Interceptions==1,"a fast pass cannot tunnel through a close defender during initial flight");
@@ -198,6 +204,7 @@ public sealed class TacticalChecks:MonoBehaviour
         s.StartDrill(TacticalDrill.PickAndRoll,true);s.offenseSpeed=s.defenseSpeed=0;
         s.actors[0].SetPosition(new Vector3(-3,0,-10));s.TeleportPlayer(new Vector3(3,0,-10),0);
         s.actors[3].SetPosition(new Vector3(0,0,-10));s.actors[4].SetPosition(new Vector3(-4,0,-2));s.actors[5].SetPosition(new Vector3(4,0,-2));
+        s.actors[3].transform.rotation=Quaternion.LookRotation(Vector3.left);
         s.RequestPass();yield return Wait(.4f);
         Check(s.ball.Holder==0&&s.PassReason.Contains("挡住"),"blocked request is declined with actionable reason");
         s.ball.Launch(1);yield return Wait(1.4f);

@@ -93,6 +93,7 @@ namespace CourtX
         public void OpenMenu()
         {
             MenuOpen=true;Running=false;ball.CancelCharge();player.SetOverview(false);
+            ball.Pose(); // Freeze the displayed ball at the same simulation instant as the menu.
             Cursor.lockState=CursorLockMode.None;
         }
         public void Resume()
@@ -118,10 +119,20 @@ namespace CourtX
             float distance=TacticalRules.Distance(Position(from),Position(to));
             if(distance>11){reason="距离太远，向持球人靠近一些。";return false;}
             if(distance<1.05f){reason="距离太近，先拉开接球空间。";return false;}
-            for(int i=3;i<6;i++)
-                if(TacticalRules.LaneBlocked(Position(from),Position(to),Position(i),.80f)||
-                   TacticalRules.LaneBlocked(Position(from),Position(to),Position(i)+actors[i].Velocity*.3f,.70f))
-                {reason="传球线被 "+Number(i)+" 挡住：横移拉开角度，再按 E。";return false;}
+            Vector3 start=Position(from)+Vector3.up*1.27f+(Position(to)-Position(from)).normalized*.4f;
+            Vector3 end=Position(to)+Vector3.up*1.27f;float duration=Mathf.Clamp(Vector3.Distance(start,end)/8,.25f,1.4f);
+            for(int step=1;step<=8;step++)
+            {
+                float t0=(step-1)/8f,t1=step/8f;
+                for(int i=3;i<6;i++)
+                {
+                    var d0=Position(i)+Vector3.ClampMagnitude(actors[i].Velocity*(duration*t0),.65f);
+                    var d1=Position(i)+Vector3.ClampMagnitude(actors[i].Velocity*(duration*t1),.65f);
+                    float entry;bool secured;
+                    if(TacticalRules.DefensiveContact(TacticalRules.PassPoint(start,end,t0),TacticalRules.PassPoint(start,end,t1),d0,d1,Facing(i),out entry,out secured,.15f))
+                    {reason="传球线被 "+Number(i)+" 挡住：横移拉开角度，再按 E。";return false;}
+                }
+            }
             reason="传球窗口开放";return true;
         }
         public void ReportPass(int from,int to)

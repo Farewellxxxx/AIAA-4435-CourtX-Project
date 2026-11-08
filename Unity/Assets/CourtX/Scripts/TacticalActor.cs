@@ -36,7 +36,9 @@ namespace CourtX
                 float s=i==0?-1:1;
                 float swing=Mathf.Sin(gait+(i==0?0:Mathf.PI))*Mathf.Min(speed*.065f,.21f);
                 Vector3 shoulder=new Vector3(s*.205f,1.39f,0),elbow,wrist;
-                if(defense)
+                if(defense&&Action==ActorAction.Receive)
+                {elbow=new Vector3(s*.32f,1.18f,.18f);wrist=new Vector3(s*.15f,1.29f,.48f);}
+                else if(defense)
                 {
                     float wave=Mathf.Sin(Time.time*3+Id)*.06f;
                     elbow=new Vector3(s*.40f,raised?1.68f:1.26f,.08f);
