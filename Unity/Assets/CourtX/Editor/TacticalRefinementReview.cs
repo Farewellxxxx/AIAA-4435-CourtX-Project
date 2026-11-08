@@ -37,6 +37,11 @@ public sealed class TacticalInteractionChecks:MonoBehaviour
     void Check(bool ok,string name){lines.Add((ok?"PASS ":"FAIL ")+name);Debug.Log(lines.Last());if(!ok)failures++;}
     void Error(string message,string trace,LogType type){if(type==LogType.Exception||type==LogType.Error){lines.Add("ERROR "+message);failures++;}}
     IEnumerator Wait(float seconds){for(int i=0;i<Mathf.CeilToInt(seconds*fps);i++)yield return null;}
+    IEnumerator Walk(float seconds,bool reverse=false)
+    {
+        for(int i=0;i<Mathf.CeilToInt(seconds*fps);i++)
+        {s.player.Drive(reverse?Vector2.down:Vector2.up,Vector2.zero,1f/fps,true,false);yield return null;}
+    }
     void Fixture(bool live=false)
     {
         s.enabled=true;s.StartDrill(TacticalDrill.PickAndRoll,true);s.enabled=live;
@@ -81,6 +86,27 @@ public sealed class TacticalInteractionChecks:MonoBehaviour
         Check(Vector3.Distance(paused,s.ball.Position)<.001f,"pause freezes a deflected ball");
         s.enabled=true;s.StartDrill(TacticalDrill.PickAndRoll,false);yield return Wait(.15f);
         Check(s.ball.Holder==0&&!s.ball.Flying&&s.ball.Position.y>=.12f,"reset clears failed-flight state and restores one owner");
+        if(stage>=2)
+        {
+            Fixture(true);s.offenseSpeed=s.defenseSpeed=0;s.TeleportPlayer(new Vector3(3,0,-10),0);
+            yield return Walk(.25f);s.ball.Launch(1);yield return Walk(1);
+            Check(s.ball.Holder==1&&s.ball.CompletedPasses==1,"steady moving human catches a leading pass");
+            Fixture(true);s.TeleportPlayer(new Vector3(3,0,-10),0);
+            yield return Walk(.25f);s.ball.Launch(1);yield return Walk(1,true);
+            Check(s.ball.Holder==-1&&s.Phase==TacticalPhase.Turnover,"reversing after release can miss the fixed receiving point");
+            s.StartDrill(TacticalDrill.PickAndRoll,false);s.offenseSpeed=2.65f;s.defenseSpeed=0;
+            s.TeleportPlayer(new Vector3(-3,0,-12),0);s.actors[1].SetPosition(new Vector3(2,0,-10));
+            for(int i=3;i<6;i++)s.actors[i].SetPosition(new Vector3(i-4,0,-2));
+            yield return Wait(.2f);s.ball.Launch(1);var receiving=s.Position(1);yield return Wait(.25f);
+            Check(TacticalRules.Distance(receiving,s.Position(1))>.3f,"AI receiver continues toward the catch point during flight");
+            yield return Wait(1);Check(s.ball.Holder==1,"moving AI receiver completes the catch");
+            Fixture();s.ball.Launch(1);float jump=0;
+            for(int i=0;i<90&&s.ball.Flying;i++){var previous=s.ball.Position;yield return null;if(!s.ball.Flying)jump=Vector3.Distance(previous,s.ball.Position);}
+            Check(s.ball.Holder==1&&jump<.3f,"catch starts at contact without a visual teleport into the hands");
+            s.OpenMenu();var catchPaused=s.ball.Position;yield return Wait(.3f);
+            Check(Vector3.Distance(catchPaused,s.ball.Position)<.001f,"menu freezes the catch blend");
+            s.Resume();yield return Wait(.25f);Check(s.ball.Holder==1,"resuming catch blend preserves singular possession");
+        }
         lines.Add("Stage "+stage+": "+failures+" failures");
         File.WriteAllLines(path+"/"+label+"-checks.txt",lines);EditorApplication.Exit(failures==0?0:1);
     }

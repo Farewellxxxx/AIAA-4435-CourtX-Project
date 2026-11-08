@@ -66,7 +66,7 @@ namespace CourtX
                 }
                 if(s.ball.Holder==s.Controlled&&!map)
                 {
-                    string reason;bool open=s.CanPass(s.Controlled,s.SelectedReceiver,out reason);
+                    string reason;bool open=s.CanPass(s.Controlled,s.SelectedReceiver,out reason,s.ball.ReleaseSpeed);
                     GUI.color=open?new Color(.4f,1,.7f):new Color(1,.68f,.3f);
                     GUI.Label(new Rect(620,340,40,40),"+",title);GUI.color=Color.white;
                     if(s.ball.Charging)

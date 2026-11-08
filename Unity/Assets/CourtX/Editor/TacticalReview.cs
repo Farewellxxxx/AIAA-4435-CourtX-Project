@@ -46,12 +46,19 @@ public sealed class TacticalChecks:MonoBehaviour
     IEnumerator Wait(float seconds)
     {for(int i=0;i<Mathf.CeilToInt(seconds*30);i++){s.player.Drive(Vector2.zero,Vector2.zero,1f/30,s.player.overview.enabled,false);yield return null;}}
     IEnumerator Until(Func<bool> predicate,float max)
-    {for(int i=0;i<max*30&&!predicate();i++)yield return null;}
+    {for(int i=0;i<max*30&&!predicate();i++){ApproachCatch();yield return null;}}
+    void ApproachCatch()
+    {
+        if(!s.ball.Flying||s.ball.Target!=s.Controlled)return;
+        var delta=TacticalRules.Flat(s.ball.CatchPoint-s.Position(s.Controlled));
+        var local=s.player.transform.InverseTransformDirection(delta.magnitude>.12f?delta.normalized:Vector3.zero);
+        s.player.Drive(new Vector2(local.x,local.z),Vector2.zero,1f/30,true,false);
+    }
     IEnumerator WalkTo(Vector3 point,float max=5,bool sprint=false,bool map=true,bool stopForBall=false)
     {
         for(int i=0;i<max*30;i++)
         {
-            if(stopForBall&&s.ball.Flying)break;
+            if(stopForBall&&s.ball.Flying){yield return Until(()=>!s.ball.Flying,2);break;}
             Vector3 delta=TacticalRules.Flat(point-s.player.transform.position);
             if(delta.magnitude<.18f)break;
             var local=s.player.transform.InverseTransformDirection(delta.normalized);
@@ -72,7 +79,7 @@ public sealed class TacticalChecks:MonoBehaviour
     {
         string reason;float until=Time.time+limit;
         s.ball.BeginCharge();yield return Wait(.1f);
-        while(Time.time<until&&s.ball.Holder==s.Controlled&&!s.CanPass(s.Controlled,receiver,out reason))
+        while(Time.time<until&&s.ball.Holder==s.Controlled&&!s.CanPass(s.Controlled,receiver,out reason,s.ball.ReleaseSpeed))
         {
             // A player-like lateral adjustment, through the same CharacterController as WASD.
             var across=Vector3.Cross(Vector3.up,(s.Position(receiver)-s.Position(s.Controlled)).normalized);

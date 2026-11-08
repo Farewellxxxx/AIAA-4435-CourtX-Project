@@ -28,6 +28,7 @@ namespace CourtX
         public event Action<int> BallReceived;
         public event Action<TacticalPhase> PhaseChanged;
         readonly Vector3[] targets=new Vector3[6];
+        readonly Vector3[] motionPositions=new Vector3[6],velocities=new Vector3[6];
         float phaseTime,screenHold,think,requestUntil,aiPassCooldown,noticeUntil;
         Vector3 screen;
         Vector3 passStep;
@@ -40,6 +41,16 @@ namespace CourtX
         public string Number(int id)=>new[]{"01","04","05","11","12","13"}[Mathf.Clamp(id,0,5)];
         public Vector3 Position(int id)=>id==Controlled?TacticalRules.Flat(player.transform.position):actors[id].transform.position;
         public Vector3 Facing(int id)=>id==Controlled?player.transform.forward:actors[id].transform.forward;
+        public Vector3 Velocity(int id)=>velocities[id];
+        void SampleMotion()
+        {
+            for(int i=0;i<6;i++)
+            {
+                var delta=TacticalRules.Flat(Position(i)-motionPositions[i]);
+                velocities[i]=delta.magnitude>.75f?Vector3.zero:Vector3.ClampMagnitude(delta/Mathf.Max(Time.deltaTime,.001f),5.5f);
+                motionPositions[i]=Position(i);
+            }
+        }
         void Start()
         {
             player.acceptsInput=false;player.enabled=false;
@@ -72,12 +83,14 @@ namespace CourtX
             Notify(offBall?"你是 04：先到地面光圈，观察持球人；E 要球。":"你是 01：观察队友，按住 Q 准备，松开传球。");
             Cursor.lockState=acceptsInput?CursorLockMode.Locked:CursorLockMode.None;
             ComputeTargets();
+            for(int i=0;i<6;i++){motionPositions[i]=Position(i);velocities[i]=Vector3.zero;}
         }
         public void TeleportPlayer(Vector3 p,float yaw)
         {
             var cc=player.GetComponent<CharacterController>();cc.enabled=false;
             player.transform.SetPositionAndRotation(p,Quaternion.Euler(0,yaw,0));cc.enabled=true;
             Physics.SyncTransforms();
+            motionPositions[Controlled]=Position(Controlled);velocities[Controlled]=Vector3.zero;
         }
         void RebindMap()
         {
@@ -113,21 +126,21 @@ namespace CourtX
             PassReason=possible?"已举手要球，队友会在传球窗口出球。":reason;
             Notify(PassReason);aiPassCooldown=Mathf.Min(aiPassCooldown,.22f);
         }
-        public bool CanPass(int from,int to,out string reason)
+        public bool CanPass(int from,int to,out string reason,float speed=8f)
         {
             if(from<0||from>=3||to<0||to>=3||from==to){reason="球正在传递，请稍候。";return false;}
             float distance=TacticalRules.Distance(Position(from),Position(to));
             if(distance>11){reason="距离太远，向持球人靠近一些。";return false;}
             if(distance<1.05f){reason="距离太近，先拉开接球空间。";return false;}
-            Vector3 start=Position(from)+Vector3.up*1.27f+(Position(to)-Position(from)).normalized*.4f;
-            Vector3 end=Position(to)+Vector3.up*1.27f;float duration=Mathf.Clamp(Vector3.Distance(start,end)/8,.25f,1.4f);
+            var plan=ball.PlanPass(from,to,speed);
+            Vector3 start=plan.Origin,end=plan.Destination;float duration=plan.Duration;
             for(int step=1;step<=8;step++)
             {
                 float t0=(step-1)/8f,t1=step/8f;
                 for(int i=3;i<6;i++)
                 {
-                    var d0=Position(i)+Vector3.ClampMagnitude(actors[i].Velocity*(duration*t0),.65f);
-                    var d1=Position(i)+Vector3.ClampMagnitude(actors[i].Velocity*(duration*t1),.65f);
+                    var d0=Position(i)+Vector3.ClampMagnitude(Velocity(i)*(duration*t0),.65f);
+                    var d1=Position(i)+Vector3.ClampMagnitude(Velocity(i)*(duration*t1),.65f);
                     float entry;bool secured;
                     if(TacticalRules.DefensiveContact(TacticalRules.PassPoint(start,end,t0),TacticalRules.PassPoint(start,end,t1),d0,d1,Facing(i),out entry,out secured,.15f))
                     {reason="传球线被 "+Number(i)+" 挡住：横移拉开角度，再按 E。";return false;}
@@ -177,6 +190,7 @@ namespace CourtX
                 if(Input.GetKeyDown(KeyCode.Q))ball.BeginCharge();
                 if(Input.GetKeyUp(KeyCode.Q)&&ball.Charging)ball.Release(SelectedReceiver);
             }
+            SampleMotion();
             if(Phase==TacticalPhase.Turnover)return;
             phaseTime+=Time.deltaTime;aiPassCooldown-=Time.deltaTime;
             AdvancePhase();
@@ -285,7 +299,7 @@ namespace CourtX
                 if(i==Controlled)continue;
                 var root=actors[i].transform;Vector3 from=root.position;
                 bool receiving=ball.Flying&&ball.Target==i;
-                Vector3 to=TacticalRules.ClampCourt(receiving?from:targets[i]);
+                Vector3 to=TacticalRules.ClampCourt(receiving?ball.CatchPoint:targets[i]);
                 Vector3 direction=to-from;direction.y=0;
                 float speed=i>=3?defenseSpeed:offenseSpeed;
                 // A planted screener is a real obstacle; defenders route around it instead of passing through.
@@ -310,6 +324,7 @@ namespace CourtX
         }
         public Vector3 GuidancePoint()
         {
+            if(ball.Flying&&ball.Target==Controlled)return ball.CatchPoint;
             if(Drill==TacticalDrill.PickAndRoll)
                 return Controlled==1?(Phase==TacticalPhase.Assemble||Phase==TacticalPhase.ScreenReady?screen:new Vector3(1.65f,0,-3.9f)):
                     (Phase==TacticalPhase.Assemble?new Vector3(-.8f,0,-9.5f):new Vector3(2.5f,0,-7f));
@@ -317,7 +332,7 @@ namespace CourtX
         }
         void UpdateGuidance()
         {
-            if(!guidanceRing)return;guidanceRing.gameObject.SetActive(Phase!=TacticalPhase.Complete&&Phase!=TacticalPhase.Turnover);
+            if(!guidanceRing)return;guidanceRing.gameObject.SetActive((ball.Flying&&ball.Target==Controlled)||(Phase!=TacticalPhase.Complete&&Phase!=TacticalPhase.Turnover));
             guidanceRing.position=GuidancePoint()+Vector3.up*.035f;
         }
         void OnApplicationFocus(bool focused){if(!focused&&initialized&&acceptsInput)OpenMenu();}
