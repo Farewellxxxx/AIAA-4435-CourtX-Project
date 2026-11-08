@@ -1,0 +1,15 @@
+FAIL 15 fps: blind rear contact deflects without gifting defender possession
+FAIL 15 fps: blocked ball visibly falls instead of sticking to a hand
+PASS 15 fps: a prepared defender facing the pass can secure it
+FAIL 15 fps: nearer defender wins contact independent of actor-array order
+FAIL 30 fps: blind rear contact deflects without gifting defender possession
+FAIL 30 fps: blocked ball visibly falls instead of sticking to a hand
+PASS 30 fps: a prepared defender facing the pass can secure it
+PASS 30 fps: nearer defender wins contact independent of actor-array order
+FAIL 60 fps: blind rear contact deflects without gifting defender possession
+FAIL 60 fps: blocked ball visibly falls instead of sticking to a hand
+PASS 60 fps: a prepared defender facing the pass can secure it
+PASS 60 fps: nearer defender wins contact independent of actor-array order
+PASS pause freezes a deflected ball
+PASS reset clears failed-flight state and restores one owner
+Stage 1: 7 failures

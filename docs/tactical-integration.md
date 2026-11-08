@@ -21,6 +21,9 @@ When replacing the whole preview layer with the team's controller, also disable 
 | TacticalBall | `Holder`, `Target`, `Flying`, `Position` | Authoritative ownership and in-flight state |
 | TacticalBall | `BeginCharge()`, `Release(target)`, `CancelCharge()` | Assisted human pass intent; Q adapter can be replaced |
 | TacticalBall | `Launch(target,speed)` | AI pass through the same flight/catch/interception logic |
+| TacticalBall | `PlanPass(from,to,speed)`, `CatchPoint`, `ReleaseSpeed` | Shared bounded lead and fixed receiving destination; preview using the intended speed |
+| TacticalBall | `Deflected`, `Deflections`, `LastContactActor` | Distinguish body contact from a secured interception |
+| TacticalSession | `Velocity(id)`, `RequestSeconds` | Sampled planar motion and remaining active request time |
 | TacticalActor | `Id`, `Action`, `Velocity` | Replace primitive procedural pose with an Animator |
 | CourtLayout | existing spawns and four anchors | Original team integration API preserved |
 
@@ -31,7 +34,8 @@ NPC motion uses bounded court targets, local separation and collision-aware huma
 ## Deliberate prototype limits
 
 - Three defenders use individual assignments with a short hedge and weak-side help/recovery. No complete five-man zone, trained model or full 2K simulation.
-- Assisted passes follow a fixed destination chosen at release with a small arc. Human receivers can miss by running away; NPC targets stop to receive. Swept segment interception avoids tunneling. Court/wall ball physics are available in the original practice; tactical throws target an in-court teammate rather than arbitrary free throws.
+- Assisted passes predict receiver movement, capped at 2.5 m lead, then lock the destination at release. NPC receivers approach that point; the human receives a ground-ring cue and retains movement control. Catch radius is .78 m, followed by a .16 s visual blend into the hand. `CanPass` accepts an optional speed and evaluates the same planned arc and defensive volumes; it is a risk estimate, not a guarantee against a defender changing direction.
+- Contact is swept against moving defensive body/hand volumes, and the earliest contact wins. A defender facing the arrival can secure the ball; a blind body hit deflects it without awarding ownership. Deflected/missed balls fall and bounce visually, while the exercise ends for R recovery. This is a bounded analytic animation, not a full rebound simulation.
 - No shooting, score, rebounds, steals from a held dribble, possession clock, fouls, or end-to-end match loop. A turnover ends this exercise; it does not start an AI fast break.
 - Simple generated character poses, not motion capture. Independent joint animation can replace TacticalActor while retaining root/collider ownership.
 - Timing and positions are C# prototype settings; initial layout is in StartDrill / ComputeTargets. The old CourtLayout anchors remain available, but do not yet author all tactical paths. A later ScriptableObject playbook can replace these constants.
@@ -42,3 +46,5 @@ NPC motion uses bounded court targets, local separation and collision-aware huma
 Run Unity with `-batchmode -projectPath <Unity path> -executeMethod TacticalReview.Run -tacticsRound final -logFile <log path>` (do not add `-quit`; the coroutine exits itself). This uses actual scene actions and saves a 30fps camera recording, snapshots and assertion output in `Preview/Playtests/Tactics`. FFmpeg must be available on PATH. Run `CourtControlsReview.Run` separately to exercise the unchanged free-practice scene. `TacticalAuthoring.Build` builds only the tactical scene to `Windows_Tactics` and leaves `Windows` untouched.
 
 Do not run multiple Unity instances on the same project. The review first checks ordinary routes, then uses explicit adversarial fixtures for lane denial, interception, missed catches, reset and pause; those fixtures are not presented as normal player gameplay.
+
+The Nov 8 interaction suite is `TacticalRefinementReview.Run -refineStage 3 -refineLabel <label>`. `Tools/run_unity_review.ps1` wraps editor invocation on this machine. Full routes with `-refinement` save to `Preview/Playtests/Tactics/Refinement-20261108`. Source tests are retained, while recordings/builds remain local. E requests bind to the actual holder and count down only during active simulation; release requires an owned active charge. `Launch` remains the explicit AI/integration entry point.

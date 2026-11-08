@@ -1,0 +1,62 @@
+PASS boot opens mode menu
+PASS defender in corridor denies pass
+PASS lateral separation opens corridor
+PASS defender behind passer does not block
+ROUTE PickAndRoll / handler starts at frame 1
+PASS PickAndRoll / handler identity and possession
+PASS PickAndRoll / handler exactly five visible NPCs
+PASS PickAndRoll / handler screener plants before action
+PASS PickAndRoll / handler handler uses screen, triggers roll
+TRACE frame 131 pass 0 > 1 open=True 传球窗口开放 positions (3.82, 0.00, -5.87);(1.29, 0.00, -4.98);(4.50, 0.00, -2.32);(1.93, 0.00, -6.52);(2.09, 0.00, -5.44);(3.77, 0.00, -2.10)
+PASS PickAndRoll / handler roll receiver catches real pass; 配合完成：已创造接球空间。可以继续传球，或按 R 再练一次。
+PASS PickAndRoll / handler possession never switches player identity
+PASS PickAndRoll / handler drill objective completes (actual Complete)
+ROUTE PickAndRoll / off-ball starts at frame 207
+PASS PickAndRoll / off-ball identity and possession
+PASS PickAndRoll / off-ball exactly five visible NPCs
+PASS PickAndRoll / off-ball screener plants before action
+PASS PickAndRoll / off-ball handler uses screen, triggers roll
+TRACE frame 326 pass 0 > 1 open=True 传球窗口开放 positions (1.87, 0.00, -7.84);(1.09, 0.00, -6.59);(6.10, 0.00, -2.30);(0.49, 0.00, -7.56);(0.48, 0.00, -6.35);(4.66, 0.00, -2.23)
+PASS PickAndRoll / off-ball roll receiver catches real pass; 球已在你手上。1 / 2 选择队友，松开 Q 传球。
+PASS PickAndRoll / off-ball possession never switches player identity
+PASS PickAndRoll / off-ball drill objective completes (actual Complete)
+ROUTE HighPostCut / handler starts at frame 419
+PASS HighPostCut / handler identity and possession
+PASS HighPostCut / handler exactly five visible NPCs
+TRACE frame 486 pass 0 > 1 open=True 传球窗口开放 positions (-3.30, 0.00, -9.79);(0.11, 0.00, -5.76);(6.10, 0.00, -2.30);(-3.13, 0.00, -8.29);(0.08, 0.00, -4.26);(4.66, 0.00, -2.23)
+PASS HighPostCut / handler high post receives and triggers cut; 04 接球。你仍控制 01，继续跑位。
+TRACE frame 573 pass 1 > 0 open=True 传球窗口开放 positions (-3.02, 0.00, -4.67);(0.05, 0.00, -7.26);(6.10, 0.00, -2.30);(-2.63, 0.00, -4.24);(0.05, 0.00, -5.46);(4.66, 0.00, -2.23)
+PASS HighPostCut / handler cutter catches return pass; 球已在你手上。1 / 2 选择队友，松开 Q 传球。
+PASS HighPostCut / handler possession never switches player identity
+PASS HighPostCut / handler drill objective completes (actual Complete)
+ROUTE HighPostCut / off-ball starts at frame 638
+PASS HighPostCut / off-ball identity and possession
+PASS HighPostCut / off-ball exactly five visible NPCs
+TRACE frame 680 pass 0 > 1 open=True 传球窗口开放 positions (-3.37, 0.00, -9.74);(0.14, 0.00, -5.65);(6.10, 0.00, -2.30);(-3.24, 0.00, -8.10);(0.17, 0.00, -3.53);(4.66, 0.00, -2.23)
+PASS HighPostCut / off-ball high post receives and triggers cut; 04 接球。你现在持球。
+TRACE frame 772 pass 1 > 0 open=True 传球窗口开放 positions (-3.07, 0.00, -4.99);(0.14, 0.00, -5.65);(6.10, 0.00, -2.30);(-2.65, 0.00, -4.40);(0.10, 0.00, -4.28);(4.66, 0.00, -2.23)
+PASS HighPostCut / off-ball cutter catches return pass; 配合完成：已创造接球空间。可以继续传球，或按 R 再练一次。
+PASS HighPostCut / off-ball possession never switches player identity
+PASS HighPostCut / off-ball drill objective completes (actual Complete)
+ADVERSARIAL CHECKS start at frame 834
+PASS completed drill keeps its success feedback while the player takes a break
+PASS a ball-holding screener cannot unlock the pick-and-roll
+PASS leaving an unused screen returns to assembly
+TRACE frame 1494 pass 0 > 1 open=True 传球窗口开放 positions (-3.00, 0.00, -10.00);(4.00, 0.00, -10.00);(6.10, 0.00, -2.30);(-1.00, 0.00, -2.00);(0.00, 0.00, -2.00);(1.00, 0.00, -2.00)
+PASS catching on the perimeter does not bypass high-post arrival
+PASS an early receiver can recover by carrying the ball to the high post
+TRACE frame 1542 pass 0 > 1 open=False 传球线被 11 挡住：横移拉开角度。 positions (-3.00, 0.00, -10.00);(3.00, 0.00, -10.00);(6.10, 0.00, -2.30);(-2.10, 0.00, -10.00);(0.00, 0.00, -2.00);(1.00, 0.00, -2.00)
+PASS a fast pass cannot tunnel through a close defender during initial flight
+PASS blocked request is declined with actionable reason
+TRACE frame 1578 pass 0 > 1 open=False 传球线被 11 挡住：横移拉开角度。 positions (-3.00, 0.00, -10.00);(3.00, 0.00, -10.00);(6.10, 0.00, -2.30);(0.00, 0.00, -10.00);(-4.00, 0.00, -2.00);(4.00, 0.00, -2.00)
+PASS forced pass is intercepted once, with defender ownership
+TRACE frame 1620 pass 0 > 1 open=True 传球窗口开放 positions (-3.00, 0.00, -10.00);(3.00, 0.00, -10.00);(6.10, 0.00, -2.30);(-1.00, 0.00, -2.00);(0.00, 0.00, -2.00);(1.00, 0.00, -2.00)
+PASS running away from fixed catch point produces a missed pass
+PASS hold Tab keeps NPC simulation moving
+PASS releasing Tab restores first person without teleport
+PASS Shift sprint and immediate walking recovery during repeated Tab
+PASS twelve mixed-mode resets leave one owner and five NPCs
+TRACE frame 1701 pass 0 > 1 open=False 传球线被 11 挡住：横移拉开角度。 positions (-3.80, 0.00, -9.30);(0.60, 0.00, -3.70);(6.10, 0.00, -2.30);(-3.20, 0.00, -7.50);(1.50, 0.00, -3.50);(4.60, 0.00, -3.50)
+PASS menu pauses in-flight ball and all actors
+PASS new round cancels previous flight
+Frames: 1722 @ 30 fps; failures: 0

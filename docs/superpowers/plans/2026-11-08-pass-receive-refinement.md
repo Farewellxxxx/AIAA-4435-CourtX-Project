@@ -22,32 +22,32 @@
 
 Files: TacticalRules.cs, TacticalBall.cs, TacticalActor.cs, TacticalRefinementReview.cs.
 
-- [ ] Reproduce rear/side contact magically changing ownership, and defender array order winning simultaneous contact.
-- [ ] Sweep the ball against actual defensive volumes, resolve earliest contact, distinguish a facing hand catch from a body deflection.
-- [ ] Keep deflected/missed balls visible falling to the court, with no invented owner or automatic recall; the exercise can still end with R recovery.
-- [ ] Run contact regression at multiple frame rates, review normal drill routes, record observations and commit.
+- [x] Reproduce rear/side contact magically changing ownership, and defender array order winning simultaneous contact.
+- [x] Sweep the ball against actual defensive volumes, resolve earliest contact, distinguish a facing hand catch from a body deflection.
+- [x] Keep deflected/missed balls visible falling to the court, with no invented owner or automatic recall; the exercise can still end with R recovery.
+- [x] Run contact regression at multiple frame rates, review normal drill routes, record observations and commit.
 
 ## Round 2 — moving reception
 
 Files: TacticalRules.cs, TacticalBall.cs, TacticalSession.cs, TacticalRefinementReview.cs, TacticalReview.cs.
 
-- [ ] Reproduce a steady moving receiver being passed to their old location and NPCs freezing during flight.
-- [ ] Predict a bounded fixed receiving point at release; have NPCs approach it. Show that point to a human receiver without steering their body.
-- [ ] Catch within a bounded radius and blend the visual into the hands; sudden direction changes must still be able to miss.
-- [ ] Verify moving catches, deliberate misses, reset/pause during ball animation and all four actual drill routes; review and commit.
+- [x] Reproduce a steady moving receiver being passed to their old location and NPCs freezing during flight.
+- [x] Predict a bounded fixed receiving point at release; have NPCs approach it. Show that point to a human receiver without steering their body.
+- [x] Catch within a bounded radius and blend the visual into the hands; sudden direction changes must still be able to miss.
+- [x] Verify moving catches, deliberate misses, reset/pause during ball animation and all four actual drill routes; review and commit.
 
 ## Round 3 — decisions and understandable requests
 
 Files: TacticalSession.cs, TacticalBall.cs, TacticalUI.cs, TacticalRefinementReview.cs.
 
-- [ ] Reproduce stale/expired requests and mismatches between proposed trajectory and passing-window feedback.
-- [ ] Use the same planned trajectory and geometry for risk preview and AI; bind requests to the actual passer, expire clearly, freeze request time in menus, cancel on possession change.
-- [ ] Validate normal and blocked requests, menu pause, possession changes and invalid charge/release intents; review and commit.
+- [x] Reproduce stale/expired requests and mismatches between proposed trajectory and passing-window feedback.
+- [x] Use the same planned trajectory and geometry for risk preview and AI; bind requests to the actual passer, expire clearly, freeze request time in menus, cancel on possession change.
+- [x] Validate normal and blocked requests, menu pause, possession changes and invalid charge/release intents; review and commit.
 
 ## Final gate
 
-- [ ] Fresh independent whole-change review; fix material findings and rerun affected tests.
-- [ ] Full tactical and old-practice regressions, final Windows build, inspected recordings, concise iteration notes and updated integration guide.
+- [x] Fresh independent whole-change review; fix material findings and rerun affected tests.
+- [x] Full tactical and old-practice regressions, final Windows build, inspected recordings, concise iteration notes and updated integration guide.
 - [ ] Push commits and rollback tag, verify remote hashes and saved files.
 
 ## Review focus
@@ -67,3 +67,5 @@ Files: TacticalSession.cs, TacticalBall.cs, TacticalUI.cs, TacticalRefinementRev
 - Round 2 complete: moving-human catch and AI flight motion reproduced RED (2 failures); fixed lead point, receiver movement, shared preview plan, .78 m catch radius and .16 s hand blend. Stage 2 complete -> 21/21; four full routes -> 45/45. Catch pause/continuity verified. The route driver now walks toward the visible fixed receiving point, as a human must; deliberate reversal still fails. Inspected recorded first-person frame.
 - Round 3 complete: five request/release failures reproduced RED; all fixed with holder-bound active-time requests, explicit expiry and owned-charge guard. Stage 3 -> 26/26; full tactical routes -> 45/45. UI preview uses current charge speed and shared lead geometry. Remaining gate: independent review, stable regression, build, visual checks and delivery.
 - Final review: fresh independent reviewer found one Important defect: final flight frame used defender/receiver positions after ball arrival. Reproduced in Unity: 15 fps late interception plus two receiver-boundary cases failed (30/60 controls passed). Fixed shared arrival fraction; review-boundary-green -> 31/31, final-reviewed-routes -> 45/45. Free practice -> 28/28. No minor findings. Reviewer declined full-match/rebound simulation (already excluded), package regression and motion aesthetics (executor verifies separately). Ruling: retain bounded turnover/R training scope; cost is no playable rebound or defender fast-break phase.
+
+- Final artifact gate: reviewed Windows build succeeded; final executable launched to menu. Native UI inspection verified received-ball state and visible request countdown/reason without clipping; saved UI video/screenshot. Final engine video decoded fully (1722 frames, 57.4 s, 1280x720 at 30 fps); archive created. Test evidence copied under docs/verification. Previous package and stable source remain intact. No source tests or plan records deleted: user requested saved results.

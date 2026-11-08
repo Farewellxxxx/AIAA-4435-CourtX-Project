@@ -1,0 +1,19 @@
+PASS 15 fps: blind rear contact deflects without gifting defender possession
+PASS 15 fps: blocked ball visibly falls instead of sticking to a hand
+PASS 15 fps: a prepared defender facing the pass can secure it
+PASS 15 fps: nearer defender wins contact independent of actor-array order
+PASS 30 fps: blind rear contact deflects without gifting defender possession
+PASS 30 fps: blocked ball visibly falls instead of sticking to a hand
+PASS 30 fps: a prepared defender facing the pass can secure it
+PASS 30 fps: nearer defender wins contact independent of actor-array order
+PASS 60 fps: blind rear contact deflects without gifting defender possession
+PASS 60 fps: blocked ball visibly falls instead of sticking to a hand
+PASS 60 fps: a prepared defender facing the pass can secure it
+PASS 60 fps: nearer defender wins contact independent of actor-array order
+PASS pause freezes a deflected ball
+PASS reset clears failed-flight state and restores one owner
+FAIL steady moving human catches a leading pass
+PASS reversing after release can miss the fixed receiving point
+FAIL AI receiver continues toward the catch point during flight
+PASS moving AI receiver completes the catch
+Stage 2: 2 failures

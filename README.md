@@ -21,6 +21,8 @@
 
 详细接口见 [战术接入说明](docs/tactical-integration.md)，研究与许可证记录见 [参考来源](docs/tactical-sources.md)，试玩证据见 [验证记录](docs/tactical-results.md)。
 
+11 月 8 日传接球改进：[三轮迭代记录](docs/pass-receive-refinement.md)。传球现在带有跑动提前量；球出手后，接球光圈固定，临时反向跑可能接不到。防守人背身碰球会弹开，正面看见来球才可能接稳。无球 E 请求保留 3.5 秒，菜单暂停不消耗时间，球权变化或超时会取消。此前战术版保存在 `v0.2-tactics-before-refinement` 标签。
+
 ## 稳定自由练习版（保留）
 
 双击同目录 `Windows/CourtX.exe` 进入半场。分发时一起复制整个 Windows 文件夹。这个版本用桌面第一人称视角检查站位、遮挡和距离。
