@@ -48,7 +48,7 @@ Files: TacticalSession.cs, TacticalBall.cs, TacticalUI.cs, TacticalRefinementRev
 
 - [x] Fresh independent whole-change review; fix material findings and rerun affected tests.
 - [x] Full tactical and old-practice regressions, final Windows build, inspected recordings, concise iteration notes and updated integration guide.
-- [ ] Push commits and rollback tag, verify remote hashes and saved files.
+- [x] Push commits and rollback tag, verify remote hashes and saved files.
 
 ## Review focus
 
@@ -69,3 +69,5 @@ Files: TacticalSession.cs, TacticalBall.cs, TacticalUI.cs, TacticalRefinementRev
 - Final review: fresh independent reviewer found one Important defect: final flight frame used defender/receiver positions after ball arrival. Reproduced in Unity: 15 fps late interception plus two receiver-boundary cases failed (30/60 controls passed). Fixed shared arrival fraction; review-boundary-green -> 31/31, final-reviewed-routes -> 45/45. Free practice -> 28/28. No minor findings. Reviewer declined full-match/rebound simulation (already excluded), package regression and motion aesthetics (executor verifies separately). Ruling: retain bounded turnover/R training scope; cost is no playable rebound or defender fast-break phase.
 
 - Final artifact gate: reviewed Windows build succeeded; final executable launched to menu. Native UI inspection verified received-ball state and visible request countdown/reason without clipping; saved UI video/screenshot. Final engine video decoded fully (1722 frames, 57.4 s, 1280x720 at 30 fps); archive created. Test evidence copied under docs/verification. Previous package and stable source remain intact. No source tests or plan records deleted: user requested saved results.
+
+- Delivery: implementation and evidence pushed to origin/feature/tactical-training; rollback tag v0.2-tactics-before-refinement uploaded. Packaged executable, videos and raw logs are saved locally; source, assertions and selected screenshots are versioned.
