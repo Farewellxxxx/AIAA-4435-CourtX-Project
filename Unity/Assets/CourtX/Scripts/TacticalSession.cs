@@ -187,7 +187,7 @@ namespace CourtX
                 if(TacticalRules.Distance(Position(1),new Vector3(.1f,0,-5.8f))<1.1f)ChangePhase(TacticalPhase.Cut);
                 else Notify("04 已接球：先到高位光圈，01 再开始空切。");
             }
-            else if(Drill==TacticalDrill.HighPostCut && id==0 && lastPasser==1 && Phase==TacticalPhase.Cut)
+            else if(Drill==TacticalDrill.HighPostCut && id==0 && (lastPasser==1||lastPasser==2) && postReceived && Phase==TacticalPhase.Cut)
             {cutReceived=true;if(Position(0).z>-5.6f)Complete();}
             else if(Drill==TacticalDrill.PickAndRoll && Phase==TacticalPhase.Roll && id==1 && lastPasser==0)
             {rollReceived=true;if(Position(1).z>-6.7f)Complete();}

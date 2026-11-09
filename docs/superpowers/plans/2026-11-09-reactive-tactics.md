@@ -71,3 +71,5 @@
 - Ruling: retain this ledger and verification artifacts because the user explicitly asked to save results. Windows-native tooling may replace Bash-only skill bookkeeping.
 `n- Task 1: complete — 20 defensive checks (9 RED failures to 0), 45 route/control checks green; first real-scene video 1727 frames / 30 fps. Existing free movement and passing routes remain usable. Video snapshot inspected.
 - Task 2: 31 rule checks green after 7 failing feature checks, plus round2 real-scene recording. BasketWorld pressure port compiled in Unity 2022 with no additional dependency. Helper response test waits for both the trap and the independent help reaction delay.
+- Task 2 iteration finding: 44/45 real-scene checks passed; the cutter received via 04→05→01 but the old objective required lastPasser==04. Keep physical receipt and location requirements, allow a legitimate third-player relay after high-post reception. Regression run is in progress; task 2 is not complete until it passes.
+- Task 2: complete after relay fix — 45/45 real-scene checks pass; all actual ball and objective assertions retained. The prior failing record is round2-relay-before-fix.txt.
