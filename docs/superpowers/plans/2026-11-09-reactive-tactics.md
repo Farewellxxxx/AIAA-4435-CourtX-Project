@@ -57,10 +57,10 @@
 ### Task 4: Whole-branch verification and delivery
 
 **Files:** tests, documentation and evidence; no old build overwrite.
-- [ ] Run 31 interaction, 45 route/control, 28 free-practice baseline checks (adapt tactical route inputs only if the changed defense warrants it; retain assertions on physical correctness).
-- [ ] Exercise 8 scenarios, adversarial early/reverse/blocked/pass/reset inputs, deterministic sequence and all recap cases; inspect video and native build UI.
-- [ ] Fresh independent whole-branch code review; fix material findings with RED/GREEN and suite rerun.
-- [ ] Build Windows_Reactive, save full zip and SHA256, actual videos, journal samples, Chinese manual and third-party reuse report; verify archive and stable hashes, push new branch/tag.
+- [x] Run 31 interaction, 45 route/control, 28 free-practice baseline checks (adapt tactical route inputs only if the changed defense warrants it; retain assertions on physical correctness).
+- [x] Exercise 8 scenarios, adversarial early/reverse/blocked/pass/reset inputs, deterministic sequence and all recap cases; inspect video and native build UI.
+- [x] Fresh independent whole-branch code review; fix material findings with RED/GREEN and suite rerun.
+- [x] Build Windows_Reactive, save full zip and SHA256, actual videos, journal samples, Chinese manual and third-party reuse report; verify archive and stable hashes, push new branch/tag.
 
 ## Execution ledger
 
@@ -81,4 +81,6 @@
 - Final: Ruling: pause freezes active requests rather than clearing them — preserves the explicitly approved original control behavior; pending valid request can still execute after resume. Reset/role changes clear all old state.
 - Final: minor (deferred): recap diagram navigation and fixed default text use different time scopes; timestamps/manual identify them, UI labels can be clearer.
 - Final: minor (deferred): a future long optional provider narrative can exceed the fixed text area; current local short review is unaffected.
-- Delivery: final source 8ecb8c2 built successfully; final standalone startup/E catch/V recap inspected and recorded. ZIP contains 155 files, 27,935,178 bytes, CRC and every entry hash verified; SHA256 14EE6EF40B4C2524415BDCFD6C7679B0D6357AA586114F4A54AB7F7C71F7BF52. Native UI recording 37.93 seconds (two actual-capture segments), full decode succeeds. Push pending.
+- Delivery: final source 8ecb8c2 built successfully; final standalone startup/E catch/V recap inspected and recorded. ZIP contains 155 files, 27,935,178 bytes, CRC and every entry hash verified; SHA256 14EE6EF40B4C2524415BDCFD6C7679B0D6357AA586114F4A54AB7F7C71F7BF52. Native UI recording 37.93 seconds (two actual-capture segments), full decode succeeds. Branch and rollback tag pushed; remote stable branches verified unchanged.
+
+- Task 4: complete — independent review fixes, 245 checks, final build/native UI, full ZIP verification, recordings/examples/docs, new remote branch and stable tag all saved. Workspace/evidence retained as explicitly requested.
