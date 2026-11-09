@@ -1,0 +1,12 @@
+[
+  {
+    "image": "recap-first-pass.png",
+    "rightSidelineVisibleFraction": 1.0,
+    "passed": true
+  },
+  {
+    "image": "recap-small-no-pass.png",
+    "rightSidelineVisibleFraction": 1.0,
+    "passed": true
+  }
+]

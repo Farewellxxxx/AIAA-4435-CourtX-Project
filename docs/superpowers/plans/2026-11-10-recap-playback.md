@@ -28,22 +28,22 @@
 ### Task 1: Replay cursor and selected-pass reports
 **Files:** Scripts/RecapPlayback.cs, TacticalJournal.cs; Editor/RecapReview.cs.
 **Interfaces:** Reset(TacticalEpisode,int decisionIndex), Seek(float), Toggle(), Tick(float), Jump(int); Time, Speed, Playing, DecisionIndex, FrameIndex, Sample(); Build(TacticalEpisode,int).
-- [ ] Write checks for selecting first/last pass, no future defense context, 6-player/ball interpolation, duplicate times, no early holder transfer, rewind/end/0.5 speed and source immutability.
-- [ ] Run RecapReview.RunRules: expect failing assertions against initial API shells.
-- [ ] Implement cursor using recorded timestamps, latest discrete state at or before cursor; preserve Build(episode) default selection.
-- [ ] Run RecapReview.RunRules and ReactiveReview.RunRules: expect zero failures, then commit.
+- [x] Write checks for selecting first/last pass, no future defense context, 6-player/ball interpolation, duplicate times, no early holder transfer, rewind/end/0.5 speed and source immutability.
+- [x] Run RecapReview.RunRules: expect failing assertions against initial API shells.
+- [x] Implement cursor using recorded timestamps, latest discrete state at or before cursor; preserve Build(episode) default selection.
+- [x] Run RecapReview.RunRules and ReactiveReview.RunRules: expect zero failures, then commit.
 
 ### Task 2: Court and playback UI
 **Files:** TacticalRecapUI.cs, TacticalSession.Review.cs, Editor/RecapPlaytest.cs.
 **Interfaces:** Session.Replay owns cursor; session LateUpdate ticks once with unscaled delta; UI reads Sample and selected report.
-- [ ] Add scene tests for clock freeze during review, replay advancement, selected-report synchronization and retry reset; run for RED.
-- [ ] Draw court matching paint_floor.py geometry, circular jersey markers, controlled/possession rings, basketball seams, short trails with legend and dashed target arrow.
-- [ ] Add play/pause, restart, 0.5x/1x and timestamp slider; dynamically calculate text block/scroll heights.
-- [ ] Run targeted tests for GREEN; native app checks at normal/small window sizes, multi-pass timeline, empty replay and long text fixture; save screenshots/video.
+- [x] Add scene tests for clock freeze during review, replay advancement, selected-report synchronization and retry reset; run for RED.
+- [x] Draw court matching paint_floor.py geometry, circular jersey markers, controlled/possession rings, basketball seams, short trails with legend and dashed target arrow.
+- [x] Add play/pause, restart, 0.5x/1x and timestamp slider; dynamically calculate text block/scroll heights.
+- [x] Run targeted tests for GREEN; native app checks at normal/small window sizes, multi-pass timeline, empty replay and long text fixture; save screenshots/video.
 
 ### Task 3: Regression, fresh review and delivery
 **Files:** Test runner output routing, separate build/package helpers, docs/recap-results.md, docs/recap-user-guide.md.
-- [ ] Run full existing six-suite regression plus new recap tests; expect zero failures.
-- [ ] One fresh-context whole-branch review; fix material findings with reproducing tests in one pass.
-- [ ] Build Windows_Recap, play final binary, record actual UI and verify video decoding.
-- [ ] Package separately, verify archive entries/hash, preserve old build hashes, commit/push feature branch and link deliverables.
+- [x] Run full existing six-suite regression plus new recap tests; expect zero failures.
+- [x] One fresh-context whole-branch review; fix material findings with reproducing tests in one pass.
+- [x] Build Windows_Recap, play final binary, record actual UI and verify video decoding.
+- [x] Package separately, verify archive entries/hash, preserve old build hashes, commit/push feature branch and link deliverables.

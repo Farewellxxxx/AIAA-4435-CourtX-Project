@@ -1,0 +1,5 @@
+Rendered real standalone player at 1280x720 and 1024x576.
+Video frames: 727
+ffmpeg exit: 0
+Recorded examples: HighPostCut role0; Switch role1.
+Optional long text: QA fixture only, no network request.
