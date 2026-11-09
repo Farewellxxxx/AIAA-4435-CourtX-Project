@@ -4,7 +4,7 @@ namespace CourtX
 {
     public enum TacticalDrill { PickAndRoll, HighPostCut }
     public enum TacticalPhase { Assemble, ScreenReady, Roll, HighPost, Cut, Complete, Turnover }
-    public enum ActorAction { Space, Dribble, Screen, Roll, Cut, Receive, Slide, HandsUp, Help }
+    public enum ActorAction { Space, Dribble, Screen, Roll, Cut, Receive, Slide, HandsUp, Help, Signal }
     public struct TacticalPassPlan
     {
         public Vector3 Origin,Destination;

@@ -70,3 +70,4 @@
 - Pre-flight: defense produces target/assignment state used by offense and journal; ball keeps sole ownership. Journal release snapshot must be captured before Launch clears Holder, not in the later ReportPass event.
 - Ruling: retain this ledger and verification artifacts because the user explicitly asked to save results. Windows-native tooling may replace Bash-only skill bookkeeping.
 `n- Task 1: complete — 20 defensive checks (9 RED failures to 0), 45 route/control checks green; first real-scene video 1727 frames / 30 fps. Existing free movement and passing routes remain usable. Video snapshot inspected.
+- Task 2: 31 rule checks green after 7 failing feature checks, plus round2 real-scene recording. BasketWorld pressure port compiled in Unity 2022 with no additional dependency. Helper response test waits for both the trap and the independent help reaction delay.

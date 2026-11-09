@@ -3,6 +3,7 @@ namespace CourtX
 {
     public enum DefenseCoverage { Drop, Switch, Blitz, Random }
     public enum DefenseStage { Contain, Engaged, Recover }
+    public struct ReceiverOption { public int Id; public bool Open; public float Space; }
     // Coordinator owns assignments and intentions only. TacticalBall owns possession.
     public sealed class ReactiveTactics
     {
@@ -15,6 +16,37 @@ namespace CourtX
         float eligible,engaged,helpIn,helpOut;
         bool armed,used;
         static readonly Vector3 rim=new Vector3(0,0,-1.575f);
+        public Vector3 ReceiverTarget(int id,TacticalPhase phase,int holder,Vector3[] p)
+        {
+            bool trap=Coverage==DefenseCoverage.Blitz&&Stage==DefenseStage.Engaged;
+            if(id==1)
+            {
+                if(phase==TacticalPhase.Assemble||phase==TacticalPhase.ScreenReady)return new Vector3(.35f,0,-8.1f);
+                if(trap&&holder==0)return new Vector3(p[0].x-1.45f,0,Mathf.Clamp(p[0].z+2.6f,-6.1f,-5.0f));
+                return new Vector3(Coverage==DefenseCoverage.Switch&&Stage!=DefenseStage.Contain?-1.65f:1.65f,0,-3.9f);
+            }
+            // Preserve the weak side rather than crossing the whole court when the handler crosses x=3.
+            float side=p[2].x>=0?1:-1;
+            if(HelpActive)
+            {
+                bool overplayed=!trap&&p[5].z>p[2].z-1&&Mathf.Abs(p[5].x)>3.7f&&holder>=0&&holder<2&&p[holder].z> -5.5f;
+                if(overplayed)return new Vector3(side*2.2f,0,-2.3f);
+                return new Vector3(side*5.6f,0,-5.7f);
+            }
+            return new Vector3(side*6,0,-2.25f);
+        }
+        public static int ChooseReceiver(int preferred,ReceiverOption[] options,float pressure)
+        {
+            int best=-1;float score=float.NegativeInfinity;
+            foreach(var option in options)
+            {
+                if(!option.Open)continue;
+                if(option.Id!=preferred&&(pressure<.35f||option.Space<1f))continue;
+                float value=Mathf.Min(option.Space,3)+(option.Id==preferred?1.2f:0);
+                if(value>score){score=value;best=option.Id;}
+            }
+            return best;
+        }
         public void Reset(DefenseCoverage coverage,int seed)
         {
             var random=new System.Random(seed);

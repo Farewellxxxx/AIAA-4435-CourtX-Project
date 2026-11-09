@@ -51,7 +51,32 @@ public static class ReactiveReview
         Check(!helper.HelpActive,"Retreat releases help with hysteresis");
         var random=new ReactiveTactics();random.Reset(DefenseCoverage.Random,88);var first=random.Coverage;random.Reset(DefenseCoverage.Random,88);
         Check(first==random.Coverage&&first!=DefenseCoverage.Random,"Seed resolves a concrete repeatable coverage");
+        Teammates();
         Finish();
+    }
+    static void Teammates()
+    {
+        var p=Positions();var trap=new ReactiveTactics();trap.Reset(DefenseCoverage.Blitz,5);
+        Step(trap,p,TacticalPhase.ScreenReady);Step(trap,p,TacticalPhase.Roll);
+        var shortRoll=trap.ReceiverTarget(1,TacticalPhase.Roll,0,p);
+        Check(shortRoll.z> -6.5f&&shortRoll.z< -4.8f,"Trap response: screener offers a short-roll outlet instead of running to rim");
+        Step(trap,p,TacticalPhase.Roll); // Allow the helper's separate reaction delay after trap engagement.
+        Check(trap.ReceiverTarget(2,TacticalPhase.Roll,0,p).z< -4,"Weak-side receiver lifts when helper tags the short roll");
+        var normal=new ReactiveTactics();normal.Reset(DefenseCoverage.Drop,5);Step(normal,p,TacticalPhase.Assemble);
+        Check(normal.ReceiverTarget(2,TacticalPhase.Assemble,0,p).z> -3,"Weak-side holds corner when no help is drawn");
+        p[0]=new Vector3(1.5f,0,-4.3f);p[5]=new Vector3(4.5f,0,-2.8f);Step(normal,p,TacticalPhase.Roll);
+        Check(normal.ReceiverTarget(2,TacticalPhase.Roll,0,p).x<3,"Overplayed weak side can cut behind a committed helper");
+        var origin=new Vector3(0,0,-8);
+        Check(PressureModel.Evaluate(origin,new[]{origin+Vector3.forward})>.6f,"Pressure port: nearby front defender creates pressure");
+        Check(PressureModel.Evaluate(origin,new[]{origin+Vector3.back})==0,"Pressure port: defender behind basket-relative drive direction is excluded");
+        Check(PressureModel.Evaluate(origin,new[]{origin+Vector3.forward*5})==0,"Pressure port: distant defender is excluded");
+        float one=PressureModel.Evaluate(origin,new[]{origin+Vector3.forward});
+        Check(PressureModel.Evaluate(origin,new[]{origin+Vector3.forward,origin+new Vector3(.4f,0,1)})>one,"Pressure port: two close front defenders increase combined pressure");
+        var choices=new[]{new ReceiverOption{Id=1,Open=false,Space=3},new ReceiverOption{Id=2,Open=true,Space=2}};
+        Check(ReactiveTactics.ChooseReceiver(1,choices,.8f)==2,"Under pressure AI can use a safe alternate instead of forcing blocked request");
+        Check(ReactiveTactics.ChooseReceiver(1,choices,0)==-1,"Without urgency AI waits and changes angle for requested target");
+        choices[0].Open=true;choices[1].Open=false;
+        Check(ReactiveTactics.ChooseReceiver(2,choices,.8f)==1,"Alternate choice follows geometry, not a fixed jersey");
     }
     static void Finish()
     {

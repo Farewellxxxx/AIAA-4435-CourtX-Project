@@ -37,6 +37,9 @@ namespace CourtX
         public int Seed { get; private set; }=4435;
         public float ActiveTime { get; private set; }
         readonly Vector3[] positions=new Vector3[6];
+        public float ReceiverSpace(int receiver)
+        {float space=20;for(int i=3;i<6;i++)space=Mathf.Min(space,TacticalRules.Distance(Position(receiver),Position(i)));return space;}
+        public float HolderPressure(int holder)=>holder<0||holder>=3?0:PressureModel.Evaluate(Position(holder),new[]{Position(3),Position(4),Position(5)});
         public void StartScenario(TacticalDrill drill,bool offBall,DefenseCoverage coverage,int seed)
         {CoverageChoice=coverage;Seed=seed;StartDrill(drill,offBall);}
         public void RetryScenario()=>StartDrill(Drill,Controlled==1);
@@ -252,10 +255,10 @@ namespace CourtX
         void ComputeTargets()
         {
             for(int i=0;i<6;i++)targets[i]=Position(i);
-            targets[2]=new Vector3(Position(0).x>3?-6.0f:6.0f,0,-2.25f);
+            targets[2]=Tactics.ReceiverTarget(2,Phase,ball.Holder,positions);
             if(Drill==TacticalDrill.PickAndRoll)
             {
-                targets[1]=(Phase==TacticalPhase.Assemble||Phase==TacticalPhase.ScreenReady)?screen:new Vector3(1.65f,0,-3.9f);
+                targets[1]=Tactics.ReceiverTarget(1,Phase,ball.Holder,positions);
                 if(Phase==TacticalPhase.ScreenReady)targets[0]=new Vector3(1.8f,0,-7.7f);
                 if(Phase==TacticalPhase.Roll)targets[0]=new Vector3(3.65f,0,-6.5f);
             }
@@ -268,6 +271,7 @@ namespace CourtX
             if(Phase==TacticalPhase.ScreenReady)actors[1].Action=ActorAction.Screen;
             if(Phase==TacticalPhase.Roll)actors[1].Action=ActorAction.Roll;
             if(Phase==TacticalPhase.Cut)actors[0].Action=ActorAction.Cut;
+            if(Tactics.HelpActive&&ball.Holder!=2)actors[2].Action=targets[2].x*targets[2].x<9?ActorAction.Cut:ActorAction.Signal;
             if(ball.Flying)actors[ball.Target].Action=ActorAction.Receive;
             if(requestRemaining>0&&Controlled!=ball.Holder)actors[Controlled].Action=ActorAction.Receive;
             int owner=ball.Holder>=0?ball.Holder:ball.Target;
@@ -291,7 +295,12 @@ namespace CourtX
             else if(Drill==TacticalDrill.PickAndRoll&&Phase==TacticalPhase.Roll&&ball.Holder==0&&Position(1).z>-6.8f)to=1;
             if(to<0)return;
             string reason;
-            if(CanPass(ball.Holder,to,out reason)){ball.Launch(to);ClearRequest();}
+            CanPass(ball.Holder,to,out reason);
+            var options=new System.Collections.Generic.List<ReceiverOption>();
+            for(int i=0;i<3;i++)if(i!=ball.Holder)
+            {string why;options.Add(new ReceiverOption{Id=i,Open=CanPass(ball.Holder,i,out why),Space=ReceiverSpace(i)});}
+            int chosenReceiver=ReactiveTactics.ChooseReceiver(to,options.ToArray(),HolderPressure(ball.Holder));
+            if(chosenReceiver>=0){ball.Launch(chosenReceiver);ClearRequest();}
             else
             {
                 if(requestRemaining>0)PassReason=reason;
@@ -344,6 +353,7 @@ namespace CourtX
                 if(i>=3&&owner>=0&&owner<3&&((i==5&&Tactics.HelpActive)||(i==4&&Tactics.Stage==DefenseStage.Engaged&&Tactics.Coverage==DefenseCoverage.Blitz)))facingMark=owner;
                 Vector3 face=i>=3?Position(facingMark)-root.position:(ball.Holder==i?new Vector3(0,0,-1.6f)-root.position:direction);
                 if(receiving&&ball.Holder<0)face=ball.Position-root.position;
+                else if(i<3&&ball.Holder>=0&&ball.Holder<3&&ball.Holder!=i&&direction.magnitude<.4f)face=Position(ball.Holder)-root.position;
                 face.y=0;if(face.sqrMagnitude>.01f)root.rotation=Quaternion.Slerp(root.rotation,Quaternion.LookRotation(face),dt*8);
             }
         }
@@ -356,7 +366,7 @@ namespace CourtX
         {
             if(ball.Flying&&ball.Target==Controlled)return ball.CatchPoint;
             if(Drill==TacticalDrill.PickAndRoll)
-                return Controlled==1?(Phase==TacticalPhase.Assemble||Phase==TacticalPhase.ScreenReady?screen:new Vector3(1.65f,0,-3.9f)):
+                return Controlled==1?Tactics.ReceiverTarget(1,Phase,ball.Holder,positions):
                     (Phase==TacticalPhase.Assemble?new Vector3(-.8f,0,-9.5f):new Vector3(2.5f,0,-7f));
             return Controlled==1?new Vector3(.1f,0,-5.8f):(Phase==TacticalPhase.Cut?new Vector3(-1.6f,0,-3.8f):new Vector3(-3.8f,0,-9.3f));
         }
