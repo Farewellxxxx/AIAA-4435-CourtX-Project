@@ -67,7 +67,7 @@ public sealed class TacticalInteractionChecks:MonoBehaviour
     {
         Application.logMessageReceived+=Error;s=FindObjectOfType<TacticalSession>();s.acceptsInput=false;
         label=Arg("-refineLabel","interaction");int stage=int.Parse(Arg("-refineStage","1"));
-        path=Path.GetFullPath(Environment.GetCommandLineArgs().Contains("-reactiveLabel")?"../Preview/Playtests/Reactive-20261109":"../Preview/Playtests/Tactics/Refinement-20261108");Directory.CreateDirectory(path);
+        path=Path.GetFullPath(Environment.GetCommandLineArgs().Contains("-reactiveLabel")?ReactiveReview.Folder:"../Preview/Playtests/Tactics/Refinement-20261108");Directory.CreateDirectory(path);
         yield return null;
         foreach(int rate in new[]{15,30,60})
         {

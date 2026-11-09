@@ -149,7 +149,7 @@ namespace CourtX
             string actor=d.from==episode.controlled?"你":"队友 "+Number(d.from);
             string choice=result.assessment==DecisionAssessment.OpenLane?"出手时预测传球线较清楚；接球结果单独记录。":"出手时预测传球存在风险"+(chosen==null?"。":"："+chosen.reason+"。");
             string alternative=alternate!=null?"另一种选择：当时 "+Number(alternate.receiver)+" 的预测线路也开放，可再比较接球空间。":"下一次可先横移改变角度，再观察新的接球窗口。";
-            result.text=heading+"出手前防守："+defense+"\n\n"+d.time.ToString("F1")+" 秒，"+actor+"传给 "+Number(d.to)+"。"+choice+"\n该次传球最终结果："+OutcomeText(d.outcome)+"。"+
+            result.text=heading+"出手前防守："+defense+"\n\n"+d.time.ToString("F1")+" 秒："+actor+" → "+Number(d.to)+"。\n"+choice+"\n该次传球最终结果："+OutcomeText(d.outcome)+"。"+
                 (result.assessment==DecisionAssessment.OpenLane&&d.windowAge>=0?" 出手前窗口已开放约 "+d.windowAge.ToString("F1")+" 秒（同球速、0.2 秒采样）。":"")+
                 "\n\n"+alternative+"\n备选是规则估计，未模拟结果；本原型不评估投篮得分。";
             if(episode.truncated)result.text+="\n较长回合已达到记录上限，部分后续片段未记录。";

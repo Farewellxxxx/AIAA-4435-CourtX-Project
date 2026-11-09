@@ -94,7 +94,7 @@ public sealed class TacticalChecks:MonoBehaviour
         Application.logMessageReceived+=Error;
         round=Environment.GetCommandLineArgs().SkipWhile(a=>a!="-tacticsRound").Skip(1).FirstOrDefault()??"round1";
         if(!new[]{"round1","round2","final"}.Contains(round))throw new ArgumentException("Unknown review round");
-        path=Path.GetFullPath(Environment.GetCommandLineArgs().Contains("-reactiveLabel")?"../Preview/Playtests/Reactive-20261109":"../Preview/Playtests/Tactics"+(Environment.GetCommandLineArgs().Contains("-refinement")?"/Refinement-20261108":""));Directory.CreateDirectory(path);
+        path=Path.GetFullPath(Environment.GetCommandLineArgs().Contains("-reactiveLabel")?ReactiveReview.Folder:"../Preview/Playtests/Tactics"+(Environment.GetCommandLineArgs().Contains("-refinement")?"/Refinement-20261108":""));Directory.CreateDirectory(path);
         Time.captureFramerate=30;QualitySettings.vSyncCount=0;
         s=FindObjectOfType<TacticalSession>();s.acceptsInput=false;
         s.PassStarted+=(from,to)=>

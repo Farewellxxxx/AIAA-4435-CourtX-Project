@@ -58,11 +58,15 @@ public static class TacticalAuthoring
     {BuildTo("../Windows_Tactics/CourtX Tactics.exe");}
     public static void BuildReactive()
     {BuildTo("../Windows_Reactive/CourtX Reactive.exe");}
-    static void BuildTo(string path)
+    public static void BuildRecap()
+    {BuildTo("../Windows_Recap/CourtX Recap.exe");}
+    public static void BuildRecapQA()
+    {BuildTo("../Preview/Playtests/Recap-20261110/QA/CourtX Recap QA.exe",new[]{"COURTX_RECAP_REVIEW"});}
+    static void BuildTo(string path,string[] defines=null)
     {
         if(!System.IO.File.Exists(Scene))Generate();
         var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions {scenes=new[]{Scene},locationPathName=path,
-            target=BuildTarget.StandaloneWindows64,options=BuildOptions.None});
+            target=BuildTarget.StandaloneWindows64,options=BuildOptions.None,extraScriptingDefines=defines});
         if(report.summary.result!=BuildResult.Succeeded)throw new Exception("Tactical build failed: "+report.summary.result);
         Debug.Log("TACTICAL BUILD SUCCEEDED: "+report.summary.totalSize+" bytes");
     }

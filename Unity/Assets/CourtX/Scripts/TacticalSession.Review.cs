@@ -7,16 +7,17 @@ namespace CourtX
     {
         public TacticalJournal Journal { get; private set; }
         public RecapReport Review { get; private set; }
+        public RecapPlayback Replay { get; } = new RecapPlayback();
         public bool ReviewOpen { get; private set; }
         public string SavedReview { get; private set; }="";
         public string OptionalNarration { get; private set; }="";
         public ITacticalRecapProvider RecapProvider { get; set; }
         readonly RecapRequestGate recapGate=new RecapRequestGate();
-        public string ReviewFolder=>Application.isEditor?Path.GetFullPath(Path.Combine(Application.dataPath,"../../Preview/Playtests/Reactive-20261109/Sessions")):
+        public string ReviewFolder=>Application.isEditor?Path.GetFullPath(Path.Combine(Application.dataPath,"../../Preview/Playtests/Recap-20261110/Sessions")):
             Path.Combine(Path.GetDirectoryName(Application.dataPath),"Replays");
         void ArchivePriorRound()
         {
-            recapGate.Reset();ReviewOpen=false;OptionalNarration="";
+            recapGate.Reset();ReviewOpen=false;OptionalNarration="";Replay.Reset(null,-1);
             if(Journal!=null&&!Journal.Closed&&ActiveTime>.05f)
             {Journal.Finish(ActiveTime,"重开前的练习片段");SaveJournal();}
         }
@@ -26,7 +27,16 @@ namespace CourtX
                 drill=Drill.ToString(),coverage=CoverageName,seed=Seed,controlled=Controlled});
             SavedReview="";Review=null;Journal.Sample(this);
         }
-        void LateUpdate(){if(initialized&&Running)Journal?.Sample(this);}
+        void LateUpdate()
+        {
+            if(initialized&&Running)Journal?.Sample(this);
+            if(ReviewOpen){Replay.Tick(Time.unscaledDeltaTime);RefreshReviewSelection();}
+        }
+        public void RefreshReviewSelection()
+        {
+            if(ReviewOpen&&Journal!=null&&(Review==null||Review.decisionIndex!=Replay.DecisionIndex))
+                Review=TacticalJournal.Build(Journal.Episode,Replay.DecisionIndex);
+        }
         void SaveJournal()
         {
             try{SavedReview=Journal.Save(ReviewFolder);}
@@ -38,7 +48,7 @@ namespace CourtX
             Journal.Sample(this);Journal.Finish(ActiveTime,Phase==TacticalPhase.Complete?"配合完成":Phase==TacticalPhase.Turnover?Message:"主动结束练习");
             Review=TacticalJournal.Build(Journal.Episode);SaveJournal();
             OpenMenu();MenuOpen=false;ReviewOpen=true;
-            TacticalRecapUI.Reset(Review.decisionIndex>=0?Journal.Episode.decisions[Review.decisionIndex].frame:Journal.Episode.frames.Count-1);
+            Replay.Reset(Journal.Episode,Review.decisionIndex);TacticalRecapUI.Reset();
             RequestOptionalNarration();
         }
         async void RequestOptionalNarration()
