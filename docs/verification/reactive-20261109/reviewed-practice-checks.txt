@@ -1,0 +1,28 @@
+PASS foot-level role interface BallHandler
+PASS foot-level role interface Screener
+PASS foot-level role interface CornerShooter
+PASS foot-level role interface OnBallDefender
+PASS foot-level role interface ScreenDefender
+PASS foot-level role interface HelpDefender
+PASS four tactical anchors retained
+PASS Tab held selects overview
+PASS walk continues 1.5 m while Tab held
+PASS YOU follows movement without reopening map
+PASS moving NPC badge refreshes every frame
+PASS Tab release immediately returns first person
+PASS release keeps position and heading; movement continuous
+PASS Shift runs at 5.5 m/s in map view
+PASS Shift release restores 3 m/s
+PASS diagonal sprint is normalized
+PASS repeated Tab press/release does not interrupt running
+PASS sprinting respects wall and floor while map open
+PASS dribble travels between hand height and floor without penetrating floor
+PASS Q gathers ball in front of camera
+PASS Q release hands ball to physics
+PASS ball flies while Tab held
+PASS E recalls and resets ball
+PASS charge clamps at full power
+PASS longer Q hold produces a faster throw
+PASS thrown ball collides with court and baseline wall
+PASS ball automatically returns after six seconds
+PASS R resets player camera and ball together

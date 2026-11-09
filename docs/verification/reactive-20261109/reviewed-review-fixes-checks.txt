@@ -1,0 +1,10 @@
+PASS First-leg relay False: 05 actually catches from 01
+PASS First-leg relay False: 04 reception from 05 at high post starts cut
+PASS First-leg relay True: 05 actually catches from 01
+PASS First-leg relay True: 04 reception from 05 at high post starts cut
+PASS AI 05 continues initial high-post relay without requiring a human request
+PASS Changed release speed does not inherit a differently sampled window age
+PASS Window timing fixture retains the sampled passer
+PASS An unchanged open AI preview retains its sampled duration
+PASS A defender closing the lane between samples invalidates the open-window claim
+Failures: 0

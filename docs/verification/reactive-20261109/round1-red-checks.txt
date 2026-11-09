@@ -1,0 +1,21 @@
+PASS Drop: waiting never triggers screen coverage
+PASS Drop: defender reaction is delayed
+FAIL Drop: actual nearby screen use activates coverage
+PASS Drop: big protects paint rather than trapping at screen
+PASS Early pass bypasses Drop without scripted trap
+PASS Switch: waiting never triggers screen coverage
+PASS Switch: defender reaction is delayed
+FAIL Switch: actual nearby screen use activates coverage
+FAIL Switch: exchange assignments
+FAIL Switch: no repeated assignment flipping
+PASS Early pass bypasses Switch without scripted trap
+PASS Blitz: waiting never triggers screen coverage
+PASS Blitz: defender reaction is delayed
+FAIL Blitz: actual nearby screen use activates coverage
+FAIL Blitz: two defenders close handler
+FAIL Blitz: pass out ends trap and weak-side help recovers
+PASS Early pass bypasses Blitz without scripted trap
+FAIL Paint penetration draws delayed weak-side help
+PASS Retreat releases help with hysteresis
+FAIL Seed resolves a concrete repeatable coverage
+Failures: 9

@@ -1,0 +1,100 @@
+SCENARIO 0/0 at video frame 0
+PASS 0/0 screen is planted
+PASS 0/0 chosen defense reacts to real screen use
+PASS 0/0 fixed identity and five NPCs
+PASS 0/0 actual pass decision occurred
+PASS 0/0 both alternatives recorded at release
+PASS 0/0 a spatial advantage completes via direct or relay passing
+PASS 0/0 weak-side advantage counts as a valid PNR outcome
+PASS 0/0 review freezes the same episode
+PASS 0/0 saved JSON matches the displayed review
+PASS 0/0 saved text matches local review
+OUTCOME 0/0 Complete passes=1 holder=2
+PASS 0/0 retry keeps seed and clears old facts
+SCENARIO 0/1 at video frame 206
+PASS 0/1 screen is planted
+PASS 0/1 chosen defense reacts to real screen use
+PASS 0/1 fixed identity and five NPCs
+PASS 0/1 actual pass decision occurred
+PASS 0/1 both alternatives recorded at release
+PASS 0/1 a spatial advantage completes via direct or relay passing
+PASS 0/1 review freezes the same episode
+PASS 0/1 saved JSON matches the displayed review
+PASS 0/1 saved text matches local review
+OUTCOME 0/1 Complete passes=1 holder=1
+PASS 0/1 retry keeps seed and clears old facts
+SCENARIO 1/0 at video frame 417
+PASS 1/0 screen is planted
+PASS 1/0 chosen defense reacts to real screen use
+PASS 1/0 fixed identity and five NPCs
+PASS 1/0 actual pass decision occurred
+PASS 1/0 both alternatives recorded at release
+PASS 1/0 a spatial advantage completes via direct or relay passing
+PASS 1/0 weak-side advantage counts as a valid PNR outcome
+PASS 1/0 review freezes the same episode
+PASS 1/0 saved JSON matches the displayed review
+PASS 1/0 saved text matches local review
+OUTCOME 1/0 Complete passes=1 holder=2
+PASS 1/0 retry keeps seed and clears old facts
+SCENARIO 1/1 at video frame 623
+PASS 1/1 screen is planted
+PASS 1/1 chosen defense reacts to real screen use
+PASS 1/1 fixed identity and five NPCs
+PASS 1/1 actual pass decision occurred
+PASS 1/1 both alternatives recorded at release
+PASS 1/1 a spatial advantage completes via direct or relay passing
+PASS 1/1 review freezes the same episode
+PASS 1/1 saved JSON matches the displayed review
+PASS 1/1 saved text matches local review
+OUTCOME 1/1 Complete passes=3 holder=1
+PASS 1/1 retry keeps seed and clears old facts
+SCENARIO 2/0 at video frame 1034
+PASS 2/0 screen is planted
+PASS 2/0 chosen defense reacts to real screen use
+PASS 2/0 fixed identity and five NPCs
+PASS 2/0 actual pass decision occurred
+PASS 2/0 both alternatives recorded at release
+PASS 2/0 a spatial advantage completes via direct or relay passing
+PASS 2/0 weak-side advantage counts as a valid PNR outcome
+PASS 2/0 review freezes the same episode
+PASS 2/0 saved JSON matches the displayed review
+PASS 2/0 saved text matches local review
+OUTCOME 2/0 Complete passes=1 holder=2
+PASS 2/0 retry keeps seed and clears old facts
+SCENARIO 2/1 at video frame 1228
+PASS 2/1 screen is planted
+PASS 2/1 chosen defense reacts to real screen use
+PASS 2/1 fixed identity and five NPCs
+PASS 2/1 actual pass decision occurred
+PASS 2/1 both alternatives recorded at release
+PASS 2/1 a spatial advantage completes via direct or relay passing
+PASS 2/1 review freezes the same episode
+PASS 2/1 saved JSON matches the displayed review
+PASS 2/1 saved text matches local review
+OUTCOME 2/1 Complete passes=3 holder=1
+PASS 2/1 retry keeps seed and clears old facts
+SCENARIO 3/0 at video frame 1590
+PASS 3/0 fixed identity and five NPCs
+PASS 3/0 actual pass decision occurred
+PASS 3/0 both alternatives recorded at release
+PASS 3/0 a spatial advantage completes via direct or relay passing
+PASS 3/0 review freezes the same episode
+PASS 3/0 saved JSON matches the displayed review
+PASS 3/0 saved text matches local review
+OUTCOME 3/0 Complete passes=4 holder=0
+PASS 3/0 retry keeps seed and clears old facts
+SCENARIO 3/1 at video frame 1920
+PASS 3/1 fixed identity and five NPCs
+PASS 3/1 actual pass decision occurred
+PASS 3/1 both alternatives recorded at release
+PASS 3/1 a spatial advantage completes via direct or relay passing
+PASS 3/1 review freezes the same episode
+PASS 3/1 saved JSON matches the displayed review
+PASS 3/1 saved text matches local review
+OUTCOME 3/1 Complete passes=3 holder=0
+PASS 3/1 retry keeps seed and clears old facts
+PASS Same seed and scripted input reproduce positions and key events
+PASS Rejecting the screen leaves defense in containment
+PASS Pause freezes active-time clocks and journal sampling
+FAIL Losing window focus does not discard an open review
+Frames: 2535 @30fps; failures: 1

@@ -81,3 +81,4 @@
 - Final: Ruling: pause freezes active requests rather than clearing them — preserves the explicitly approved original control behavior; pending valid request can still execute after resume. Reset/role changes clear all old state.
 - Final: minor (deferred): recap diagram navigation and fixed default text use different time scopes; timestamps/manual identify them, UI labels can be clearer.
 - Final: minor (deferred): a future long optional provider narrative can exceed the fixed text area; current local short review is unaffected.
+- Delivery: final source 8ecb8c2 built successfully; final standalone startup/E catch/V recap inspected and recorded. ZIP contains 155 files, 27,935,178 bytes, CRC and every entry hash verified; SHA256 14EE6EF40B4C2524415BDCFD6C7679B0D6357AA586114F4A54AB7F7C71F7BF52. Native UI recording 37.93 seconds (two actual-capture segments), full decode succeeds. Push pending.

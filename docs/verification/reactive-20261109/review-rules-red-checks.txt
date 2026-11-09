@@ -1,0 +1,50 @@
+PASS Drop: waiting never triggers screen coverage
+PASS Drop: defender reaction is delayed
+PASS Drop: actual nearby screen use activates coverage
+PASS Drop: big protects paint rather than trapping at screen
+PASS Early pass bypasses Drop without scripted trap
+PASS Switch: waiting never triggers screen coverage
+PASS Switch: defender reaction is delayed
+PASS Switch: actual nearby screen use activates coverage
+PASS Switch: exchange assignments
+PASS Switch: no repeated assignment flipping
+PASS Early pass bypasses Switch without scripted trap
+PASS Blitz: waiting never triggers screen coverage
+PASS Blitz: defender reaction is delayed
+PASS Blitz: actual nearby screen use activates coverage
+PASS Blitz: two defenders close handler
+PASS Blitz: pass out ends trap and weak-side help recovers
+PASS Early pass bypasses Blitz without scripted trap
+PASS Paint penetration draws delayed weak-side help
+PASS Retreat releases help with hysteresis
+PASS Seed resolves a concrete repeatable coverage
+FAIL Drop: pass out before reaction cancels old screen even after return pass
+FAIL Drop: retreat invalidates pending screen rather than activating on later proximity
+PASS Drop: a newly planted screen can arm a new response after cancellation
+FAIL Switch: pass out before reaction cancels old screen even after return pass
+FAIL Switch: retreat invalidates pending screen rather than activating on later proximity
+PASS Switch: a newly planted screen can arm a new response after cancellation
+FAIL Blitz: pass out before reaction cancels old screen even after return pass
+FAIL Blitz: retreat invalidates pending screen rather than activating on later proximity
+PASS Blitz: a newly planted screen can arm a new response after cancellation
+PASS Trap response: screener offers a short-roll outlet instead of running to rim
+PASS Weak-side receiver lifts when helper tags the short roll
+PASS Weak-side holds corner when no help is drawn
+PASS Overplayed weak side can cut behind a committed helper
+PASS Pressure port: nearby front defender creates pressure
+PASS Pressure port: defender behind basket-relative drive direction is excluded
+PASS Pressure port: distant defender is excluded
+PASS Pressure port: two close front defenders increase combined pressure
+PASS Under pressure AI can use a safe alternate instead of forcing blocked request
+PASS Without urgency AI waits and changes angle for requested target
+PASS Alternate choice follows geometry, not a fixed jersey
+PASS Journal freezes decision-time lane risk instead of retaining mutable input
+PASS Recap separates open-lane choice from missed-catch execution
+PASS Caught risky pass is not retroactively judged safe
+FAIL Risky release never claims its actual lane remained open
+PASS Alternative is grounded in another open option recorded at release
+PASS Recap does not invent an unrecorded open alternative
+PASS No-pass round produces useful feedback without inventing a pass
+PASS Export roundtrip preserves recorded facts
+PASS Reset invalidates a late optional-provider response
+Failures: 7
