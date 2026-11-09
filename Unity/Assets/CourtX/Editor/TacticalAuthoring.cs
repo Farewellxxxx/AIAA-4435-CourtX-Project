@@ -55,9 +55,13 @@ public static class TacticalAuthoring
         Debug.Log("Created independent tactical scene.");
     }
     public static void Build()
+    {BuildTo("../Windows_Tactics/CourtX Tactics.exe");}
+    public static void BuildReactive()
+    {BuildTo("../Windows_Reactive/CourtX Reactive.exe");}
+    static void BuildTo(string path)
     {
         if(!System.IO.File.Exists(Scene))Generate();
-        var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions {scenes=new[]{Scene},locationPathName="../Windows_Tactics/CourtX Tactics.exe",
+        var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions {scenes=new[]{Scene},locationPathName=path,
             target=BuildTarget.StandaloneWindows64,options=BuildOptions.None});
         if(report.summary.result!=BuildResult.Succeeded)throw new Exception("Tactical build failed: "+report.summary.result);
         Debug.Log("TACTICAL BUILD SUCCEEDED: "+report.summary.totalSize+" bytes");

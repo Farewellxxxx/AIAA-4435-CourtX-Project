@@ -32,6 +32,17 @@ namespace CourtX
         float phaseTime,screenHold,think,requestRemaining,aiPassCooldown,noticeUntil;
         int requestOwner=-1;
         public float RequestSeconds=>requestRemaining;
+        public ReactiveTactics Tactics { get; }=new ReactiveTactics();
+        public DefenseCoverage CoverageChoice { get; private set; }=DefenseCoverage.Drop;
+        public int Seed { get; private set; }=4435;
+        public float ActiveTime { get; private set; }
+        readonly Vector3[] positions=new Vector3[6];
+        public void StartScenario(TacticalDrill drill,bool offBall,DefenseCoverage coverage,int seed)
+        {CoverageChoice=coverage;Seed=seed;StartDrill(drill,offBall);}
+        public void RetryScenario()=>StartDrill(Drill,Controlled==1);
+        public void NextScenario()=>StartScenario(Drill,Controlled==1,CoverageChoice,unchecked(Seed+1));
+        public string CoverageName=>Drill==TacticalDrill.HighPostCut?"盯人 · 协防回位":CoverageLabel(Tactics.Coverage);
+        public static string CoverageLabel(DefenseCoverage c)=>new[]{"Drop 沉退","Switch 换防","Blitz 夹击","随机变式"}[(int)c];
         Vector3 screen;
         Vector3 passStep;
         float passStepUntil;
@@ -68,6 +79,7 @@ namespace CourtX
             PhaseChanges=0;phaseTime=screenHold=think=requestRemaining=aiPassCooldown=0;requestOwner=-1;
             passStepUntil=0;passStepActor=-1;
             lastPasser=-1;postReceived=rollReceived=cutReceived=false;
+            ActiveTime=0;Tactics.Reset(CoverageChoice,Seed);
             player.basketball=null;player.ResetView();
             var start=new[]{new Vector3(-.9f,0,-10.3f),new Vector3(-3.8f,0,-7f),new Vector3(6.1f,0,-2.3f),
                 new Vector3(-.65f,0,-8.15f),new Vector3(-2.25f,0,-5.8f),new Vector3(4.6f,0,-3.5f)};
@@ -84,6 +96,7 @@ namespace CourtX
             RebindMap();ball.ResetBall(0);PassReason="";
             Notify(offBall?"你是 04：先到地面光圈，观察持球人；E 要球。":"你是 01：观察队友，按住 Q 准备，松开传球。");
             Cursor.lockState=acceptsInput?CursorLockMode.Locked:CursorLockMode.None;
+            UpdateDefense(0);
             ComputeTargets();
             for(int i=0;i<6;i++){motionPositions[i]=Position(i);velocities[i]=Vector3.zero;}
         }
@@ -179,7 +192,7 @@ namespace CourtX
         }
         public void Turnover(string reason){ClearRequest();ChangePhase(TacticalPhase.Turnover);Notify(reason);if(guidanceRing)guidanceRing.gameObject.SetActive(false);}
         void Complete(){ChangePhase(TacticalPhase.Complete);Notify("配合完成：已创造接球空间。可以继续传球，或按 R 再练一次。");}
-        void Notify(string text){Message=text;noticeUntil=Time.time+4;}
+        void Notify(string text){Message=text;noticeUntil=ActiveTime+4;}
         void ChangePhase(TacticalPhase phase)
         {if(Phase==phase)return;Phase=phase;phaseTime=0;PhaseChanges++;PhaseChanged?.Invoke(phase);}
         void Update()
@@ -202,10 +215,12 @@ namespace CourtX
                 if(Input.GetKeyUp(KeyCode.Q)&&ball.Charging)ball.Release(SelectedReceiver);
             }
             SampleMotion();
+            ActiveTime+=Time.deltaTime;
             UpdateRequest(Time.deltaTime);
             if(Phase==TacticalPhase.Turnover)return;
             phaseTime+=Time.deltaTime;aiPassCooldown-=Time.deltaTime;
             AdvancePhase();
+            UpdateDefense(Time.deltaTime);
             think-=Time.deltaTime;
             if(think<=0){ComputeTargets();DecidePass();think=decisionInterval;}
             MoveActors(Time.deltaTime);UpdateGuidance();
@@ -231,7 +246,7 @@ namespace CourtX
                     ChangePhase(TacticalPhase.Cut);
                 if(Phase==TacticalPhase.Cut&&cutReceived&&ball.Holder==0&&Position(0).z>-4.9f)Complete();
             }
-            if(Phase!=TacticalPhase.Complete&&Phase!=TacticalPhase.Turnover&&phaseTime>18&&Time.time>noticeUntil)
+            if(Phase!=TacticalPhase.Complete&&Phase!=TacticalPhase.Turnover&&phaseTime>18&&ActiveTime>noticeUntil)
                 Notify(Phase==TacticalPhase.Assemble?"队形可自由调整。04 到光圈站定；也可按 R 重新开始。":"暂未出现窗口。横移或回到光圈接应；R 可重新开始。");
         }
         void ComputeTargets()
@@ -255,20 +270,15 @@ namespace CourtX
             if(Phase==TacticalPhase.Cut)actors[0].Action=ActorAction.Cut;
             if(ball.Flying)actors[ball.Target].Action=ActorAction.Receive;
             if(requestRemaining>0&&Controlled!=ball.Holder)actors[Controlled].Action=ActorAction.Receive;
-            Vector3 rim=new Vector3(0,0,-1.575f);
             int owner=ball.Holder>=0?ball.Holder:ball.Target;
             for(int i=3;i<6;i++)
             {
-                int mark=i-3;Vector3 pos=Position(mark);Vector3 toward=(rim-pos).normalized;
-                float gap=mark==owner?1.25f:1.45f;
-                targets[i]=pos+toward*gap;actors[i].Action=mark==owner?ActorAction.HandsUp:ActorAction.Slide;
-                if(i==4&&Phase==TacticalPhase.Roll&&phaseTime<1.25f)
-                {targets[i]=Position(0)+(rim-Position(0)).normalized*1.5f;actors[i].Action=ActorAction.Help;}
-                if(i==5&&owner>=0&&owner<3&&Position(owner).z>-5.6f&&Mathf.Abs(Position(owner).x)<3.5f)
-                {targets[i]=Vector3.Lerp(pos,Position(owner),.55f)+Vector3.forward*.45f;actors[i].Action=ActorAction.Help;}
+                targets[i]=Tactics.DefenseTargets[i-3];
+                actors[i].Action=Tactics.Marks[i-3]==owner?ActorAction.HandsUp:ActorAction.Slide;
+                if((i==5&&Tactics.HelpActive)||(i==4&&Tactics.Stage==DefenseStage.Engaged&&Tactics.Coverage==DefenseCoverage.Blitz))actors[i].Action=ActorAction.Help;
             }
             if(Phase==TacticalPhase.Complete)for(int i=0;i<3;i++)targets[i]=Position(i);
-            if(passStepActor>=0&&Time.time<passStepUntil&&ball.Holder==passStepActor)
+            if(passStepActor>=0&&ActiveTime<passStepUntil&&ball.Holder==passStepActor)
                 targets[passStepActor]=passStep;
         }
         void DecidePass()
@@ -286,7 +296,7 @@ namespace CourtX
             {
                 if(requestRemaining>0)PassReason=reason;
                 // An AI passer may change its angle, but does not move the human receiver or gift possession.
-                if(Time.time>=passStepUntil)
+                if(ActiveTime>=passStepUntil)
                 {
                     Vector3 origin=Position(ball.Holder),toward=(Position(to)-origin).normalized;
                     Vector3 side=Vector3.Cross(Vector3.up,toward);
@@ -299,7 +309,7 @@ namespace CourtX
                         {float t;clearance=Mathf.Min(clearance,TacticalRules.SegmentDistance(Position(i),candidate,Position(to),out t));}
                         if(clearance>best){best=clearance;choice=candidate;}
                     }
-                    passStep=choice;passStepActor=ball.Holder;passStepUntil=Time.time+1.1f;
+                    passStep=choice;passStepActor=ball.Holder;passStepUntil=ActiveTime+1.1f;
                     targets[passStepActor]=passStep;
                 }
             }
@@ -329,10 +339,18 @@ namespace CourtX
                     }
                 }
                 root.position=TacticalRules.ClampCourt(from+step);
-                Vector3 face=i>=3?Position(i-3)-root.position:(ball.Holder==i?new Vector3(0,0,-1.6f)-root.position:direction);
+                int owner=ball.Holder>=0?ball.Holder:ball.Target;
+                int facingMark=i>=3?Tactics.Marks[i-3]:0;
+                if(i>=3&&owner>=0&&owner<3&&((i==5&&Tactics.HelpActive)||(i==4&&Tactics.Stage==DefenseStage.Engaged&&Tactics.Coverage==DefenseCoverage.Blitz)))facingMark=owner;
+                Vector3 face=i>=3?Position(facingMark)-root.position:(ball.Holder==i?new Vector3(0,0,-1.6f)-root.position:direction);
                 if(receiving&&ball.Holder<0)face=ball.Position-root.position;
                 face.y=0;if(face.sqrMagnitude>.01f)root.rotation=Quaternion.Slerp(root.rotation,Quaternion.LookRotation(face),dt*8);
             }
+        }
+        void UpdateDefense(float dt)
+        {
+            for(int i=0;i<6;i++)positions[i]=Position(i);
+            Tactics.Step(Drill,Phase,ball.Holder,ball.Target,positions,dt);
         }
         public Vector3 GuidancePoint()
         {

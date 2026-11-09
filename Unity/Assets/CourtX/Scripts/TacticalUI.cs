@@ -6,6 +6,7 @@ namespace CourtX
     {
         static Font font;
         static GUIStyle title,body,small,button;
+        static int coverage;
         static void Init()
         {
             if(body!=null)return;
@@ -24,37 +25,43 @@ namespace CourtX
             if(s.MenuOpen)
             {
                 Panel(new Rect(0,0,1280,720),new Color(.015f,.06f,.08f,.78f));
-                Panel(new Rect(260,68,760,586),ink);
-                GUI.Label(new Rect(300,96,680,50),"COURTX  /  3v3 配合练习",title);
-                GUI.Label(new Rect(300,155,680,40),"固定角色 · 真实传接 · 读防守，找空间",body);
-                GUI.Label(new Rect(300,216,680,30),"01   选择战术",small);
+                Panel(new Rect(260,30,760,660),ink);
+                GUI.Label(new Rect(300,50,680,50),"COURTX  /  读防守 · 做选择",title);
+                GUI.Label(new Rect(300,106,680,35),"3v3 配合练习    固定角色 · 真实传接",body);
+                GUI.Label(new Rect(300,156,680,30),"01   选择战术",small);
                 GUI.backgroundColor=drill==0?teal:Color.white;
-                if(GUI.Button(new Rect(300,252,326,74),"高位挡拆\n站定掩护 → 绕过 → 顺下接球",button))drill=0;
+                if(GUI.Button(new Rect(300,192,326,66),"高位挡拆\n观察沉退 / 换防 / 夹击",button))drill=0;
                 GUI.backgroundColor=drill==1?teal:Color.white;
-                if(GUI.Button(new Rect(646,252,326,74),"高位接应 · 传切\n提上接球 → 外侧切入 → 回传",button))drill=1;
-                GUI.Label(new Rect(300,350,680,30),"02   选择开局角色",small);
+                if(GUI.Button(new Rect(646,192,326,66),"高位接应 · 传切\n提上接球 → 空切 → 回传",button))drill=1;
+                GUI.Label(new Rect(300,278,680,30),"02   选择开局角色",small);
                 GUI.backgroundColor=role==0?teal:Color.white;
-                if(GUI.Button(new Rect(300,388,326,56),"01 持球人开局",button))role=0;
+                if(GUI.Button(new Rect(300,314,326,48),"01 持球人开局",button))role=0;
                 GUI.backgroundColor=role==1?teal:Color.white;
-                if(GUI.Button(new Rect(646,388,326,56),"04 无球队友开局",button))role=1;
+                if(GUI.Button(new Rect(646,314,326,48),"04 无球队友开局",button))role=1;
+                GUI.Label(new Rect(300,382,680,30),drill==0?"03   防守变式（同一场景可以重复练习）":"03   盯人防守 · 突破后协防与回位",small);
+                GUI.enabled=drill==0;
+                for(int i=0;i<4;i++)
+                {GUI.backgroundColor=coverage==i?teal:Color.white;if(GUI.Button(new Rect(300+i*172,418,156,49),TacticalSession.CoverageLabel((DefenseCoverage)i),small))coverage=i;}
+                GUI.enabled=true;
                 GUI.backgroundColor=teal;
-                if(GUI.Button(new Rect(300,484,672,58),"开始新回合  →",button))s.StartDrill((TacticalDrill)drill,role==1);
+                if(GUI.Button(new Rect(300,490,672,58),"开始新回合  →",button))s.StartScenario((TacticalDrill)drill,role==1,(DefenseCoverage)coverage,s.Seed);
                 GUI.backgroundColor=Color.white;
                 if(GUI.Button(new Rect(300,563,326,42),"继续当前回合",button))s.Resume();
                 if(GUI.Button(new Rect(646,563,326,42),"退出",button))Application.Quit();
-                GUI.Label(new Rect(300,616,680,25),"这是半场配合原型；光圈是建议跑位点。可随时自由移动。",small);
+                GUI.Label(new Rect(300,621,680,44),"光圈是建议位置，可自由移动。场景种子："+s.Seed+"\n防守选择并非唯一答案；先观察队友与传球空间。",small);
             }
             else
             {
                 bool map=s.player.overview.enabled;
-                float panelWidth=map?242:570,topHeight=map?216:121;
+                float panelWidth=map?242:570,topHeight=map?242:145;
                 Panel(new Rect(24,20,panelWidth,topHeight),ink);Panel(new Rect(24,20,5,topHeight),teal);
                 string phase=new[]{"集结 / 04 准备掩护","掩护站定 / 01 绕过","顺下 / 寻找传球窗口","高位接应 / 传给 04","传切 / 01 空切接回传","配合完成 / R 再练一次","回合结束 / R 重试"}[(int)s.Phase];
                 GUI.Label(new Rect(43,30,panelWidth-38,map?62:30),"COURTX"+(map?"\n":"   ")+(s.Drill==TacticalDrill.PickAndRoll?"高位挡拆":"高位接应 · 传切"),body);
                 GUI.Label(new Rect(43,map?102:66,panelWidth-38,map?53:30),phase,map?small:body);
                 string owner=s.ball.Holder<0?(s.ball.Flying?"传递中":s.ball.Deflected?"球被弹开":"无人持球"):s.Number(s.ball.Holder);
                 GUI.Label(new Rect(43,map?164:103,panelWidth-38,map?60:25),"你："+s.Number(s.Controlled)+"    球权："+owner+(map?"\n":"    ")+"接球目标："+s.Number(s.SelectedReceiver),small);
-                float messageY=map?249:153,messageHeight=map?145:96;
+                GUI.Label(new Rect(43,map?222:132,panelWidth-38,27),s.CoverageName,small);
+                float messageY=map?278:178,messageHeight=map?125:72;
                 Panel(new Rect(24,messageY,panelWidth,messageHeight),ink);
                 GUI.Label(new Rect(43,messageY+11,panelWidth-38,messageHeight-16),s.Message+(s.RequestSeconds>0?"\n要球剩余 "+s.RequestSeconds.ToString("F1")+" 秒":""),small);
                 if(!string.IsNullOrEmpty(s.PassReason)&&s.PassReason!=s.Message)
