@@ -122,17 +122,25 @@ namespace CourtX
         public static string OutcomeText(PassOutcome value)=>new[]{"尚未完成接球","接稳了传球","传球落空","防守人接住了球","球碰到防守人后弹开"}[(int)value];
         public static RecapReport Build(TacticalEpisode episode)
         {
-            var result=new RecapReport();
-            string heading="本地规则复盘 · "+episode.coverage+" · 种子 "+episode.seed+"\n";
-            var change=episode.events.LastOrDefault(e=>e.kind=="defense");
-            string defense=change==null?"本段没有记录到协防或掩护防守切换。":change.time.ToString("F1")+" 秒："+change.text+"。";
-            if(episode.decisions.Count==0)
-            {
-                result.text=heading+"本回合尚未发生传球。\n"+defense+"\n可以先用横移和掩护观察防守，再选择传球；无球时可按 E 要球。\n未出球的选择没有被判为失误。";
-                return result;
-            }
             int index=episode.decisions.FindLastIndex(d=>d.from==episode.controlled);
             if(index<0)index=episode.decisions.Count-1;
+            return Build(episode,index);
+        }
+        public static RecapReport Build(TacticalEpisode episode,int decisionIndex)
+        {
+            var result=new RecapReport();
+            string heading="本地规则复盘 · "+episode.coverage+" · 种子 "+episode.seed+"\n";
+            bool selected=decisionIndex>=0&&decisionIndex<episode.decisions.Count;
+            float releaseTime=selected?episode.decisions[decisionIndex].time:episode.decisions.Count==0?episode.duration:0;
+            var change=episode.events.LastOrDefault(e=>e.kind=="defense"&&e.time<=releaseTime);
+            string defense=change==null?"本段没有记录到协防或掩护防守切换。":change.time.ToString("F1")+" 秒："+change.text+"。";
+            if(!selected)
+            {
+                result.text=heading+(episode.decisions.Count==0?"本回合尚未发生传球。":"当前回放时刻尚未出手；播放到出手时会显示对应评语。")+"\n"+defense+"\n可以先用横移和掩护观察防守，再选择传球；无球时可按 E 要球。\n未出球的选择没有被判为失误。";
+                if(episode.truncated)result.text+="\n较长回合已达到记录上限，部分后续片段未记录。";
+                return result;
+            }
+            int index=decisionIndex;
             var d=episode.decisions[index];var chosen=d.options.FirstOrDefault(o=>o.receiver==d.to);
             result.decisionIndex=index;result.outcome=d.outcome;
             result.assessment=chosen!=null&&chosen.open?DecisionAssessment.OpenLane:DecisionAssessment.RiskyLane;
@@ -141,7 +149,7 @@ namespace CourtX
             string actor=d.from==episode.controlled?"你":"队友 "+Number(d.from);
             string choice=result.assessment==DecisionAssessment.OpenLane?"出手时预测传球线较清楚；接球结果单独记录。":"出手时预测传球存在风险"+(chosen==null?"。":"："+chosen.reason+"。");
             string alternative=alternate!=null?"另一种选择：当时 "+Number(alternate.receiver)+" 的预测线路也开放，可再比较接球空间。":"下一次可先横移改变角度，再观察新的接球窗口。";
-            result.text=heading+defense+"\n\n"+d.time.ToString("F1")+" 秒，"+actor+"传给 "+Number(d.to)+"。"+choice+"\n实际结果："+OutcomeText(d.outcome)+"。"+
+            result.text=heading+"出手前防守："+defense+"\n\n"+d.time.ToString("F1")+" 秒，"+actor+"传给 "+Number(d.to)+"。"+choice+"\n该次传球最终结果："+OutcomeText(d.outcome)+"。"+
                 (result.assessment==DecisionAssessment.OpenLane&&d.windowAge>=0?" 出手前窗口已开放约 "+d.windowAge.ToString("F1")+" 秒（同球速、0.2 秒采样）。":"")+
                 "\n\n"+alternative+"\n备选是规则估计，未模拟结果；本原型不评估投篮得分。";
             if(episode.truncated)result.text+="\n较长回合已达到记录上限，部分后续片段未记录。";

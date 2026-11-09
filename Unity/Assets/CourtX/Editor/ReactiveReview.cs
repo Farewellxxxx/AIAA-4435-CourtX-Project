@@ -11,7 +11,7 @@ using UnityEngine;
 public static class ReactiveReview
 {
     public static string Label=>Environment.GetCommandLineArgs().SkipWhile(a=>a!="-reactiveLabel").Skip(1).FirstOrDefault()??"rules";
-    public static string Folder=>Path.GetFullPath("../Preview/Playtests/Reactive-20261109");
+    public static string Folder=>Path.GetFullPath(Environment.GetCommandLineArgs().SkipWhile(a=>a!="-reviewOutput").Skip(1).FirstOrDefault()??"../Preview/Playtests/Reactive-20261109");
     static readonly List<string> lines=new List<string>();
     static int failures;
     public static void Check(bool ok,string name){lines.Add((ok?"PASS ":"FAIL ")+name);Debug.Log(lines.Last());if(!ok)failures++;}

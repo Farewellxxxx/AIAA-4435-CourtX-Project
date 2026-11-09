@@ -1,11 +1,11 @@
-param([string]$Method='ReactiveReview.RunRules',[string]$Label='rules',[string]$Round='round1',[switch]$Quit)
+param([string]$Method='ReactiveReview.RunRules',[string]$Label='rules',[string]$Round='round1',[string]$OutputFolder='Preview/Playtests/Reactive-20261109',[switch]$Quit)
 $ErrorActionPreference='Stop'
 $courtRoot=Split-Path $PSScriptRoot -Parent
-$folder=Join-Path $courtRoot 'Preview/Playtests/Reactive-20261109'
+$folder=Join-Path $courtRoot $OutputFolder
 New-Item -ItemType Directory -Path $folder -Force | Out-Null
 $project=Join-Path $courtRoot 'Unity'
 $log=Join-Path $folder ($Label+'.log')
-$argsList=@('-batchmode','-projectPath',('"'+$project+'"'),'-executeMethod',$Method,'-reactiveLabel',$Label,'-tacticsRound',$Round,'-refineStage','3','-refineLabel',$Label,'-logFile',('"'+$log+'"'))
+$argsList=@('-batchmode','-projectPath',('"'+$project+'"'),'-executeMethod',$Method,'-reactiveLabel',$Label,'-reviewOutput',('"'+$folder+'"'),'-tacticsRound',$Round,'-refineStage','3','-refineLabel',$Label,'-logFile',('"'+$log+'"'))
 if($Quit){$argsList+='-quit'}
 $editor=Start-Process 'E:/Unity/Editors/Editor/Unity.exe' -ArgumentList $argsList -WindowStyle Hidden -PassThru
 Write-Output "Unity PID $($editor.Id) | $Method | $Label"
