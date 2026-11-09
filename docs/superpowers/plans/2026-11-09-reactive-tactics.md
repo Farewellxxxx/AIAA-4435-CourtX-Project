@@ -34,25 +34,25 @@
 
 **Files:** create Scripts/ReactiveTactics.cs, Editor/ReactiveReview.cs; modify TacticalSession.cs, TacticalUI.cs, TacticalAuthoring.cs; add Tools/run_reactive_review.ps1.
 **Interfaces:** coordinator Reset(coverage, seed); Tick(session,dt); ApplyTargets(session,targets); MarkFor(defender), Stage, HelpActive. Session exposes Coverage/Seed/ActiveTime and StartScenario/RetryScenario/NextScenario.
-- [ ] Write behavioral checks: no trigger before screen use; Drop protects paint, Switch exchanges 0/1 exactly once, Blitz converges then recovers after pass; third defender helps and returns; seeded reset deterministic.
-- [ ] Run Unity ReactiveReview round1 RED, then implement and run GREEN. Baseline interactions 31 checks first.
-- [ ] Play and record PNR variants with both roles; correct actual observed faults. Commit task.
+- [x] Write behavioral checks: no trigger before screen use; Drop protects paint, Switch exchanges 0/1 exactly once, Blitz converges then recovers after pass; third defender helps and returns; seeded reset deterministic.
+- [x] Run Unity ReactiveReview round1 RED, then implement and run GREEN. Baseline interactions 31 checks first.
+- [x] Play and record PNR variants with both roles; correct actual observed faults. Commit task.
 
 ### Task 2: Teammate response
 
 **Files:** ReactiveTactics.cs, TacticalSession.cs, TacticalActor.cs, Editor/ReactiveReview.cs; optional small licensed PressureModel.cs port + third-party notice.
 **Interfaces:** stable target arrays and assignments from task 1; scoring consumes CanPass and decision-time receiver separation. Produces short-roll, roll, weakside relocate/cut and AI safe receiver choice.
-- [ ] Write checks: short roll vs trap; weakside lift after help and hold spacing otherwise; unsafe request does not force pass; AI has another safe option without fixed-jersey bias.
-- [ ] Observe failures; implement minimal local rules. Validate external-license compatibility before port, and compare simple pressure fixtures in Unity.
-- [ ] Play round2, check space and poses and flight; commit after GREEN.
+- [x] Write checks: short roll vs trap; weakside lift after help and hold spacing otherwise; unsafe request does not force pass; AI has another safe option without fixed-jersey bias.
+- [x] Observe failures; implement minimal local rules. Validate external-license compatibility before port, and compare simple pressure fixtures in Unity.
+- [x] Play round2, check space and poses and flight; commit after GREEN.
 
 ### Task 3: Fact-based recap
 
 **Files:** create TacticalJournal.cs, TacticalRecapUI.cs; integrate Session and ball release event; tests in ReactiveReview.
 **Interfaces:** journal Begin/Tick/RecordDecision/RecordEvent/Finish; serializable episode/frames/decision options; ITacticalRecapProvider.GenerateAsync(immutable episode, cancellation). Session OpenReview closes the current episode, pauses, saves JSON + text; version guard prevents stale overwrite.
-- [ ] Tests first: release-time risk retained after actors move; good-choice/missed-catch separated; no-pass round has no invented pass; paused time frozen; reset invalidates pending provider; JSON roundtrip preserves facts.
-- [ ] Observe RED; implement Chinese rules, export, keyframe diagram, retry/next and menu controls. No API keys/network required.
-- [ ] Play round3 and record UI; commit after GREEN.
+- [x] Tests first: release-time risk retained after actors move; good-choice/missed-catch separated; no-pass round has no invented pass; paused time frozen; reset invalidates pending provider; JSON roundtrip preserves facts.
+- [x] Observe RED; implement Chinese rules, export, keyframe diagram, retry/next and menu controls. No API keys/network required.
+- [x] Play round3 and record UI; commit after GREEN.
 
 ### Task 4: Whole-branch verification and delivery
 
@@ -69,7 +69,7 @@
 - Ruling: this written plan records the already approved prompt; no further approval round is needed.
 - Pre-flight: defense produces target/assignment state used by offense and journal; ball keeps sole ownership. Journal release snapshot must be captured before Launch clears Holder, not in the later ReportPass event.
 - Ruling: retain this ledger and verification artifacts because the user explicitly asked to save results. Windows-native tooling may replace Bash-only skill bookkeeping.
-`n- Task 1: complete — 20 defensive checks (9 RED failures to 0), 45 route/control checks green; first real-scene video 1727 frames / 30 fps. Existing free movement and passing routes remain usable. Video snapshot inspected.
+- Task 1: complete — 20 defensive checks (9 RED failures to 0), 45 route/control checks green; first real-scene video 1727 frames / 30 fps. Existing free movement and passing routes remain usable. Video snapshot inspected.
 - Task 2: 31 rule checks green after 7 failing feature checks, plus round2 real-scene recording. BasketWorld pressure port compiled in Unity 2022 with no additional dependency. Helper response test waits for both the trap and the independent help reaction delay.
 - Task 2 iteration finding: 44/45 real-scene checks passed; the cutter received via 04→05→01 but the old objective required lastPasser==04. Keep physical receipt and location requirements, allow a legitimate third-player relay after high-post reception. Regression run is in progress; task 2 is not complete until it passes.
 - Task 2: complete after relay fix — 45/45 real-scene checks pass; all actual ball and objective assertions retained. The prior failing record is round2-relay-before-fix.txt.
@@ -77,3 +77,7 @@
 - Round 3 refinement: weak-side advantage previously failed the fixed-receiver completion gate (3 observed failures); now accepted with actual reception, offensive court position and >1.2 m space. Third-player high-post relay follows the cutter. Edge run reproduced same-seed events and positions but exposed focus loss closing a review; fix preserves the review while already paused. Full suite pending.
 - Native standalone UI checked through Computer Use: selected Blitz/04, started, E requested and caught a real pass, V opened review, same-scenario retry restored ownership and identity. Full 1280x720 recording and JSON/TXT preserved. Initial smaller crop retained as diagnostic; final native-review-ui.mp4 is the verified full client crop.
 - Task 3: complete — 39 rule/recap tests and 83 real-scene scenario/edge checks pass. Focus-loss regression RED→GREEN. Deterministic repeated input matches positions and key events. Final full suite: 226/226 (39 rules, 83 scenarios, 31 interaction, 45 tactical/control, 28 free practice). Stable executable, Assembly-CSharp and UnityPlayer hashes match the archived stable package.
+- Final: fixed stale armed screen after early pass/retreat — 6 state regressions RED→GREEN; new valid screen cycles still engage. Fixed initial high-post relay for both roles and AI continuation — 3 live-scene regressions RED→GREEN. Fixed mismatched/closed release-window timing — 1 recap and 2 real snapshot regressions RED→GREEN. Full reviewed suite 245/245 (49 rules, 9 review regressions, 83 scenarios, 31 interaction, 45 original routes, 28 practice).
+- Final: Ruling: pause freezes active requests rather than clearing them — preserves the explicitly approved original control behavior; pending valid request can still execute after resume. Reset/role changes clear all old state.
+- Final: minor (deferred): recap diagram navigation and fixed default text use different time scopes; timestamps/manual identify them, UI labels can be clearer.
+- Final: minor (deferred): a future long optional provider narrative can exceed the fixed text area; current local short review is unaffected.

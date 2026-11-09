@@ -60,8 +60,11 @@ namespace CourtX
         {
             int owner=holder>=0?holder:flightTarget;
             bool pnr=drill==TacticalDrill.PickAndRoll;
+            // An interrupted opportunity is not a standing order to trap on a later return pass.
+            if(!used&&(phase==TacticalPhase.Assemble||holder!=0)){armed=false;eligible=0;}
             if(pnr&&phase==TacticalPhase.ScreenReady&&holder==0)armed=true;
-            bool usedScreen=pnr&&armed&&!used&&phase==TacticalPhase.Roll&&holder==0&&TacticalRules.Distance(p[0],p[1])<3.8f;
+            bool usedScreen=pnr&&armed&&!used&&phase==TacticalPhase.Roll&&holder==0&&p[0].z>=-10.2f&&TacticalRules.Distance(p[0],p[1])<3.8f;
+            if(!used&&armed&&phase==TacticalPhase.Roll&&!usedScreen)armed=false;
             eligible=usedScreen?eligible+dt:0;
             if(eligible>=ReactionDelay)
             {

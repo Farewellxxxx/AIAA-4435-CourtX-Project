@@ -14,7 +14,7 @@ namespace CourtX
     [Serializable] public sealed class TacticalFrame
     {public float time;public Vector3[] positions;public int[] marks;public int holder;public Vector3 ball;public string phase,defense;public bool help;}
     [Serializable] public sealed class PassDecision
-    {public float time,windowAge,pressure;public int from,to,frame;public Vector3 origin,destination;public PassOption[] options;public PassOutcome outcome;}
+    {public float time,windowAge,pressure,passSpeed;public int from,to,frame;public Vector3 origin,destination;public PassOption[] options;public PassOutcome outcome;}
     [Serializable] public sealed class TacticalEvent
     {public float time;public string kind,text;}
     [Serializable] public sealed class TacticalEpisode
@@ -32,6 +32,7 @@ namespace CourtX
         public bool Closed { get; private set; }
         float nextSample;
         int sampledHolder=-2;
+        float sampledSpeed;
         readonly float[] windowStart={-1,-1,-1};
         string priorDefense="";
         public TacticalJournal(TacticalEpisode episode){Episode=episode;}
@@ -73,10 +74,13 @@ namespace CourtX
             }
             if(s.ActiveTime<nextSample)return;nextSample=s.ActiveTime+.2f;
             AddFrame(s);
-            if(sampledHolder!=s.ball.Holder){sampledHolder=s.ball.Holder;for(int i=0;i<3;i++)windowStart[i]=-1;}
+            float speed=s.ball.Holder==s.Controlled?s.ball.ReleaseSpeed:8f;
+            if(sampledHolder!=s.ball.Holder||Mathf.Abs(sampledSpeed-speed)>.001f)
+                for(int i=0;i<3;i++)windowStart[i]=-1;
+            sampledHolder=s.ball.Holder;sampledSpeed=speed;
             for(int i=0;i<3;i++)
             {
-                string reason;bool open=s.CanPass(s.ball.Holder,i,out reason);
+                string reason;bool open=s.CanPass(s.ball.Holder,i,out reason,speed);
                 if(!open)windowStart[i]=-1;else if(windowStart[i]<0)windowStart[i]=s.ActiveTime;
             }
         }
@@ -90,9 +94,10 @@ namespace CourtX
                 options.Add(new PassOption{receiver=i,open=open,reason=why,space=s.ReceiverSpace(i),distance=TacticalRules.Distance(s.Position(from),s.Position(i))});
             }
             var plan=s.ball.PlanPass(from,to,speed);
+            bool currentOpen=options.Any(o=>o.receiver==to&&o.open);
             AddDecision(new PassDecision{time=s.ActiveTime,from=from,to=to,frame=AddFrame(s),options=options.ToArray(),
-                origin=plan.Origin,destination=plan.Destination,pressure=s.HolderPressure(from),
-                windowAge=sampledHolder==from&&windowStart[to]>=0?s.ActiveTime-windowStart[to]:-1});
+                origin=plan.Origin,destination=plan.Destination,pressure=s.HolderPressure(from),passSpeed=speed,
+                windowAge=currentOpen&&s.ball.Holder==from&&sampledHolder==from&&Mathf.Abs(sampledSpeed-speed)<=.001f&&windowStart[to]>=0?s.ActiveTime-windowStart[to]:-1});
             Event(s.ActiveTime,"pass",s.Number(from)+" → "+s.Number(to)+" 出球");
         }
         public void Outcome(float time,PassOutcome outcome,int actor=-1)
@@ -137,7 +142,7 @@ namespace CourtX
             string choice=result.assessment==DecisionAssessment.OpenLane?"出手时预测传球线较清楚；接球结果单独记录。":"出手时预测传球存在风险"+(chosen==null?"。":"："+chosen.reason+"。");
             string alternative=alternate!=null?"另一种选择：当时 "+Number(alternate.receiver)+" 的预测线路也开放，可再比较接球空间。":"下一次可先横移改变角度，再观察新的接球窗口。";
             result.text=heading+defense+"\n\n"+d.time.ToString("F1")+" 秒，"+actor+"传给 "+Number(d.to)+"。"+choice+"\n实际结果："+OutcomeText(d.outcome)+"。"+
-                (d.windowAge>=0?" 出手前窗口已开放约 "+d.windowAge.ToString("F1")+" 秒（0.2 秒采样）。":"")+
+                (result.assessment==DecisionAssessment.OpenLane&&d.windowAge>=0?" 出手前窗口已开放约 "+d.windowAge.ToString("F1")+" 秒（同球速、0.2 秒采样）。":"")+
                 "\n\n"+alternative+"\n备选是规则估计，未模拟结果；本原型不评估投篮得分。";
             if(episode.truncated)result.text+="\n较长回合已达到记录上限，部分后续片段未记录。";
             return result;

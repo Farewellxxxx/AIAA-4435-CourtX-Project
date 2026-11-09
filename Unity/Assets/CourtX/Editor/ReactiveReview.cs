@@ -53,6 +53,18 @@ public static class ReactiveReview
         Check(!helper.HelpActive,"Retreat releases help with hysteresis");
         var random=new ReactiveTactics();random.Reset(DefenseCoverage.Random,88);var first=random.Coverage;random.Reset(DefenseCoverage.Random,88);
         Check(first==random.Coverage&&first!=DefenseCoverage.Random,"Seed resolves a concrete repeatable coverage");
+        foreach(var coverage in new[]{DefenseCoverage.Drop,DefenseCoverage.Switch,DefenseCoverage.Blitz})
+        {
+            var cancelled=new ReactiveTactics();var p=Positions();cancelled.Reset(coverage,7);
+            Step(cancelled,p,TacticalPhase.ScreenReady);Step(cancelled,p,TacticalPhase.Roll,frames:1);
+            Step(cancelled,p,TacticalPhase.Roll,2,frames:120);Step(cancelled,p,TacticalPhase.Roll,0,frames:60);
+            Check(cancelled.Stage==DefenseStage.Contain&&cancelled.Marks.SequenceEqual(new[]{0,1,2}),coverage+": pass out before reaction cancels old screen even after return pass");
+            cancelled.Reset(coverage,7);Step(cancelled,p,TacticalPhase.ScreenReady);Step(cancelled,p,TacticalPhase.Roll,frames:1);
+            p[0]=new Vector3(-6,0,-12);Step(cancelled,p,TacticalPhase.Roll,frames:120);p[0]=new Vector3(1.5f,0,-8.1f);Step(cancelled,p,TacticalPhase.Roll,frames:60);
+            Check(cancelled.Stage==DefenseStage.Contain,coverage+": retreat invalidates pending screen rather than activating on later proximity");
+            Step(cancelled,p,TacticalPhase.ScreenReady);Step(cancelled,p,TacticalPhase.Roll,frames:60);
+            Check(cancelled.Stage==DefenseStage.Engaged,coverage+": a newly planted screen can arm a new response after cancellation");
+        }
         Teammates();
         Recaps();
         Finish();
@@ -74,6 +86,8 @@ public static class ReactiveReview
         episode.decisions[0].options[0].open=false;episode.decisions[0].outcome=PassOutcome.Caught;
         report=TacticalJournal.Build(episode);
         Check(report.assessment==DecisionAssessment.RiskyLane&&report.outcome==PassOutcome.Caught,"Caught risky pass is not retroactively judged safe");
+        episode.decisions[0].windowAge=2;
+        Check(!TacticalJournal.Build(episode).text.Contains("窗口已开放约"),"Risky release never claims its actual lane remained open");
         Check(report.alternative==2,"Alternative is grounded in another open option recorded at release");
         episode.decisions[0].options[1].open=false;
         Check(TacticalJournal.Build(episode).alternative==-1,"Recap does not invent an unrecorded open alternative");

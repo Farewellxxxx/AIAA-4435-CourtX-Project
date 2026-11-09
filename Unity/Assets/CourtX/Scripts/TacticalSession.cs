@@ -186,7 +186,7 @@ namespace CourtX
             Journal?.Outcome(ActiveTime,PassOutcome.Caught,id);
             ClearRequest();
             Notify(Number(id)+" 接球。"+(id==Controlled?"你现在持球。":"你仍控制 "+Number(Controlled)+"，继续跑位。"));
-            if(Drill==TacticalDrill.HighPostCut && id==1 && lastPasser==0 && Phase==TacticalPhase.HighPost)
+            if(Drill==TacticalDrill.HighPostCut && id==1 && (lastPasser==0||lastPasser==2) && Phase==TacticalPhase.HighPost)
             {
                 postReceived=true;
                 if(TacticalRules.Distance(Position(1),new Vector3(.1f,0,-5.8f))<1.1f)ChangePhase(TacticalPhase.Cut);
@@ -299,7 +299,7 @@ namespace CourtX
             if(ball.Holder<0||ball.Holder>=3||ball.Holder==Controlled||aiPassCooldown>0)return;
             int to=-1;
             if(requestRemaining>0&&requestOwner==ball.Holder)to=Controlled;
-            else if(Drill==TacticalDrill.HighPostCut&&Phase==TacticalPhase.HighPost&&ball.Holder==0&&TacticalRules.Distance(Position(1),new Vector3(.1f,0,-5.8f))<.8f)to=1;
+            else if(Drill==TacticalDrill.HighPostCut&&Phase==TacticalPhase.HighPost&&(ball.Holder==0||ball.Holder==2)&&TacticalRules.Distance(Position(1),new Vector3(.1f,0,-5.8f))<.8f)to=1;
             else if(Drill==TacticalDrill.HighPostCut&&Phase==TacticalPhase.Cut&&ball.Holder==1&&Position(0).z>-5.8f)to=0;
             else if(Drill==TacticalDrill.HighPostCut&&Phase==TacticalPhase.Cut&&ball.Holder==2&&postReceived&&Position(0).z>-5.8f)to=0;
             else if(Drill==TacticalDrill.PickAndRoll&&Phase==TacticalPhase.Roll&&ball.Holder==0&&Position(1).z>-6.8f)to=1;
