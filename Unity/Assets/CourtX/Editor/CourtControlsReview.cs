@@ -130,7 +130,8 @@ public class CourtControlsChecks : MonoBehaviour
         Check(!basket.IsCharging&&!basket.IsAirborne && !walk.overview.enabled,"R resets player camera and ball together");
         Time.captureFramerate=0;
         Directory.CreateDirectory("../Preview/Playtests");
-        File.WriteAllLines("../Preview/Playtests/Controls-20261106-checks.txt",results);
+        string report=Array.IndexOf(Environment.GetCommandLineArgs(),"-reactiveLabel")>=0?"../Preview/Playtests/Reactive-20261109/free-practice-checks.txt":"../Preview/Playtests/Controls-20261106-checks.txt";
+        Directory.CreateDirectory(Path.GetDirectoryName(report));File.WriteAllLines(report,results);
         EditorApplication.Exit(failures==0?0:1);
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace CourtX
 {
     [DefaultExecutionOrder(10)]
-    public sealed class TacticalSession : MonoBehaviour
+    public sealed partial class TacticalSession : MonoBehaviour
     {
         public Walkthrough player;
         public TacticalBall ball;
@@ -76,6 +76,7 @@ namespace CourtX
         public void StartDrill(TacticalDrill drill,bool offBall)
         {
             if(!initialized)return;
+            ArchivePriorRound();
             Drill=drill;Controlled=offBall?1:0;Running=true;MenuOpen=false;
             menuDrill=(int)drill;menuRole=offBall?1:0;
             Phase=drill==TacticalDrill.PickAndRoll?TacticalPhase.Assemble:TacticalPhase.HighPost;
@@ -102,6 +103,7 @@ namespace CourtX
             UpdateDefense(0);
             ComputeTargets();
             for(int i=0;i<6;i++){motionPositions[i]=Position(i);velocities[i]=Vector3.zero;}
+            BeginJournal();
         }
         public void TeleportPlayer(Vector3 p,float yaw)
         {
@@ -123,12 +125,13 @@ namespace CourtX
         }
         public void OpenMenu()
         {
+            ReviewOpen=false;
             MenuOpen=true;Running=false;ball.CancelCharge();player.SetOverview(false);
             ball.Pose(); // Freeze the displayed ball at the same simulation instant as the menu.
             Cursor.lockState=CursorLockMode.None;
         }
         public void Resume()
-        {MenuOpen=false;Running=true;Cursor.lockState=acceptsInput?CursorLockMode.Locked:CursorLockMode.None;}
+        {if(Journal!=null&&Journal.Closed){RetryScenario();return;}MenuOpen=false;Running=true;Cursor.lockState=acceptsInput?CursorLockMode.Locked:CursorLockMode.None;}
         public void SelectReceiver(int slot)
         {
             int n=0;for(int i=0;i<3;i++)if(i!=Controlled){if(n++==slot)SelectedReceiver=i;}
@@ -143,6 +146,7 @@ namespace CourtX
             string reason;
             bool possible=CanPass(ball.Holder,Controlled,out reason);
             PassReason=possible?"已举手要球，队友会在传球窗口出球。":reason;
+            Journal?.Event(ActiveTime,"request",Number(Controlled)+" 要球："+PassReason);
             Notify(PassReason);aiPassCooldown=Mathf.Min(aiPassCooldown,.22f);
         }
         void ClearRequest(){requestRemaining=0;requestOwner=-1;PassReason="";}
@@ -179,6 +183,7 @@ namespace CourtX
         {lastPasser=from;ClearRequest();Notify(Number(from)+" → "+Number(to)+"：球在空中，靠近落点接球。");aiPassCooldown=1.1f;PassStarted?.Invoke(from,to);}
         public void ReportCatch(int id)
         {
+            Journal?.Outcome(ActiveTime,PassOutcome.Caught,id);
             ClearRequest();
             Notify(Number(id)+" 接球。"+(id==Controlled?"你现在持球。":"你仍控制 "+Number(Controlled)+"，继续跑位。"));
             if(Drill==TacticalDrill.HighPostCut && id==1 && lastPasser==0 && Phase==TacticalPhase.HighPost)
@@ -189,18 +194,22 @@ namespace CourtX
             }
             else if(Drill==TacticalDrill.HighPostCut && id==0 && (lastPasser==1||lastPasser==2) && postReceived && Phase==TacticalPhase.Cut)
             {cutReceived=true;if(Position(0).z>-5.6f)Complete();}
-            else if(Drill==TacticalDrill.PickAndRoll && Phase==TacticalPhase.Roll && id==1 && lastPasser==0)
+            else if(Drill==TacticalDrill.PickAndRoll && Phase==TacticalPhase.Roll && id==1 && (lastPasser==0||lastPasser==2))
             {rollReceived=true;if(Position(1).z>-6.7f)Complete();}
+            else if(Drill==TacticalDrill.PickAndRoll && Phase==TacticalPhase.Roll && id==2 && (lastPasser==0||lastPasser==1)&&Position(2).z> -7&&ReceiverSpace(2)>1.2f)
+                Complete();
             BallReceived?.Invoke(id);
         }
         public void Turnover(string reason){ClearRequest();ChangePhase(TacticalPhase.Turnover);Notify(reason);if(guidanceRing)guidanceRing.gameObject.SetActive(false);}
-        void Complete(){ChangePhase(TacticalPhase.Complete);Notify("配合完成：已创造接球空间。可以继续传球，或按 R 再练一次。");}
+        void Complete(){ChangePhase(TacticalPhase.Complete);Notify("配合完成：已创造接球空间。V 查看复盘，或 R 再练一次。");}
         void Notify(string text){Message=text;noticeUntil=ActiveTime+4;}
         void ChangePhase(TacticalPhase phase)
-        {if(Phase==phase)return;Phase=phase;phaseTime=0;PhaseChanges++;PhaseChanged?.Invoke(phase);}
+        {if(Phase==phase)return;Phase=phase;phaseTime=0;PhaseChanges++;Journal?.Event(ActiveTime,"phase",phase.ToString());PhaseChanged?.Invoke(phase);}
         void Update()
         {
             if(!initialized)return;
+            if(acceptsInput&&Input.GetKeyDown(KeyCode.V)&&Running){OpenReview();return;}
+            if(ReviewOpen){if(acceptsInput&&Input.GetKeyDown(KeyCode.Escape))OpenMenu();return;}
             if(acceptsInput&&Input.GetKeyDown(KeyCode.Escape)){if(MenuOpen)Resume();else OpenMenu();}
             if(!Running)return;
             if(acceptsInput)
@@ -292,6 +301,7 @@ namespace CourtX
             if(requestRemaining>0&&requestOwner==ball.Holder)to=Controlled;
             else if(Drill==TacticalDrill.HighPostCut&&Phase==TacticalPhase.HighPost&&ball.Holder==0&&TacticalRules.Distance(Position(1),new Vector3(.1f,0,-5.8f))<.8f)to=1;
             else if(Drill==TacticalDrill.HighPostCut&&Phase==TacticalPhase.Cut&&ball.Holder==1&&Position(0).z>-5.8f)to=0;
+            else if(Drill==TacticalDrill.HighPostCut&&Phase==TacticalPhase.Cut&&ball.Holder==2&&postReceived&&Position(0).z>-5.8f)to=0;
             else if(Drill==TacticalDrill.PickAndRoll&&Phase==TacticalPhase.Roll&&ball.Holder==0&&Position(1).z>-6.8f)to=1;
             if(to<0)return;
             string reason;
@@ -375,12 +385,13 @@ namespace CourtX
             if(!guidanceRing)return;guidanceRing.gameObject.SetActive((ball.Flying&&ball.Target==Controlled)||(Phase!=TacticalPhase.Complete&&Phase!=TacticalPhase.Turnover));
             guidanceRing.position=GuidancePoint()+Vector3.up*.035f;
         }
-        void OnApplicationFocus(bool focused){if(!focused&&initialized&&acceptsInput)OpenMenu();}
+        void OnApplicationFocus(bool focused){if(!focused&&initialized&&acceptsInput&&!ReviewOpen)OpenMenu();}
         void OnDisable(){Cursor.lockState=CursorLockMode.None;}
 
         void OnGUI()
         {
             if(!initialized)return;
+            if(ReviewOpen){TacticalRecapUI.Draw(this);return;}
             TacticalUI.Draw(this,ref menuDrill,ref menuRole,help);
         }
     }

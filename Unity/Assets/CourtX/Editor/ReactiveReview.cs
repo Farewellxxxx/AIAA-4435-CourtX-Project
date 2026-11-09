@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using CourtX;
 using UnityEditor;
 using UnityEngine;
@@ -52,7 +54,40 @@ public static class ReactiveReview
         var random=new ReactiveTactics();random.Reset(DefenseCoverage.Random,88);var first=random.Coverage;random.Reset(DefenseCoverage.Random,88);
         Check(first==random.Coverage&&first!=DefenseCoverage.Random,"Seed resolves a concrete repeatable coverage");
         Teammates();
+        Recaps();
         Finish();
+    }
+    sealed class DelayedProvider:ITacticalRecapProvider
+    {
+        public readonly TaskCompletionSource<string> completion=new TaskCompletionSource<string>();
+        public Task<string> GenerateAsync(string json,string local,CancellationToken token)=>completion.Task;
+    }
+    static void Recaps()
+    {
+        var episode=new TacticalEpisode{controlled=0,drill="高位挡拆",coverage="Drop",seed=8};
+        var journal=new TacticalJournal(episode);
+        var decision=new PassDecision{from=0,to=1,time=2,options=new[]{new PassOption{receiver=1,open=true,space=2},new PassOption{receiver=2,open=true,space=3}},outcome=PassOutcome.Missed};
+        journal.AddDecision(decision);decision.options[0].open=false;
+        Check(episode.decisions[0].options[0].open,"Journal freezes decision-time lane risk instead of retaining mutable input");
+        var report=TacticalJournal.Build(episode);
+        Check(report.assessment==DecisionAssessment.OpenLane&&report.outcome==PassOutcome.Missed,"Recap separates open-lane choice from missed-catch execution");
+        episode.decisions[0].options[0].open=false;episode.decisions[0].outcome=PassOutcome.Caught;
+        report=TacticalJournal.Build(episode);
+        Check(report.assessment==DecisionAssessment.RiskyLane&&report.outcome==PassOutcome.Caught,"Caught risky pass is not retroactively judged safe");
+        Check(report.alternative==2,"Alternative is grounded in another open option recorded at release");
+        episode.decisions[0].options[1].open=false;
+        Check(TacticalJournal.Build(episode).alternative==-1,"Recap does not invent an unrecorded open alternative");
+        var empty=TacticalJournal.Build(new TacticalEpisode());
+        Check(empty.assessment==DecisionAssessment.NoDecision&&empty.decisionIndex==-1&&!string.IsNullOrEmpty(empty.text),"No-pass round produces useful feedback without inventing a pass");
+        var clone=JsonUtility.FromJson<TacticalEpisode>(JsonUtility.ToJson(episode));
+        Check(clone.decisions.Count==1&&clone.decisions[0].outcome==PassOutcome.Caught&&clone.seed==8,"Export roundtrip preserves recorded facts");
+        var late=Task.Run(async()=>
+        {
+            var provider=new DelayedProvider();var gate=new RecapRequestGate();
+            var pending=gate.GenerateAsync(provider,"{}","本地");gate.Reset();provider.completion.SetResult("stale");
+            return await pending;
+        }).GetAwaiter().GetResult();
+        Check(late==null,"Reset invalidates a late optional-provider response");
     }
     static void Teammates()
     {

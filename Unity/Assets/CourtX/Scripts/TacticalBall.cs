@@ -49,6 +49,7 @@ namespace CourtX
         {
             if(!session.Running||Holder<0||Holder>=3||target<0||target>=3||target==Holder)return false;
             int passer=Holder;
+            session.Journal?.RecordPass(session,passer,target,speed);
             var plan=PlanPass(passer,target,speed);start=plan.Origin;end=plan.Destination;duration=plan.Duration;
             elapsed=0;Target=target;Holder=-1;Charging=false;
             dropping=false;Deflected=false;LastContactActor=-1;
@@ -104,11 +105,13 @@ namespace CourtX
                     Holder=contact;Target=-1;Interceptions++;heldTime=0;
                     catchOrigin=point;catchBlend=0;
                     session.actors[contact].Action=ActorAction.Receive;
+                    session.Journal?.Outcome(session.ActiveTime,PassOutcome.Intercepted,contact);
                     session.Turnover(session.Number(contact)+" 看到了传球并接稳了。横移改变角度，R 重试。");
                 }
                 else
                 {
                     Deflected=true;Deflections++;
+                    session.Journal?.Outcome(session.ActiveTime,PassOutcome.Deflected,contact);
                     Vector3 normal=TacticalRules.Flat(point-contactRoot).normalized;
                     Vector3 velocity=Vector3.Reflect((next-previous)/Mathf.Max(flightStep,.001f),normal)*.28f+Vector3.up;
                     Drop(point,velocity,"球碰到 "+session.Number(contact)+" 被弹开，防守人没有接稳。R 重试。");
@@ -120,6 +123,7 @@ namespace CourtX
             // The target point is fixed at release; running away can genuinely miss the catch.
             if(TacticalRules.Distance(receiverAtArrival,end)>.78f)
             {
+                session.Journal?.Outcome(session.ActiveTime,PassOutcome.Missed);
                 Drop(end,(next-previous)/Mathf.Max(flightStep,.001f)*.22f,"传球落空。接球时靠近落点，按 R 重试。");return;
             }
             Holder=receiver;Target=-1;heldTime=0;catchOrigin=end;catchBlend=0;CompletedPasses++;session.ReportCatch(receiver);

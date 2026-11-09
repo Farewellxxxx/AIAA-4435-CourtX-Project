@@ -5,7 +5,7 @@ namespace CourtX
     public static class TacticalUI
     {
         static Font font;
-        static GUIStyle title,body,small,button;
+        static GUIStyle title,body,small,button,compactButton;
         static int coverage;
         static void Init()
         {
@@ -15,6 +15,7 @@ namespace CourtX
             title=new GUIStyle(body){fontSize=32,fontStyle=FontStyle.Bold};
             small=new GUIStyle(body){fontSize=15};
             button=new GUIStyle(GUI.skin.button){font=font,fontSize=19,wordWrap=true};
+            compactButton=new GUIStyle(button){fontSize=15};
         }
         static void Panel(Rect rect,Color color){GUI.color=color;GUI.DrawTexture(rect,Texture2D.whiteTexture);GUI.color=Color.white;}
         public static void Draw(TacticalSession s,ref int drill,ref int role,bool help)
@@ -41,7 +42,7 @@ namespace CourtX
                 GUI.Label(new Rect(300,382,680,30),drill==0?"03   防守变式（同一场景可以重复练习）":"03   盯人防守 · 突破后协防与回位",small);
                 GUI.enabled=drill==0;
                 for(int i=0;i<4;i++)
-                {GUI.backgroundColor=coverage==i?teal:Color.white;if(GUI.Button(new Rect(300+i*172,418,156,49),TacticalSession.CoverageLabel((DefenseCoverage)i),small))coverage=i;}
+                {GUI.backgroundColor=coverage==i?teal:Color.white;if(GUI.Button(new Rect(300+i*172,418,156,49),TacticalSession.CoverageLabel((DefenseCoverage)i),compactButton))coverage=i;}
                 GUI.enabled=true;
                 GUI.backgroundColor=teal;
                 if(GUI.Button(new Rect(300,490,672,58),"开始新回合  →",button))s.StartScenario((TacticalDrill)drill,role==1,(DefenseCoverage)coverage,s.Seed);
@@ -69,7 +70,7 @@ namespace CourtX
                 if(help)
                 {
                     Panel(new Rect(180,628,920,72),ink);
-                    GUI.Label(new Rect(200,638,880,55),"WASD 移动    Shift 跑步    按住 Tab 实时俯视    鼠标 转头\n1 / 2 选队友    按住 Q / 松开 传球    E 要球    R 重开    Esc 菜单    F1 收起提示",small);
+                    GUI.Label(new Rect(200,638,880,55),"WASD 移动    Shift 跑步    按住 Tab 实时俯视    鼠标 转头\n1 / 2 选队友    按住 Q / 松开 传球    E 要球    V 结束并复盘    R 重开    Esc 菜单    F1 提示",small);
                 }
                 if(s.ball.Holder==s.Controlled&&!map)
                 {
