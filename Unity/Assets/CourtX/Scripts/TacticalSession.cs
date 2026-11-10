@@ -71,7 +71,7 @@ namespace CourtX
         {
             player.acceptsInput=false;player.enabled=false;
             if(player.basketball)player.basketball.enabled=false;
-            initialized=true;StartDrill(TacticalDrill.PickAndRoll,false);OpenMenu();
+            initialized=true;StartDrill(TacticalDrill.PickAndRoll,false);OpenMenu();OpenLearning();
         }
         public void StartDrill(TacticalDrill drill,bool offBall)
         {
@@ -104,6 +104,7 @@ namespace CourtX
             ComputeTargets();
             for(int i=0;i<6;i++){motionPositions[i]=Position(i);velocities[i]=Vector3.zero;}
             BeginJournal();
+            learning?.PracticeStarted();
         }
         public void TeleportPlayer(Vector3 p,float yaw)
         {
@@ -129,9 +130,10 @@ namespace CourtX
             MenuOpen=true;Running=false;ball.CancelCharge();player.SetOverview(false);
             ball.Pose(); // Freeze the displayed ball at the same simulation instant as the menu.
             Cursor.lockState=CursorLockMode.None;
+            learning?.MenuOpened();
         }
         public void Resume()
-        {if(Journal!=null&&Journal.Closed){RetryScenario();return;}MenuOpen=false;Running=true;Cursor.lockState=acceptsInput?CursorLockMode.Locked:CursorLockMode.None;}
+        {if(Journal!=null&&Journal.Closed){RetryScenario();return;}MenuOpen=false;Running=true;learning?.ResumePractice();Cursor.lockState=acceptsInput?CursorLockMode.Locked:CursorLockMode.None;}
         public void SelectReceiver(int slot)
         {
             int n=0;for(int i=0;i<3;i++)if(i!=Controlled){if(n++==slot)SelectedReceiver=i;}

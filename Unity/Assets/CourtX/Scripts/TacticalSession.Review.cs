@@ -13,7 +13,7 @@ namespace CourtX
         public string OptionalNarration { get; private set; }="";
         public ITacticalRecapProvider RecapProvider { get; set; }
         readonly RecapRequestGate recapGate=new RecapRequestGate();
-        public string ReviewFolder=>Application.isEditor?Path.GetFullPath(Path.Combine(Application.dataPath,"../../Preview/Playtests/Recap-20261110/Sessions")):
+        public string ReviewFolder=>Application.isEditor?Path.GetFullPath(Path.Combine(Application.dataPath,"../../Preview/Playtests/Learning-20261111/Sessions")):
             Path.Combine(Path.GetDirectoryName(Application.dataPath),"Replays");
         void ArchivePriorRound()
         {
@@ -24,13 +24,14 @@ namespace CourtX
         void BeginJournal()
         {
             Journal=new TacticalJournal(new TacticalEpisode{id=DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff")+"-"+Guid.NewGuid().ToString("N").Substring(0,8),
-                drill=Drill.ToString(),coverage=CoverageName,seed=Seed,controlled=Controlled});
+                drill=Drill.ToString(),coverage=CoverageName,seed=Seed,controlled=Controlled,hasScenarioConfig=true,coverageChoice=(int)CoverageChoice});
             SavedReview="";Review=null;Journal.Sample(this);
         }
         void LateUpdate()
         {
             if(initialized&&Running)Journal?.Sample(this);
             if(ReviewOpen){Replay.Tick(Time.unscaledDeltaTime);RefreshReviewSelection();}
+            learning?.Tick(Time.unscaledDeltaTime);
         }
         public void RefreshReviewSelection()
         {
@@ -41,6 +42,7 @@ namespace CourtX
         {
             try{SavedReview=Journal.Save(ReviewFolder);}
             catch(Exception error){SavedReview="保存失败："+error.Message;Debug.LogWarning(SavedReview);}
+            learning?.Remember(Journal.Episode);
         }
         public void OpenReview()
         {
@@ -50,6 +52,7 @@ namespace CourtX
             OpenMenu();MenuOpen=false;ReviewOpen=true;
             Replay.Reset(Journal.Episode,Review.decisionIndex);TacticalRecapUI.Reset();
             RequestOptionalNarration();
+            learning?.ReviewCurrent(Journal.Episode);
         }
         async void RequestOptionalNarration()
         {
