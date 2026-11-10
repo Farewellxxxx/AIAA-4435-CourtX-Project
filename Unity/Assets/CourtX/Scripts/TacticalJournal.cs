@@ -19,6 +19,7 @@ namespace CourtX
     {public float time;public string kind,text;}
     [Serializable] public sealed class TacticalEpisode
     {
+        public bool hasScenarioConfig;public int coverageChoice;public string learningObjective;
         public string id,drill,coverage,endReason;public int seed,controlled;public float duration;public bool truncated;
         public List<TacticalFrame> frames=new List<TacticalFrame>();
         public List<PassDecision> decisions=new List<PassDecision>();
