@@ -62,6 +62,14 @@ public sealed class LearningPlayChecks:MonoBehaviour
         s.OpenReview();yield return null;h.SelectHistory(h.History.Entries.Count-1);
         Check(h.Page==LearningPage.Review&&h.Current!=null&&h.Current.id!=s.Journal.Episode.id,"History can review an older round without replacing current journal");
         h.StartPractice();yield return null;Check(s.Running&&!s.Journal.Closed&&s.Journal.Episode.id!=id,"Historical retry starts a fresh simulation rather than resuming recorded frames");
+        yield return Wait(3);string failedId=s.Journal.Episode.id;
+        string blockPath=Path.Combine(s.ReviewFolder,failedId+".json");Directory.CreateDirectory(blockPath);s.OpenReview();
+        Check(h.SaveFailed&&!string.IsNullOrWhiteSpace(h.RecordWarning),"Disk write failure is visible on the displayed actual episode");
+        h.Show(LearningPage.Lesson);h.StartPractice();yield return Wait(3);s.OpenReview();
+        h.SelectHistory(h.History.Entries.ToList().FindIndex(e=>e.id==failedId));
+        Check(h.SaveFailed&&h.RecordWarning.Contains("保存"),"Save failure follows its history entry after another round");
+        Directory.Delete(blockPath,false);h.RetrySaveCurrent();
+        Check(!h.SaveFailed&&File.Exists(blockPath),"Retry persists the selected failed history episode and clears its warning");
         Directory.CreateDirectory(ReactiveReview.Folder);lines.Add("Failures: "+failures);File.WriteAllLines(Path.Combine(ReactiveReview.Folder,ReactiveReview.Label+"-checks.txt"),lines);
         EditorApplication.Exit(failures==0?0:1);
     }

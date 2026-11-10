@@ -123,7 +123,10 @@ namespace CourtX
         {
             string headingText=h.Page==LearningPage.Lesson?"这一刻，六个人在做什么":h.Page==LearningPage.Challenge?"先判断，再看解释":h.Page==LearningPage.WhatIf?"比较真实发生的两轮":"沿着球路复盘你的选择";
             GUI.Label(new Rect(850,171,378,30),headingText,heading);
-            rightScroll=GUI.BeginScrollView(new Rect(850,210,378,408),rightScroll,new Rect(0,0,352,rightHeight));float y=0;
+            string warning=h.RecordWarning;bool warned=!string.IsNullOrEmpty(warning);
+            if(warned){Box(new Rect(846,207,384,78),new Color(.34f,.17f,.09f));GUI.Label(new Rect(854,213,366,66),warning,small);}
+            rightScroll=GUI.BeginScrollView(new Rect(850,warned?294:210,378,warned?324:408),rightScroll,new Rect(0,0,352,rightHeight));float y=0;
+            if(h.SaveFailed){if(Button(new Rect(0,y,352,40),"重试保存这轮记录",true))h.RetrySaveCurrent();y+=54;}
             if(h.Page==LearningPage.Lesson)
             {
                 var step=h.Steps.LastOrDefault(x=>x.time<=h.Cursor.Time+.001f);

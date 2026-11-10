@@ -1,0 +1,80 @@
+PASS Example matches requested drill / coverage / role: PickAndRoll Drop 0
+PASS Recorded example satisfies playback schema
+PASS Lesson nodes follow actual recorded interval
+PASS Every lesson node explains all six roles
+PASS Example consumers cannot modify another lesson instance
+PASS Example matches requested drill / coverage / role: PickAndRoll Switch 0
+PASS Recorded example satisfies playback schema
+PASS Lesson nodes follow actual recorded interval
+PASS Every lesson node explains all six roles
+PASS Example consumers cannot modify another lesson instance
+PASS Example matches requested drill / coverage / role: PickAndRoll Blitz 0
+PASS Recorded example satisfies playback schema
+PASS Lesson nodes follow actual recorded interval
+PASS Every lesson node explains all six roles
+PASS Example consumers cannot modify another lesson instance
+PASS Example matches requested drill / coverage / role: PickAndRoll Drop 1
+PASS Recorded example satisfies playback schema
+PASS Lesson nodes follow actual recorded interval
+PASS Every lesson node explains all six roles
+PASS Example consumers cannot modify another lesson instance
+PASS Example matches requested drill / coverage / role: PickAndRoll Switch 1
+PASS Recorded example satisfies playback schema
+PASS Lesson nodes follow actual recorded interval
+PASS Every lesson node explains all six roles
+PASS Example consumers cannot modify another lesson instance
+PASS Example matches requested drill / coverage / role: PickAndRoll Blitz 1
+PASS Recorded example satisfies playback schema
+PASS Lesson nodes follow actual recorded interval
+PASS Every lesson node explains all six roles
+PASS Example consumers cannot modify another lesson instance
+PASS Example matches requested drill / coverage / role: HighPostCut Drop 0
+PASS Recorded example satisfies playback schema
+PASS Lesson nodes follow actual recorded interval
+PASS Every lesson node explains all six roles
+PASS Example consumers cannot modify another lesson instance
+PASS Example matches requested drill / coverage / role: HighPostCut Drop 1
+PASS Recorded example satisfies playback schema
+PASS Lesson nodes follow actual recorded interval
+PASS Every lesson node explains all six roles
+PASS Example consumers cannot modify another lesson instance
+PASS High-post normalizes irrelevant coverage without changing role or seed
+PASS Random example selection resolves through the same seeded defense policy
+PASS At least six role-aware defensive reading questions
+PASS Question identifiers remain unique for saved answers
+PASS Question anchor exists in its displayed record: screen
+PASS Every choice has conditional explanatory feedback: screen
+PASS Question anchor exists in its displayed record: switch
+PASS Every choice has conditional explanatory feedback: switch
+PASS Question anchor exists in its displayed record: blitz
+PASS Every choice has conditional explanatory feedback: blitz
+PASS Question anchor exists in its displayed record: highpost
+PASS Every choice has conditional explanatory feedback: highpost
+PASS Question anchor exists in its displayed record: cut
+PASS Every choice has conditional explanatory feedback: cut
+PASS Question anchor exists in its displayed record: lane
+PASS Every choice has conditional explanatory feedback: lane
+PASS Switch question actually shows exchanged assignments
+PASS Lane question is grounded in recorded open 05 / blocked 01 options
+PASS Same start and role can compare different defensive variants
+PASS Different seed comparison is rejected with explanation
+PASS Different controlled role is not a same-start comparison
+PASS Initial geometry mismatch is rejected even if labels agree
+PASS Truncated record does not claim a complete comparison
+PASS Actual history stores a completed valid episode
+PASS Repeated review does not duplicate an episode
+PASS History snapshots do not retain live mutable arrays
+PASS Summary separates release quality and actual caught count
+PASS No-pass practice is never graded as a failed pass
+PASS Legacy episode resolves its recorded scenario for retry
+PASS Unknown legacy coverage is not silently called Drop
+PASS Invalid mark arrays rejected before court rendering
+PASS Corrupt giant pass coordinates cannot enter the dashed-line renderer
+PASS History duration cannot end before its recorded frames
+FAIL Missing-tail record remains viewable but is not complete evidence
+FAIL Missing-tail comparison is rejected even without the truncated flag
+FAIL Missing interior timeline is not complete evidence
+FAIL Record without completion metadata is not comparable evidence
+PASS Genuine short zero-pass rounds retain normal sampling tolerance
+PASS History load keeps valid files and reports bad files without crashing
+Failures: 4

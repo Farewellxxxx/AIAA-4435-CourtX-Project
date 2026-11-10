@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 namespace CourtX
@@ -8,6 +10,7 @@ namespace CourtX
     {
         readonly TacticalSession session;
         readonly Dictionary<string,int> answers=new Dictionary<string,int>();
+        readonly Dictionary<string,string> saveResults=new Dictionary<string,string>();
         public LearningScenario Scenario {get;private set;}=new LearningScenario();
         public LearningPage Page {get;private set;}
         public bool IsOpen {get;private set;}
@@ -25,6 +28,21 @@ namespace CourtX
         public bool CanPractice=>Page!=LearningPage.Review||LearningScenario.FromEpisode(Current)!=null;
         public LearningStep[] Steps=>LearningCatalog.Steps(Current);
         public string Notice {get;private set;}="";
+        public bool SaveFailed=>!IsExample&&Current!=null&&saveResults.TryGetValue(Current.id,out string result)&&result.StartsWith("保存失败");
+        public string RecordWarning=>IsExample||Current==null?"":
+            (SaveFailed?"保存未完成，退出前请重试；文件可能未写完整。\n":"")+
+            (!LearningHistory.Complete(Current)?"记录不完整：仅展示已有片段，不能用于 A/B 对比。":"");
+        public void RetrySaveCurrent()
+        {
+            if(!SaveFailed)return;
+            try
+            {
+                if(Path.GetFileName(Current.id)!=Current.id||Current.id.IndexOfAny(Path.GetInvalidFileNameChars())>=0)throw new IOException("无效的记录文件名");
+                saveResults[Current.id]=new TacticalJournal(Current).Save(session.ReviewFolder);
+                Notice="本轮已完整保存到 Replays。";
+            }
+            catch(Exception error){saveResults[Current.id]="保存失败："+error.Message;Notice="保存仍未完成，请检查文件夹是否可写。";}
+        }
         public LearningHub(TacticalSession owner)
         {session=owner;History.Load(owner.ReviewFolder);IsOpen=true;LoadLesson();}
         void SetCurrent(TacticalEpisode episode,bool example,float time=0)
@@ -52,8 +70,9 @@ namespace CourtX
         {IsOpen=false;Cursor.Seek(Cursor.Time);Scenario=new LearningScenario{drill=session.Drill,controlled=session.Controlled,coverage=session.CoverageChoice,seed=session.Seed}.Normalize();}
         public void MenuOpened(){IsOpen=true;Cursor.Seek(Cursor.Time);}
         public void ResumePractice(){IsOpen=false;Cursor.Seek(Cursor.Time);}
-        public void Remember(TacticalEpisode episode)
+        public void Remember(TacticalEpisode episode,string saveResult=null)
         {
+            if(episode!=null&&!string.IsNullOrEmpty(episode.id)&&saveResult!=null)saveResults[episode.id]=saveResult;
             if(!History.Add(episode))return;
             if(Baseline!=null&&LearningHistory.CanCompare(Baseline,episode,out _))Candidate=History.Entries[0];
         }
@@ -81,7 +100,7 @@ namespace CourtX
         public void PinBaseline()
         {
             if(IsExample||!LearningHistory.Valid(Current)){Notice="请先完成一次实际练习，并在复盘中设为 A。";return;}
-            if(Current.truncated||LearningScenario.FromEpisode(Current)==null){Notice="这份记录不完整或缺少配置，不能作为对比开局。";return;}
+            if(!LearningHistory.Complete(Current)||LearningScenario.FromEpisode(Current)==null){Notice="这份记录不完整或缺少配置，不能作为对比开局。";return;}
             Baseline=Current;Candidate=null;Notice="已设为 A；使用相同开局再练一次，可改变防守或自己的操作。";
         }
         public void UseBaselineStart()

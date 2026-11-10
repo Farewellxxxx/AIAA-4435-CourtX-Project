@@ -59,6 +59,12 @@ public static class LearningReview
         var malformed=Clone(b);malformed.frames[0].marks[0]=99;Check(!LearningHistory.Valid(malformed),"Invalid mark arrays rejected before court rendering");
         var huge=Clone(b);huge.decisions[0].destination=Vector3.one*float.MaxValue;Check(!LearningHistory.Valid(huge),"Corrupt giant pass coordinates cannot enter the dashed-line renderer");
         var clock=Clone(b);clock.duration=0;Check(!LearningHistory.Valid(clock),"History duration cannot end before its recorded frames");
+        var tail=Clone(b);tail.id+="-missing-tail";tail.frames=tail.frames.Take(1).ToList();tail.decisions.Clear();tail.events.Clear();
+        Check(LearningHistory.Valid(tail)&&!LearningHistory.Complete(tail),"Missing-tail record remains viewable but is not complete evidence");
+        Check(!LearningHistory.CanCompare(b,tail,out reason),"Missing-tail comparison is rejected even without the truncated flag");
+        var middle=Clone(b);middle.frames=new List<TacticalFrame>{middle.frames.First(),middle.frames.Last()};Check(!LearningHistory.Complete(middle),"Missing interior timeline is not complete evidence");
+        var unfinished=Clone(b);unfinished.endReason="";Check(!LearningHistory.Complete(unfinished),"Record without completion metadata is not comparable evidence");
+        var shortRound=Clone(tail);shortRound.duration=.12f;shortRound.endReason="主动结束练习";Check(LearningHistory.Complete(shortRound),"Genuine short zero-pass rounds retain normal sampling tolerance");
         string folder=Path.Combine(ReactiveReview.Folder,"history-test-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(folder);
         File.WriteAllText(Path.Combine(folder,"valid.json"),JsonUtility.ToJson(b));File.WriteAllText(Path.Combine(folder,"broken.json"),"{broken");File.WriteAllText(Path.Combine(folder,"invalid.json"),JsonUtility.ToJson(malformed));
         var loaded=new LearningHistory();loaded.Load(folder);Check(loaded.Entries.Count==1&&loaded.SkippedFiles==2,"History load keeps valid files and reports bad files without crashing");

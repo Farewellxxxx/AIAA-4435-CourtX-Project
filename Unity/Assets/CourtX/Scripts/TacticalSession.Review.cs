@@ -42,7 +42,7 @@ namespace CourtX
         {
             try{SavedReview=Journal.Save(ReviewFolder);}
             catch(Exception error){SavedReview="保存失败："+error.Message;Debug.LogWarning(SavedReview);}
-            learning?.Remember(Journal.Episode);
+            learning?.Remember(Journal.Episode,SavedReview);
         }
         public void OpenReview()
         {

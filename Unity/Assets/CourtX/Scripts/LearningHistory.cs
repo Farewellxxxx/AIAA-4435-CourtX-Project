@@ -12,6 +12,15 @@ namespace CourtX
         public IReadOnlyList<TacticalEpisode> Entries=>entries;
         readonly List<TacticalEpisode> entries=new List<TacticalEpisode>();
         public int SkippedFiles {get;private set;}
+        public static bool Complete(TacticalEpisode e)
+        {
+            // Playback safety is weaker than evidence completeness. A trailing partial sample is
+            // normal (sampling every .2s); missing seconds or the opening state are not.
+            if(!Valid(e)||e.truncated||string.IsNullOrWhiteSpace(e.endReason)||e.frames[0].time>.001f||
+                e.duration-e.frames[e.frames.Count-1].time>.25f)return false;
+            for(int i=1;i<e.frames.Count;i++)if(e.frames[i].time-e.frames[i-1].time>.55f)return false;
+            return true;
+        }
         public bool Add(TacticalEpisode episode)
         {
             if(!Valid(episode)||entries.Any(e=>e.id==episode.id))return false;
@@ -69,7 +78,7 @@ namespace CourtX
             reason="先保存两次实际练习，再选择 A / B。";
             if(!Valid(a)||!Valid(b))return false;
             if(a.id==b.id){reason="A 和 B 是同一次练习，请再练一轮。";return false;}
-            if(a.truncated||b.truncated){reason="记录触及上限，不能作为完整回合对比。";return false;}
+            if(!Complete(a)||!Complete(b)){reason="记录不完整或缺少结束信息，不能作为完整回合对比。";return false;}
             if(a.drill!=b.drill||a.controlled!=b.controlled||a.seed!=b.seed){reason="需要相同战术、角色和种子；可以改变防守或自己的操作。";return false;}
             var x=a.frames[0];var y=b.frames[0];
             if(Mathf.Abs(x.time-y.time)>.001f||x.holder!=y.holder||Vector3.Distance(x.ball,y.ball)>.01f||
