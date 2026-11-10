@@ -1,0 +1,11 @@
+PASS OpenReview binds replay to recorded episode and default pass
+PASS Session advances replay while live simulation is paused
+PASS Replay never moves live actors or active-time clock
+PASS Playing recap never mutates journal
+PASS Scrubbing first release updates session report
+PASS Next pass updates report and diagram together
+PASS Before first pass clears old assessment
+PASS Long provider fixture reaches UI intact
+PASS Retry leaves recap and starts a fresh journal
+PASS No-pass round opens without invented pass
+Failures: 0

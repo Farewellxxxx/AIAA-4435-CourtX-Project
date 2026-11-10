@@ -50,12 +50,15 @@ public sealed class LearningPlayChecks:MonoBehaviour
         }
         else {Check(false,"A/B view changes retain elapsed time and clamp ended round");Check(false,"Comparison never mutates baseline facts");}
         h.SelectQuestion(2);Check(h.Page==LearningPage.Challenge&&h.Scenario.controlled==1&&h.Scenario.coverage==DefenseCoverage.Blitz,"Question binds its role, coverage and scene");
+        h.Cursor.Toggle();h.Tick(3);Check(Mathf.Abs(h.Cursor.Time-h.Question.time)<.001f,"Question snapshot stays fixed while its options and feedback are displayed");
         h.ChooseAnswer(0);Check(h.Answer==0&&!string.IsNullOrWhiteSpace(h.Feedback),"Wrong answer receives specific feedback");
         h.ShowQuestionLesson();Check(h.Page==LearningPage.Lesson&&Mathf.Abs(h.Cursor.Time-h.Question.time)<.001f,"Question returns to its corresponding lesson instant");
         h.SelectQuestion(2);Check(h.Answer==0,"Answer persists across module navigation");
         h.ResetAnswer();Check(h.Answer==-1,"Explicit retry clears this question answer");
         h.ChooseAnswer(h.Question.correct);Check(h.Answer==h.Question.correct,"Question can be retried after reflection");
         h.StartPractice();yield return Wait(2);Check(s.Drill==TacticalDrill.PickAndRoll&&s.Controlled==1&&s.CoverageChoice==DefenseCoverage.Blitz&&s.Journal.Episode.learningObjective.Contains(h.Question.title),"Challenge launches its actual matching scene with learning objective");
+        h.Show(LearningPage.WhatIf);Check(h.Scenario.Key==LearningScenario.FromEpisode(h.Baseline).Key,"Returning from another drill restores the pinned comparison opening");
+        s.Resume();
         s.OpenReview();yield return null;h.SelectHistory(h.History.Entries.Count-1);
         Check(h.Page==LearningPage.Review&&h.Current!=null&&h.Current.id!=s.Journal.Episode.id,"History can review an older round without replacing current journal");
         h.StartPractice();yield return null;Check(s.Running&&!s.Journal.Closed&&s.Journal.Episode.id!=id,"Historical retry starts a fresh simulation rather than resuming recorded frames");

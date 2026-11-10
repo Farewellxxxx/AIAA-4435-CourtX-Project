@@ -36,7 +36,7 @@ namespace CourtX
             if(page==LearningPage.Lesson)LoadLesson();
             else if(page==LearningPage.Challenge)SelectQuestion(QuestionIndex);
             else if(page==LearningPage.Review){if(History.Entries.Count>0)SelectHistory(0);else SetCurrent(null,false);}
-            else SetCompareSide(Candidate!=null);
+            else {if(Baseline!=null)Scenario=LearningScenario.FromEpisode(Baseline);SetCompareSide(Candidate!=null);}
         }
         public void SelectScenario(LearningScenario scenario)
         {Scenario=scenario.Copy().Normalize();if(Page==LearningPage.Lesson)LoadLesson();}
@@ -95,6 +95,6 @@ namespace CourtX
             LearningHistory.CanCompare(Baseline,Candidate,out string reason);Notice=reason;
         }
         public void Seek(float time)=>Cursor.Seek(time);
-        public void Tick(float seconds){if(IsOpen)Cursor.Tick(seconds);}
+        public void Tick(float seconds){if(IsOpen&&Page!=LearningPage.Challenge)Cursor.Tick(seconds);}
     }
 }

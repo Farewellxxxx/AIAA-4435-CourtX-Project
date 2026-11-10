@@ -393,6 +393,7 @@ namespace CourtX
         void OnGUI()
         {
             if(!initialized)return;
+            if(learning!=null&&learning.IsOpen){LearningHubUI.Draw(this);return;}
             if(ReviewOpen){TacticalRecapUI.Draw(this);return;}
             TacticalUI.Draw(this,ref menuDrill,ref menuRole,help);
         }

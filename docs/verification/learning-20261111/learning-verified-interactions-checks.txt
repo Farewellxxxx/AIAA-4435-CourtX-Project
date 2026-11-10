@@ -1,0 +1,32 @@
+PASS 15 fps: blind rear contact deflects without gifting defender possession
+PASS 15 fps: blocked ball visibly falls instead of sticking to a hand
+PASS 15 fps: a prepared defender facing the pass can secure it
+PASS 15 fps: nearer defender wins contact independent of actor-array order
+PASS 30 fps: blind rear contact deflects without gifting defender possession
+PASS 30 fps: blocked ball visibly falls instead of sticking to a hand
+PASS 30 fps: a prepared defender facing the pass can secure it
+PASS 30 fps: nearer defender wins contact independent of actor-array order
+PASS 60 fps: blind rear contact deflects without gifting defender possession
+PASS 60 fps: blocked ball visibly falls instead of sticking to a hand
+PASS 60 fps: a prepared defender facing the pass can secure it
+PASS 60 fps: nearer defender wins contact independent of actor-array order
+PASS pause freezes a deflected ball
+PASS reset clears failed-flight state and restores one owner
+PASS steady moving human catches a leading pass
+PASS reversing after release can miss the fixed receiving point
+PASS AI receiver continues toward the catch point during flight
+PASS moving AI receiver completes the catch
+PASS catch starts at contact without a visual teleport into the hands
+PASS menu freezes the catch blend
+PASS resuming catch blend preserves singular possession
+PASS expired blocked request clears its reason and explains expiry
+PASS menu pause preserves request time and AI passes after the lane opens
+PASS request bound to previous passer cannot make a different holder pass
+PASS release without an owned charge cannot command an AI holder
+PASS request during flight reports that the ball is already travelling
+PASS 15 fps: a defender arriving after the ball cannot steal a completed catch
+PASS 30 fps: a defender arriving after the ball cannot steal a completed catch
+PASS 60 fps: a defender arriving after the ball cannot steal a completed catch
+PASS receiver position is judged at arrival, leaving after catch
+PASS receiver position is judged at arrival, arriving too late
+Stage 3: 0 failures

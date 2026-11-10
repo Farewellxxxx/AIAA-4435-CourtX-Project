@@ -1,0 +1,18 @@
+PASS Question 0 gives wrong-choice feedback
+PASS Question 1 gives wrong-choice feedback
+PASS Question 2 gives wrong-choice feedback
+PASS Question 3 gives wrong-choice feedback
+PASS Question 4 gives wrong-choice feedback
+PASS Question 5 gives wrong-choice feedback
+PASS Actual PickAndRoll role 0 returns exact round
+PASS Actual PickAndRoll role 0 records pass
+PASS Actual PickAndRoll role 0 returns exact round
+PASS Actual PickAndRoll role 0 records pass
+PASS Actual A/B share opening
+PASS Actual HighPostCut role 1 returns exact round
+PASS Actual HighPostCut role 1 records pass
+PASS Actual PickAndRoll role 1 returns exact round
+PASS Actual PickAndRoll role 1 records pass
+PASS Short no-pass round invents no passing assessment
+PASS Standalone full-UI video encoded
+Video frames: 1352; failures: 0

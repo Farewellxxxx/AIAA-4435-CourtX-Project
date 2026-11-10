@@ -83,10 +83,16 @@ namespace CourtX
             for(float d=0;d<length;d+=13)Line(a+dir*d,a+dir*Mathf.Min(d+7,length),new Color(1,.78f,.22f,.65f),2);
             var side=new Vector2(-dir.y,dir.x);Line(b,b-dir*11+side*5,gold);Line(b,b-dir*11-side*5,gold);
         }
-        public static void Draw(TacticalSession s,TacticalEpisode episode,RecapPlayback replay,TacticalFrame frame,GUIStyle label)
+        public static void DrawAt(Rect rect,TacticalSession s,TacticalEpisode episode,RecapPlayback replay,GUIStyle label,bool showTarget=true)
+        {
+            var matrix=GUI.matrix;
+            GUI.matrix=matrix*Matrix4x4.TRS(new Vector3(rect.x-48*rect.width/548,rect.y-140*rect.height/404,0),Quaternion.identity,new Vector3(rect.width/548,rect.height/404,1));
+            Draw(s,episode,replay,replay.Sample(),label,showTarget);GUI.matrix=matrix;
+        }
+        public static void Draw(TacticalSession s,TacticalEpisode episode,RecapPlayback replay,TacticalFrame frame,GUIStyle label,bool showTarget=true)
         {
             InitTextures();Court();if(frame==null)return;Trails(episode,replay,frame);
-            if(replay.DecisionIndex>=0)TargetArrow(episode.decisions[replay.DecisionIndex]);
+            if(showTarget&&replay.DecisionIndex>=0)TargetArrow(episode.decisions[replay.DecisionIndex]);
             var numberStyle=new GUIStyle(label){alignment=TextAnchor.MiddleCenter,fontStyle=FontStyle.Bold,fontSize=15};numberStyle.normal.textColor=new Color(.02f,.08f,.09f);
             for(int i=0;i<6;i++)
             {

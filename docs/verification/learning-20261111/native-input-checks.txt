@@ -1,0 +1,7 @@
+PASS Native click opens challenge tab
+PASS Native wrong answer scrolls to specific feedback
+PASS Native linked lesson opens matching 2.1 second scene
+PASS Native practice button opens first-person gameplay
+PASS Native V ends and archives exact actual round
+PASS Native scroll reaches review footer
+PASS Native Escape returns to learning center
