@@ -1,5 +1,9 @@
 # CourtX · 半场配合原型
 
+当前学习中心入口：本机 `Windows_Learning/CourtX Learning.exe`。同一程序提供战术演练、真实 A/B 对比、六道读防守挑战、第一人称练习和历史回合复盘。按 V 结束练习并保存；复盘页点击“同一开局再练”。完整文件夹一起复制即可运行。
+
+学习中心开发分支为 `feature/tactical-learning-hub`，升级前稳定版标签为 `v0.4-recap-stable-20261111`。使用 Unity 的 `LearningAuthoring.Build` 构建新版本；旧程序目录均保留。参见[中文使用说明](docs/LEARNING_GUIDE_ZH.md)、[383 项检查和三轮试玩](docs/LEARNING_RESULTS.md)、[接口说明](docs/LEARNING_INTEGRATION.md)。以下保留既有版本说明。
+
 战术版入口：本机 `Windows_Tactics/CourtX Tactics.exe`。打开后选择“高位挡拆”或“高位接应 · 传切”，再选择 01 持球开局或 04 无球开局。Unity 场景为 `Assets/CourtX/Scenes/TacticalTraining.unity`。旧的自由练习仍在 `Windows/CourtX.exe` 和 `HalfCourt.unity`。
 
 源码稳定版在 `main`，标签 `v0.1-free-practice`；战术开发在 `feature/tactical-training`。Git 仓库不提交 Unity 缓存、Windows 构建和原始录像。下载源码后用 Unity 2022.3.62f3c1 打开 `Unity` 文件夹；通过 `TacticalAuthoring.Build` 可输出独立 Windows 战术版。

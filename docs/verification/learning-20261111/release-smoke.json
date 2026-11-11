@@ -1,0 +1,11 @@
+{
+  "releaseSourceRevision": "2a906bc5ef4497105aad7b4af4cb2d7ec6faaa5f",
+  "productionStarted": true,
+  "nativeEmptyComparisonVerified": true,
+  "saveFailureVisible": true,
+  "nativeRetryPersistedJsonAndText": true,
+  "qaInstrumentationAbsent": true,
+  "smokeCopyAssemblyMatchesRelease": true,
+  "assemblySha256": "8CCF92C1157EC8FEC950B4A83E4F2F6B2176F5C25B08F6D9338CA0D060220967",
+  "testProcessesClosedNormally": true
+}

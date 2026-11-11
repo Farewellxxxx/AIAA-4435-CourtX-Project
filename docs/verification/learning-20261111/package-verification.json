@@ -1,0 +1,21 @@
+{
+  "file": "CourtX-Learning-20261111.zip",
+  "sha256": "12E332E99CEDC136DFC5FC665A1155354D0AF01BD6C7A1C7936419EC240A517E",
+  "bytes": 27930990,
+  "entries": 133,
+  "sourceRevision": "2a906bc5ef4497105aad7b4af4cb2d7ec6faaa5f",
+  "assemblySha256": "8CCF92C1157EC8FEC950B4A83E4F2F6B2176F5C25B08F6D9338CA0D060220967",
+  "qaInstrumentationAbsent": true,
+  "allArchivedFilesMatchBuild": true,
+  "oldTacticalAssemblyUnchanged": true,
+  "preserved": {
+    "Recap-20261110/CourtX-Recap-20261110.zip": {
+      "sha256": "6D84FA90EF27D9B08E1C620306A618402419ADC7C5393D1D3CFC14AB2A815F60",
+      "filesMatched": 148
+    },
+    "Reactive-20261109/CourtX-Reactive-20261109.zip": {
+      "sha256": "14EE6EF40B4C2524415BDCFD6C7679B0D6357AA586114F4A54AB7F7C71F7BF52",
+      "filesMatched": 155
+    }
+  }
+}
