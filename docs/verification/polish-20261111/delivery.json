@@ -1,0 +1,25 @@
+{
+  "file": "CourtX-LearningPolish-20261111.zip",
+  "sha256": "60B039DD771D90E25FA59E07768B10889543CC14598866DA4AE5D04FA9AD46D7",
+  "bytes": 27935430,
+  "entries": 133,
+  "sourceRevision": "bfe294f966ddaef26ffec95329c774f086cd5e38",
+  "assemblySha256": "A294C175E1EC70FB3EA30FD8850E3CCA16EA64866F3E30093EDFC4D7117FFDF5",
+  "qaInstrumentationAbsent": true,
+  "allArchivedFilesMatchBuild": true,
+  "preservedUserFiles": 4,
+  "preserved": {
+    "Learning-20261111/CourtX-Learning-20261111.zip": {
+      "sha256": "12E332E99CEDC136DFC5FC665A1155354D0AF01BD6C7A1C7936419EC240A517E",
+      "filesMatched": 133
+    },
+    "Recap-20261110/CourtX-Recap-20261110.zip": {
+      "sha256": "6D84FA90EF27D9B08E1C620306A618402419ADC7C5393D1D3CFC14AB2A815F60",
+      "filesMatched": 148
+    },
+    "Reactive-20261109/CourtX-Reactive-20261109.zip": {
+      "sha256": "14EE6EF40B4C2524415BDCFD6C7679B0D6357AA586114F4A54AB7F7C71F7BF52",
+      "filesMatched": 155
+    }
+  }
+}
