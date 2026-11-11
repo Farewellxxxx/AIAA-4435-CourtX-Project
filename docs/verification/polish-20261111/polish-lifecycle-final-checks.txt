@@ -1,0 +1,28 @@
+PASS Startup opens recorded lesson with live simulation paused
+PASS Lesson configuration transfers into actual practice
+PASS Live journal preserves explicit scenario metadata for historical retry
+PASS Teaching playback never advances a paused practice or its actors
+PASS Teaching replay advances independently
+PASS Resume returns to the same unfinished practice
+PASS V review displays and archives this exact actual round
+PASS Legacy review state remains valid for integrations
+PASS Opening review twice does not duplicate history
+PASS Current completed round can become comparison A
+PASS Second actual practice with shared start becomes comparison B
+PASS A/B view changes retain elapsed time and clamp ended round
+PASS Comparison never mutates baseline facts
+PASS Question binds its role, coverage and scene
+PASS Question snapshot stays fixed while its options and feedback are displayed
+PASS Wrong answer receives specific feedback
+PASS Question returns to its corresponding lesson instant
+PASS Answer persists across module navigation
+PASS Explicit retry clears this question answer
+PASS Question can be retried after reflection
+PASS Challenge launches its actual matching scene with learning objective
+PASS Returning from another drill restores the pinned comparison opening
+PASS History can review an older round without replacing current journal
+PASS Historical retry starts a fresh simulation rather than resuming recorded frames
+PASS Disk write failure is visible on the displayed actual episode
+PASS Save failure follows its history entry after another round
+PASS Retry persists the selected failed history episode and clears its warning
+Failures: 0

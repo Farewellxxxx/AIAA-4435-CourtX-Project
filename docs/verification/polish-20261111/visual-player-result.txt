@@ -1,0 +1,2 @@
+20 screenshots across 4 viewport sizes; errors=0
+QA records are rendering fixtures, not user practice.

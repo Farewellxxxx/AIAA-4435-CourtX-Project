@@ -1,33 +1,60 @@
+using System.Collections.Generic;
 using UnityEngine;
 namespace CourtX
 {
     public static class RecapCourtView
     {
-        static Texture2D disc,basketball;
+        static Texture2D disc,basketball,stroke,courtStrokes;
+        static readonly Dictionary<Vector2Int,Texture2D> rings=new Dictionary<Vector2Int,Texture2D>();
+        static Color[] raster;
+        static int rasterWidth,rasterHeight;
         static readonly Color teal=new Color(.28f,.84f,.70f),orange=new Color(1,.56f,.35f),gold=new Color(1,.78f,.22f);
-        static readonly Color courtLine=new Color(.76f,.85f,.80f,.68f);
+        static readonly Color courtLine=new Color(.76f,.85f,.80f,.88f);
         public static void Panel(Rect rect,Color color){GUI.color=color;GUI.DrawTexture(rect,Texture2D.whiteTexture);GUI.color=Color.white;}
         static Vector2 Point(Vector3 p)=>new Vector2(112+(p.x+7.5f)*28,146-p.z*28);
         static Vector2 Point(float x,float z)=>Point(new Vector3(x,0,z));
         static void Line(Vector2 a,Vector2 b,Color color,float width=2)
         {
-            var matrix=GUI.matrix;
-            // Compose in virtual-canvas coordinates; RotateAroundPivot misplaces pivots under the scaled canvas.
-            GUI.matrix=matrix*Matrix4x4.TRS(new Vector3(a.x,a.y,0),Quaternion.Euler(0,0,Mathf.Atan2(b.y-a.y,b.x-a.x)*Mathf.Rad2Deg),Vector3.one);
-            Panel(new Rect(0,-width*.5f,(b-a).magnitude,width),color);GUI.matrix=matrix;
+            if(raster!=null){RasterLine(a,b,color,width);return;}
+            var matrix=GUI.matrix;var aa=(Vector2)matrix.MultiplyPoint3x4(a);var bb=(Vector2)matrix.MultiplyPoint3x4(b);
+            float pixels=Mathf.Max(1.6f,width*matrix.MultiplyVector(Vector3.up).magnitude);
+            if(Mathf.Abs(aa.x-bb.x)<.01f)aa.x=bb.x=Mathf.Round(aa.x)+.5f;
+            if(Mathf.Abs(aa.y-bb.y)<.01f)aa.y=bb.y=Mathf.Round(aa.y)+.5f;
+            var delta=bb-aa;if(delta.sqrMagnitude<.0001f)return;
+            // One-pixel alpha fringe keeps diagonals continuous without blurring their solid core.
+            GUI.matrix=Matrix4x4.TRS(aa,Quaternion.Euler(0,0,Mathf.Atan2(delta.y,delta.x)*Mathf.Rad2Deg),Vector3.one);
+            GUI.color=color;GUI.DrawTexture(new Rect(-.5f,-(pixels+2)*.5f,delta.magnitude+1,pixels+2),stroke);GUI.color=Color.white;GUI.matrix=matrix;
         }
-        static void WorldLine(float x,float z,float xx,float zz)=>Line(Point(x,z),Point(xx,zz),courtLine,1.6f);
+        static void WorldLine(float x,float z,float xx,float zz)=>Line(Point(x,z),Point(xx,zz),courtLine,2);
         static void Arc(float x,float z,float r,float start,float end,bool dashed=false)
         {
-            for(int i=0;i<64;i++)
+            for(int i=0;i<128;i++)
             {
-                if(dashed && i%8>=4)continue;
-                float a=Mathf.Lerp(start,end,i/64f),b=Mathf.Lerp(start,end,(i+1)/64f);
+                if(dashed && i%16>=8)continue;
+                float a=Mathf.Lerp(start,end,i/128f),b=Mathf.Lerp(start,end,(i+1)/128f);
                 WorldLine(x+r*Mathf.Cos(a),z+r*Mathf.Sin(a),x+r*Mathf.Cos(b),z+r*Mathf.Sin(b));
             }
         }
         static void Circle(Vector2 center,float radius,Color color,float width=2)
         {
+            if(raster==null)
+            {
+                var matrix=GUI.matrix;float scale=matrix.MultiplyVector(Vector3.up).magnitude;
+                float r=radius*scale,w=Mathf.Max(1.6f,width*scale);
+                var key=new Vector2Int(Mathf.RoundToInt(r*100),Mathf.RoundToInt(w*100));
+                if(!rings.TryGetValue(key,out var texture))
+                {
+                    if(rings.Count>=32){foreach(var cached in rings.Values)Object.Destroy(cached);rings.Clear();}
+                    int size=Mathf.CeilToInt(2*r+w+2);texture=new Texture2D(size,size,TextureFormat.RGBA32,false){filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp,hideFlags=HideFlags.HideAndDontSave};
+                    var pixels=new Color[size*size];
+                    for(int y=0;y<size;y++)for(int x=0;x<size;x++)
+                    {float distance=new Vector2(x+.5f-size*.5f,y+.5f-size*.5f).magnitude;pixels[y*size+x]=new Color(1,1,1,Mathf.Clamp01(w*.5f+.5f-Mathf.Abs(distance-r)));}
+                    texture.SetPixels(pixels);texture.Apply();rings[key]=texture;
+                }
+                var p=matrix.MultiplyPoint3x4(center);GUI.matrix=Matrix4x4.identity;GUI.color=color;
+                GUI.DrawTexture(new Rect(Mathf.Round(p.x-texture.width*.5f),Mathf.Round(p.y-texture.height*.5f),texture.width,texture.height),texture);
+                GUI.color=Color.white;GUI.matrix=matrix;return;
+            }
             for(int i=0;i<40;i++)
             {
                 float a=i*Mathf.PI/20,b=(i+1)*Mathf.PI/20;
@@ -37,7 +64,10 @@ namespace CourtX
         static void InitTextures()
         {
             if(disc!=null)return;
-            disc=new Texture2D(64,64,TextureFormat.RGBA32,false);basketball=new Texture2D(64,64,TextureFormat.RGBA32,false);
+            stroke=new Texture2D(1,4,TextureFormat.RGBA32,false){filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp,hideFlags=HideFlags.HideAndDontSave};
+            stroke.SetPixels(new[]{new Color(1,1,1,0),Color.white,Color.white,new Color(1,1,1,0)});stroke.Apply();
+            disc=new Texture2D(64,64,TextureFormat.RGBA32,true);basketball=new Texture2D(64,64,TextureFormat.RGBA32,true);
+            disc.filterMode=basketball.filterMode=FilterMode.Trilinear;disc.wrapMode=basketball.wrapMode=TextureWrapMode.Clamp;
             disc.hideFlags=basketball.hideFlags=HideFlags.HideAndDontSave;
             for(int y=0;y<64;y++)for(int x=0;x<64;x++)
             {
@@ -54,6 +84,35 @@ namespace CourtX
         {
             Panel(new Rect(48,140,548,404),new Color(.065f,.19f,.21f));
             var paint=Point(-2.45f,0);Panel(new Rect(paint.x,paint.y,4.9f*28,5.8f*28),new Color(.10f,.29f,.30f));
+            var matrix=GUI.matrix;int width=Mathf.Max(1,Mathf.RoundToInt(548*matrix.MultiplyVector(Vector3.right).magnitude)),height=Mathf.Max(1,Mathf.RoundToInt(404*matrix.MultiplyVector(Vector3.up).magnitude));
+            if(courtStrokes==null||courtStrokes.width!=width||courtStrokes.height!=height)
+            {
+                if(courtStrokes!=null)Object.Destroy(courtStrokes);
+                rasterWidth=width;rasterHeight=height;raster=new Color[width*height];CourtLines();
+                courtStrokes=new Texture2D(width,height,TextureFormat.RGBA32,false){filterMode=FilterMode.Bilinear,wrapMode=TextureWrapMode.Clamp,hideFlags=HideFlags.HideAndDontSave};
+                courtStrokes.SetPixels(raster);courtStrokes.Apply();raster=null;
+            }
+            var origin=matrix.MultiplyPoint3x4(new Vector2(48,140));GUI.matrix=Matrix4x4.identity;GUI.color=Color.white;
+            GUI.DrawTexture(new Rect(Mathf.Round(origin.x),Mathf.Round(origin.y),width,height),courtStrokes);GUI.matrix=matrix;
+        }
+        // Cache the stationary court at screen resolution. Joining arc segments by maximum
+        // coverage avoids dark gaps and bright beads caused by alpha-overlapping tiny quads.
+        static void RasterLine(Vector2 a,Vector2 b,Color color,float width)
+        {
+            var scale=new Vector2(rasterWidth/548f,rasterHeight/404f);
+            a=Vector2.Scale(a-new Vector2(48,140),scale);b=Vector2.Scale(b-new Vector2(48,140),scale);
+            float radius=Mathf.Max(1.6f,width*scale.y)*.5f;var delta=b-a;float length=delta.sqrMagnitude;
+            int minX=Mathf.Max(0,Mathf.FloorToInt(Mathf.Min(a.x,b.x)-radius-1)),maxX=Mathf.Min(rasterWidth-1,Mathf.CeilToInt(Mathf.Max(a.x,b.x)+radius+1));
+            int minY=Mathf.Max(0,Mathf.FloorToInt(Mathf.Min(a.y,b.y)-radius-1)),maxY=Mathf.Min(rasterHeight-1,Mathf.CeilToInt(Mathf.Max(a.y,b.y)+radius+1));
+            for(int y=minY;y<=maxY;y++)for(int x=minX;x<=maxX;x++)
+            {
+                var p=new Vector2(x+.5f,y+.5f);float t=length>.0001f?Mathf.Clamp01(Vector2.Dot(p-a,delta)/length):0;
+                float alpha=Mathf.Clamp01(radius+.5f-Vector2.Distance(p,a+delta*t))*color.a;int index=(rasterHeight-1-y)*rasterWidth+x;
+                if(alpha>raster[index].a)raster[index]=new Color(color.r,color.g,color.b,alpha);
+            }
+        }
+        static void CourtLines()
+        {
             WorldLine(-7.5f,0,7.5f,0);WorldLine(-7.5f,0,-7.5f,-14);WorldLine(7.5f,0,7.5f,-14);WorldLine(-7.5f,-14,7.5f,-14);
             WorldLine(-2.45f,0,-2.45f,-5.8f);WorldLine(2.45f,0,2.45f,-5.8f);WorldLine(-2.45f,-5.8f,2.45f,-5.8f);
             Arc(0,-5.8f,1.8f,Mathf.PI,Mathf.PI*2);Arc(0,-5.8f,1.8f,0,Mathf.PI,true);
@@ -93,12 +152,14 @@ namespace CourtX
         {
             InitTextures();Court();if(frame==null)return;Trails(episode,replay,frame);
             if(showTarget&&replay.DecisionIndex>=0)TargetArrow(episode.decisions[replay.DecisionIndex]);
-            var numberStyle=new GUIStyle(label){alignment=TextAnchor.MiddleCenter,fontStyle=FontStyle.Bold,fontSize=15};numberStyle.normal.textColor=new Color(.02f,.08f,.09f);
+            var canvas=GUI.matrix;float pixelScale=canvas.MultiplyVector(Vector3.up).magnitude;
+            var numberStyle=new GUIStyle(label){alignment=TextAnchor.MiddleCenter,fontStyle=FontStyle.Bold,fontSize=Mathf.Max(13,Mathf.RoundToInt(16*pixelScale)),padding=new RectOffset()};numberStyle.normal.textColor=new Color(.02f,.08f,.09f);
             for(int i=0;i<6;i++)
             {
                 var p=Point(frame.positions[i]);if(i==episode.controlled)Circle(p,18,Color.white,2);
                 if(i==frame.holder)Circle(p,i==episode.controlled?22:19,gold,3);
-                Disc(p,15,i<3?teal:orange);GUI.Label(new Rect(p.x-15,p.y-15,30,30),s.Number(i),numberStyle);
+                Disc(p,15,i<3?teal:orange);var screen=canvas.MultiplyPoint3x4(p);GUI.matrix=Matrix4x4.identity;
+                GUI.Label(new Rect(Mathf.Round(screen.x-17*pixelScale),Mathf.Round(screen.y-17*pixelScale),Mathf.Round(34*pixelScale),Mathf.Round(34*pixelScale)),s.Number(i),numberStyle);GUI.matrix=canvas;
             }
             var ball=Point(frame.ball);var display=ball;
             // Keep the basketball legible beside an overlapping jersey; a connector locates its recorded position.

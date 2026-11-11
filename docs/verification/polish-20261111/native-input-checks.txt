@@ -1,0 +1,10 @@
+PASS 1280x800: timeline thumb drag selected 4.1s with matching court and role explanations
+PASS 1280x800: scrollbar drag reached the final role and complete explanatory text
+PASS 1280x800: challenge tab selected correct page
+PASS 1280x800: wrong answer produced corresponding feedback and scrolled it into view
+PASS 1280x800: both copied user rounds loaded and could be selected
+PASS 1280x800: primary button started first-person practice
+PASS 1280x800: V saved the smoke-test round and returned to recap
+PASS final 1024x576 release: history cards displayed all three lines; second card selected the correct 8.7s round
+NOT CONFIRMED: mouse-wheel input through desktop tool; not counted as passed
+Smoke-test round archived separately; original user replay files unchanged
