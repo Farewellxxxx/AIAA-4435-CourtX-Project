@@ -1,5 +1,7 @@
 # CourtX · 半场配合原型
 
+2D 轨迹优化版入口：`Windows_Readability/CourtX Learning.exe`。球员轨迹提高对比度、增加方向提示，点击圆标可聚焦单人；金色空中球路与白色虚线出手目标分开，时间轴标出传球时刻。旧程序保留。详见[轨迹阅读说明](docs/REPLAY_READABILITY.md)。本地分支 `feature/replay-readability`，构建入口 `LearningAuthoring.BuildReadability`。
+
 界面修整版入口：`Windows_LearningPolish/CourtX Learning.exe`。本轮针对文字清晰度、字号与换行、球场曲线、球员外圈和页面控件；沿用原有配合与交互逻辑。旧的 `Windows_Learning` 完整保留。详见[修整与验证记录](docs/LEARNING_POLISH.md)。源码分支 `feature/learning-visual-polish`，保留版标签 `v0.5-learning-stable-20261111`；新程序使用 `LearningAuthoring.BuildPolish` 单独构建。
 
 当前学习中心入口：本机 `Windows_Learning/CourtX Learning.exe`。同一程序提供战术演练、真实 A/B 对比、六道读防守挑战、第一人称练习和历史回合复盘。按 V 结束练习并保存；复盘页点击“同一开局再练”。完整文件夹一起复制即可运行。

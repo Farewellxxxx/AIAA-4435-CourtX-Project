@@ -10,6 +10,9 @@ namespace CourtX
         static int rasterWidth,rasterHeight;
         static readonly Color teal=new Color(.28f,.84f,.70f),orange=new Color(1,.56f,.35f),gold=new Color(1,.78f,.22f);
         static readonly Color courtLine=new Color(.76f,.85f,.80f,.88f);
+        static readonly Color pathInk=new Color(.025f,.07f,.085f),passTarget=new Color(.96f,.97f,.88f);
+        struct TrailSpan { public Vector2 from,to; public float freshness; }
+        static readonly List<TrailSpan> trail=new List<TrailSpan>(32);
         public static void Panel(Rect rect,Color color){GUI.color=color;GUI.DrawTexture(rect,Texture2D.whiteTexture);GUI.color=Color.white;}
         static Vector2 Point(Vector3 p)=>new Vector2(112+(p.x+7.5f)*28,146-p.z*28);
         static Vector2 Point(float x,float z)=>Point(new Vector3(x,0,z));
@@ -122,43 +125,101 @@ namespace CourtX
             Arc(0,-14,1.8f,0,Mathf.PI);
             Line(Point(-.9f,-1.2f),Point(.9f,-1.2f),Color.white,3);Circle(Point(0,-1.575f),6.5f,gold,2.5f);
         }
-        static void Trails(TacticalEpisode episode,RecapPlayback replay,TacticalFrame sample)
+        static float ViewScale=>Mathf.Max(.001f,GUI.matrix.MultiplyVector(Vector3.up).magnitude);
+        static Vector3 RecordedPoint(TacticalFrame frame,int actor)=>actor==6?frame.ball:frame.positions[actor];
+        static void AddTrailSpan(TacticalFrame a,TacticalFrame b,int actor,float start,float now)
         {
-            float start=replay.Time-2;
-            for(int i=1;i<=replay.FrameIndex;i++)
+            if(b.time<=start||b.time<=a.time||b.time>now+.001f)return;
+            // Carrying/dribbling already follows the player's path. Gold isolates recorded flight.
+            if(actor==6&&a.holder>=0&&b.holder>=0)return;
+            float cut=Mathf.Clamp01((start-a.time)/(b.time-a.time));
+            var from=Point(Vector3.Lerp(RecordedPoint(a,actor),RecordedPoint(b,actor),cut));
+            var to=Point(RecordedPoint(b,actor));
+            if((to-from).sqrMagnitude<.01f)return;
+            trail.Add(new TrailSpan{from=from,to=to,freshness=Mathf.InverseLerp(start,now,b.time)});
+        }
+        static void Trail(TacticalEpisode episode,RecapPlayback replay,TacticalFrame sample,int actor)
+        {
+            trail.Clear();float start=replay.Time-2;
+            int first=replay.FrameIndex;
+            while(first>0&&episode.frames[first-1].time>start)first--;
+            for(int i=Mathf.Max(1,first);i<=replay.FrameIndex;i++)
+                AddTrailSpan(episode.frames[i-1],episode.frames[i],actor,start,replay.Time);
+            AddTrailSpan(episode.frames[replay.FrameIndex],sample,actor,start,replay.Time);
+            if(trail.Count==0)return;
+            float scale=ViewScale,core=(actor==6?3.4f:3.0f)/scale;
+            Color color=actor==6?gold:actor<3?new Color(.38f,.95f,.85f):new Color(1,.61f,.42f);
+            // All dark edges precede all cores, so adjacent samples cannot erase each other.
+            foreach(var span in trail)Line(span.from,span.to,pathInk,core+2.6f/scale);
+            foreach(var span in trail)
             {
-                var a=episode.frames[i-1];var b=episode.frames[i];if(b.time<start)continue;
-                for(int actor=0;actor<6;actor++)Line(Point(a.positions[actor]),Point(b.positions[actor]),actor<3?new Color(.28f,.84f,.70f,.28f):new Color(1,.56f,.35f,.26f),2);
-                Line(Point(a.ball),Point(b.ball),new Color(1,.78f,.22f,.75f),3);
+                // Fade hue toward the dark edge, keeping an opaque crisp core at joins.
+                var ink=Color.Lerp(pathInk,color,Mathf.Lerp(.62f,1,span.freshness));
+                Line(span.from,span.to,ink,core);
             }
-            var last=episode.frames[replay.FrameIndex];
-            for(int actor=0;actor<6;actor++)Line(Point(last.positions[actor]),Point(sample.positions[actor]),actor<3?teal:orange,2);
-            Line(Point(last.ball),Point(sample.ball),gold,3);
+            if(actor==6)return;
+            // Place a direction chevron behind the jersey, only on a sufficiently long path.
+            float remaining=27/scale;
+            for(int i=trail.Count-1;i>=0;i--)
+            {
+                var span=trail[i];var delta=span.to-span.from;float length=delta.magnitude;
+                if(length<remaining){remaining-=length;continue;}
+                var dir=delta/length;var tip=span.to-dir*remaining;var side=new Vector2(-dir.y,dir.x);
+                var left=tip-dir*(7/scale)+side*(4/scale);var right=tip-dir*(7/scale)-side*(4/scale);
+                Line(tip,left,pathInk,5/scale);Line(tip,right,pathInk,5/scale);
+                Line(tip,left,color,2.5f/scale);Line(tip,right,color,2.5f/scale);break;
+            }
         }
         static void TargetArrow(PassDecision decision)
         {
             var a=Point(decision.origin);var b=Point(decision.destination);var delta=b-a;float length=delta.magnitude;if(length<1)return;
             var dir=delta/length;
-            for(float d=0;d<length;d+=13)Line(a+dir*d,a+dir*Mathf.Min(d+7,length),new Color(1,.78f,.22f,.65f),2);
-            var side=new Vector2(-dir.y,dir.x);Line(b,b-dir*11+side*5,gold);Line(b,b-dir*11-side*5,gold);
+            float scale=ViewScale;
+            for(float d=0;d<length;d+=15)
+            {
+                var from=a+dir*d;var to=a+dir*Mathf.Min(d+8,length);
+                Line(from,to,pathInk,4/scale);Line(from,to,passTarget,1.8f/scale);
+            }
+            var side=new Vector2(-dir.y,dir.x);Line(b,b-dir*11+side*5,passTarget,2/scale);Line(b,b-dir*11-side*5,passTarget,2/scale);
         }
-        public static void DrawAt(Rect rect,TacticalSession s,TacticalEpisode episode,RecapPlayback replay,GUIStyle label,bool showTarget=true)
+        public static int PickActor(Rect rect,TacticalFrame frame,Vector2 pointer)
+        {
+            if(frame==null||!rect.Contains(pointer))return -1;
+            float radius=Mathf.Max(12,17*Mathf.Min(rect.width/548,rect.height/404));
+            float nearest=radius*radius;int selected=-1;
+            // Visible badge interiors follow reverse paint order, not nearest centre.
+            // Extra hit padding can choose the nearest actor only outside every painted badge.
+            for(int i=frame.positions.Length-1;i>=0;i--)
+            {
+                var p=Point(frame.positions[i]);
+                var screen=new Vector2(rect.x+(p.x-48)*rect.width/548,rect.y+(p.y-140)*rect.height/404);
+                var delta=screen-pointer;
+                var local=new Vector2(delta.x/(17*rect.width/548),delta.y/(17*rect.height/404));
+                if(local.sqrMagnitude<=1)return i;
+                float distance=delta.sqrMagnitude;
+                if(distance<nearest){nearest=distance;selected=i;}
+            }
+            return selected;
+        }
+        public static void DrawAt(Rect rect,TacticalSession s,TacticalEpisode episode,RecapPlayback replay,GUIStyle label,bool showTarget=true,int focusActor=-1)
         {
             var matrix=GUI.matrix;
             GUI.matrix=matrix*Matrix4x4.TRS(new Vector3(rect.x-48*rect.width/548,rect.y-140*rect.height/404,0),Quaternion.identity,new Vector3(rect.width/548,rect.height/404,1));
-            Draw(s,episode,replay,replay.Sample(),label,showTarget);GUI.matrix=matrix;
+            Draw(s,episode,replay,replay.Sample(),label,showTarget,focusActor);GUI.matrix=matrix;
         }
-        public static void Draw(TacticalSession s,TacticalEpisode episode,RecapPlayback replay,TacticalFrame frame,GUIStyle label,bool showTarget=true)
+        public static void Draw(TacticalSession s,TacticalEpisode episode,RecapPlayback replay,TacticalFrame frame,GUIStyle label,bool showTarget=true,int focusActor=-1)
         {
-            InitTextures();Court();if(frame==null)return;Trails(episode,replay,frame);
+            InitTextures();Court();if(frame==null)return;
+            for(int i=0;i<6;i++)if(focusActor<0||focusActor==i)Trail(episode,replay,frame,i);
             if(showTarget&&replay.DecisionIndex>=0)TargetArrow(episode.decisions[replay.DecisionIndex]);
+            Trail(episode,replay,frame,6);
             var canvas=GUI.matrix;float pixelScale=canvas.MultiplyVector(Vector3.up).magnitude;
             var numberStyle=new GUIStyle(label){alignment=TextAnchor.MiddleCenter,fontStyle=FontStyle.Bold,fontSize=Mathf.Max(13,Mathf.RoundToInt(16*pixelScale)),padding=new RectOffset()};numberStyle.normal.textColor=new Color(.02f,.08f,.09f);
             for(int i=0;i<6;i++)
             {
                 var p=Point(frame.positions[i]);if(i==episode.controlled)Circle(p,18,Color.white,2);
                 if(i==frame.holder)Circle(p,i==episode.controlled?22:19,gold,3);
-                Disc(p,15,i<3?teal:orange);var screen=canvas.MultiplyPoint3x4(p);GUI.matrix=Matrix4x4.identity;
+                Disc(p,17,pathInk);Disc(p,15,i<3?teal:orange);var screen=canvas.MultiplyPoint3x4(p);GUI.matrix=Matrix4x4.identity;
                 GUI.Label(new Rect(Mathf.Round(screen.x-17*pixelScale),Mathf.Round(screen.y-17*pixelScale),Mathf.Round(34*pixelScale),Mathf.Round(34*pixelScale)),s.Number(i),numberStyle);GUI.matrix=canvas;
             }
             var ball=Point(frame.ball);var display=ball;

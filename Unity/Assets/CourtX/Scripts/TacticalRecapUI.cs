@@ -49,7 +49,7 @@ namespace CourtX
             RecapCourtView.Panel(new Rect(620,132,612,412),new Color(.055f,.14f,.16f));
             string heading=replay.DecisionIndex<0?"观察跑位 · 尚未出手":"第 "+(replay.DecisionIndex+1)+" / "+episode.decisions.Count+" 次出手  ·  "+s.Number(episode.decisions[replay.DecisionIndex].from)+" → "+s.Number(episode.decisions[replay.DecisionIndex].to);
             GUI.Label(new Rect(640,140,570,34),heading,section);
-            string extra=string.IsNullOrEmpty(s.OptionalNarration)?"本地规则模式\n位置按记录插值回放；采样间隔约 0.2 秒。金色实线是球的记录轨迹，虚线箭头仅表示出手目标。":"整段练习的可选解说（不随出手切换）\n"+s.OptionalNarration;
+            string extra=string.IsNullOrEmpty(s.OptionalNarration)?"本地规则模式\n位置按记录插值回放；采样间隔约 0.2 秒。金色实线是记录的空中球路，白色虚线箭头仅表示出手目标。":"整段练习的可选解说（不随出手切换）\n"+s.OptionalNarration;
             const float width=550;
             float localHeight=body.CalcHeight(new GUIContent(s.Review.text),width);
             float extraHeight=small.CalcHeight(new GUIContent(extra),width);
@@ -58,7 +58,7 @@ namespace CourtX
             GUI.Label(new Rect(0,0,width,localHeight),s.Review.text,body);
             RecapCourtView.Panel(new Rect(0,localHeight+12,width,1),new Color(.23f,.37f,.39f));
             GUI.Label(new Rect(0,extraTop,width,extraHeight),extra,small);GUI.EndScrollView();
-            GUI.Label(new Rect(624,550,594,45),"金色实线：篮球近 2 秒轨迹   虚线箭头：该次出手目标\n播放或拖动时间轴，右侧自动切换到对应传球。",tiny);
+            GUI.Label(new Rect(624,550,594,45),"金色实线：近 2 秒空中球路   白虚线箭头：出手目标\n播放或拖动时间轴，右侧自动切换到对应传球。",tiny);
             GUI.backgroundColor=teal;
             if(GUI.Button(new Rect(48,658,360,42),"同一场景再练  →",button))s.RetryScenario();
             GUI.backgroundColor=Color.white;

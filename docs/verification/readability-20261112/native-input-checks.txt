@@ -1,0 +1,10 @@
+2026-11-12, release Windows_Readability/CourtX Learning.exe, native Windows mouse through computer-use.
+PASS New release opens the learning hub and Switch can be selected.
+PASS Clicking timeline seeks to approximately 3.5 s and shows matching recorded positions.
+PASS Clicking the visible 12 badge in the crowded screen position shows "只看 12" and isolates its trail.
+PASS Clicking 12 a second time restores all trails.
+PASS Clicking 01 isolates the attacker's trail without changing role or recording.
+PASS Clicking "显示全部" restores all trails.
+PASS Review tab loads the three existing user rounds in the copied local Replays folder.
+PASS Dragging review timeline changes 7.6 s to 9.6 s with matching player/ball motion.
+No new live round was started or saved during this native check.

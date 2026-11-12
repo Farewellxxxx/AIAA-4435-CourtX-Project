@@ -15,6 +15,7 @@ namespace CourtX
         static Vector2 rightScroll,leftScroll;
         static float rightHeight=600;
         static string prior="";
+        static int focusActor=-1;
         static bool focusFeedback;
         static readonly Color ink=new Color(.90f,.95f,.94f),muted=new Color(.58f,.71f,.72f),teal=new Color(.28f,.84f,.70f),panel=new Color(.055f,.13f,.15f);
         static void Init()
@@ -59,18 +60,27 @@ namespace CourtX
             string[] tabs={"01  战术演练","02  What-if 对比","03  读防守挑战","04  实战复盘"};
             for(int i=0;i<4;i++)if(Button(new Rect(36+i*304,105,292,38),tabs[i],(int)h.Page==i))h.Show((LearningPage)i);
             Box(new Rect(36,157,218,475),panel);Box(new Rect(834,157,410,475),panel);
-            string key=h.Page+"/"+h.Current?.id+"/"+h.QuestionIndex;
-            if(key!=prior){rightScroll=leftScroll=Vector2.zero;prior=key;}
             if(h.Page==LearningPage.Lesson||h.Page==LearningPage.WhatIf)Settings(h);
             else if(h.Page==LearningPage.Challenge)Questions(h);
             else History(h);
             Controls(h);
+            string key=h.Page+"/"+h.Current?.id+"/"+h.QuestionIndex;
+            if(key!=prior){rightScroll=leftScroll=Vector2.zero;focusActor=-1;prior=key;}
             var frame=h.Cursor.Sample();
-            string source=h.IsExample?"教学示例 · 固定录制开局 4435":h.Current==null?"完成练习后，这里显示真实记录":"实际练习 · "+(h.Current==h.Baseline?"A 轮":h.Current==h.Candidate?"B 轮":"你控制 "+LearningCatalog.Number(h.Current.controlled));
-            Label(new Rect(270,157,548,27),source,small);
-            RecapCourtView.DrawAt(Pixel(new Rect(299,188,490,361)),s,h.Current,h.Cursor,tiny,h.Page!=LearningPage.Challenge||h.Answer>=0);
+            string source=h.IsExample?"教学示例 · 开局 4435":h.Current==null?"尚无实际练习记录":"实际练习 · "+(h.Current==h.Baseline?"A 轮":h.Current==h.Candidate?"B 轮":"你控制 "+LearningCatalog.Number(h.Current.controlled));
+            Label(new Rect(270,157,303,27),source,small);
+            GUI.enabled=frame!=null;
+            if(Button(new Rect(578,155,240,30),focusActor<0?"点球员 · 聚焦轨迹":"只看 "+LearningCatalog.Number(focusActor)+" · 显示全部",focusActor>=0))focusActor=-1;
+            GUI.enabled=true;
+            var court=Pixel(new Rect(299,188,490,361));
+            if(Event.current.type==EventType.MouseDown&&Event.current.button==0)
+            {
+                int picked=RecapCourtView.PickActor(court,frame,Event.current.mousePosition);
+                if(picked>=0){focusActor=focusActor==picked?-1:picked;Event.current.Use();}
+            }
+            RecapCourtView.DrawAt(court,s,h.Current,h.Cursor,tiny,h.Page!=LearningPage.Challenge||h.Answer>=0,focusActor);
             if(frame==null)Label(new Rect(310,340,470,90),"从一次实际练习开始。\n按 V 结束片段，就能回到这里看完整球路。",heading);
-            Label(new Rect(278,619,540,28),"青：进攻  橙：防守  白圈：你  金圈：持球  金色球：篮球",tiny);
+            Label(new Rect(278,619,540,28),"青进攻 / 橙防守   金实线：球路   白虚线：目标",tiny);
             Right(s,h);
             Box(new Rect(36,649,1208,1),new Color(.17f,.29f,.30f));
             Label(new Rect(36,661,715,25),Config(h.Scenario),small);
@@ -128,6 +138,13 @@ namespace CourtX
             GUI.enabled=h.Current!=null;
             float time=GUI.HorizontalSlider(Pixel(new Rect(288,557,510,20)),h.Cursor.Time,h.Cursor.StartTime,h.Cursor.EndTime,slider,thumb);
             if(Mathf.Abs(time-h.Cursor.Time)>.001f)h.Seek(time);
+            if(h.Current!=null&&h.Cursor.EndTime>h.Cursor.StartTime)
+                for(int i=0;i<h.Current.decisions.Count;i++)
+                {
+                    float t=h.Current.decisions[i].time;if(t<h.Cursor.StartTime||t>h.Cursor.EndTime)continue;
+                    float x=Mathf.Lerp(295,791,Mathf.InverseLerp(h.Cursor.StartTime,h.Cursor.EndTime,t));
+                    Box(new Rect(x-1.5f,568,3,i==h.Cursor.DecisionIndex?9:6),i==h.Cursor.DecisionIndex?new Color(1,.81f,.30f):new Color(.70f,.77f,.68f));
+                }
             if(Button(new Rect(280,581,78,32),h.Cursor.Playing?"暂停":"播放"))h.Cursor.Toggle();
             if(Button(new Rect(366,581,78,32),h.Cursor.Speed<1?"0.5×":"1×"))h.Cursor.Speed=h.Cursor.Speed<1?1:.5f;
             if(Button(new Rect(452,581,92,32),"前一节点"))Jump(h,-1);
@@ -200,7 +217,7 @@ namespace CourtX
                 y=Text(y,"本地事实复盘。没有记录视线或注意力，不推断你当时在想什么。文件保存在程序旁 Replays 文件夹。",tiny);
             }
             else y=Text(y,"还没有实际练习记录。选择战术进入球场，按 V 结束片段并保存。教学示例不会计入你的练习历史。");
-            y=Text(y,"球场实线：近 2 秒运动轨迹。金色虚线：已发生出手的目标，区别于篮球实际走过的轨迹。",tiny);
+            y=Text(y,"看图：青色 / 橙色实线是近 2 秒跑位，越近越亮；小箭头标出移动方向。点击球员可只看他的轨迹，再点一次恢复全部。\n白圈是你，金圈是持球人。金色实线是记录的空中球路；白色虚线箭头是出手目标。时间轴短线标记传球时刻。",tiny);
             rightHeight=Mathf.Max(406,y+12);EndScroll();
         }
         static float Metrics(float y,string name,TacticalEpisode e)
