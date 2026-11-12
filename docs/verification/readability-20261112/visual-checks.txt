@@ -1,0 +1,67 @@
+PASS 1280x720: actual render resolution matches request
+PASS 1280x720-lesson: captured a rendered surface rather than a black frame
+PASS 1280x720: visible 05 badge hit maps correctly
+PASS 1280x720: outside map does not select an actor
+PASS 1280x720-focus04: captured a rendered surface rather than a black frame
+PASS 1280x720: focus does not mutate recorded facts
+PASS 1280x720-flight: captured a rendered surface rather than a black frame
+PASS 1280x720: changing example restores all trails
+PASS 1280x720-quiz: captured a rendered surface rather than a black frame
+PASS 1280x720: question remains at its recorded instant
+PASS 1280x720-feedback: captured a rendered surface rather than a black frame
+PASS 1280x720-review: captured a rendered surface rather than a black frame
+PASS 1280x720-comparison: captured a rendered surface rather than a black frame
+PASS 1280x720-focus11: captured a rendered surface rather than a black frame
+PASS 1280x720: A/B record switch clears prior trail focus
+PASS 1280x720: viewing never advances the live court
+PASS 1024x576: actual render resolution matches request
+PASS 1024x576-lesson: captured a rendered surface rather than a black frame
+PASS 1024x576: visible 05 badge hit maps correctly
+PASS 1024x576: outside map does not select an actor
+PASS 1024x576-focus04: captured a rendered surface rather than a black frame
+PASS 1024x576: focus does not mutate recorded facts
+PASS 1024x576-flight: captured a rendered surface rather than a black frame
+PASS 1024x576: changing example restores all trails
+PASS 1024x576-quiz: captured a rendered surface rather than a black frame
+PASS 1024x576: question remains at its recorded instant
+PASS 1024x576-feedback: captured a rendered surface rather than a black frame
+PASS 1024x576-review: captured a rendered surface rather than a black frame
+PASS 1024x576-comparison: captured a rendered surface rather than a black frame
+PASS 1024x576-focus11: captured a rendered surface rather than a black frame
+PASS 1024x576: A/B record switch clears prior trail focus
+PASS 1024x576: viewing never advances the live court
+PASS 1920x1080: actual render resolution matches request
+PASS 1920x1080-lesson: captured a rendered surface rather than a black frame
+PASS 1920x1080: visible 05 badge hit maps correctly
+PASS 1920x1080: outside map does not select an actor
+PASS 1920x1080-focus04: captured a rendered surface rather than a black frame
+PASS 1920x1080: focus does not mutate recorded facts
+PASS 1920x1080-flight: captured a rendered surface rather than a black frame
+PASS 1920x1080: changing example restores all trails
+PASS 1920x1080-quiz: captured a rendered surface rather than a black frame
+PASS 1920x1080: question remains at its recorded instant
+PASS 1920x1080-feedback: captured a rendered surface rather than a black frame
+PASS 1920x1080-review: captured a rendered surface rather than a black frame
+PASS 1920x1080-comparison: captured a rendered surface rather than a black frame
+PASS 1920x1080-focus11: captured a rendered surface rather than a black frame
+PASS 1920x1080: A/B record switch clears prior trail focus
+PASS 1920x1080: viewing never advances the live court
+PASS 1280x800: actual render resolution matches request
+PASS 1280x800-lesson: captured a rendered surface rather than a black frame
+PASS 1280x800: visible 05 badge hit maps correctly
+PASS 1280x800: outside map does not select an actor
+PASS 1280x800-focus04: captured a rendered surface rather than a black frame
+PASS 1280x800: focus does not mutate recorded facts
+PASS 1280x800-flight: captured a rendered surface rather than a black frame
+PASS 1280x800: changing example restores all trails
+PASS 1280x800-quiz: captured a rendered surface rather than a black frame
+PASS 1280x800: question remains at its recorded instant
+PASS 1280x800-feedback: captured a rendered surface rather than a black frame
+PASS 1280x800-review: captured a rendered surface rather than a black frame
+PASS 1280x800-comparison: captured a rendered surface rather than a black frame
+PASS 1280x800-focus11: captured a rendered surface rather than a black frame
+PASS 1280x800: A/B record switch clears prior trail focus
+PASS 1280x800: viewing never advances the live court
+Screenshots: 32
+Failures: 0
+QA fixtures are visual evidence only, not user practice or learning outcomes.

@@ -1,0 +1,23 @@
+PASS Selected first pass retains its own risk and outcome
+PASS Selected pass never cites later defense as release context
+PASS Explicit last and default human pass selection agree
+PASS Before first release has no invented pass assessment
+PASS Open paused on selected release
+PASS Scrub before first pass clears selected decision
+PASS All six actors interpolate by timestamp
+PASS Ball follows its own recorded positions
+PASS No future possession or mark transfer during interpolation
+PASS Between releases retains the preceding decision
+PASS Next pass selects exact release and pauses
+PASS Previous pass selects earlier release
+PASS Scrubbing clamps before recording start
+PASS Half speed advances half a recorded second
+PASS Paused playback does not advance
+PASS Playback stops exactly at last recorded frame
+PASS Play at end restarts the episode
+PASS Replay and report building do not mutate archived facts
+PASS Sample arrays cannot mutate recording even at endpoint
+PASS Duplicate timestamps choose the latest exact discrete state
+PASS Empty episode stays usable and cannot play
+PASS Single-frame and nonzero-start recording remains stationary
+Failures: 0

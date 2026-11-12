@@ -1,0 +1,7 @@
+FAIL Overlapping visible 12 badge wins over obscured closer 04
+FAIL Overlap selection remains correct at half scale
+FAIL Overlap selection follows letterbox offset
+PASS Separate 05 badge remains selectable
+PASS Outside court does not select a player
+PASS Empty record does not create a selection
+Failures: 3

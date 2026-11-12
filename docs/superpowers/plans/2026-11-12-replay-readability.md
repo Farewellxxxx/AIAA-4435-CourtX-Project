@@ -26,22 +26,22 @@
 
 Files: `RecapCourtView.cs`, `TacticalRecapUI.cs`.
 Interfaces: preserve existing `Draw`/`DrawAt` calls with optional `focusActor=-1`; add `PickActor(Rect,TacticalFrame,Vector2)` returning closest visible actor or -1.
-- [ ] Keep baseline images and hash the old program.
-- [ ] Implement contrasted/clipped paths, direction cues, ivory target arrows and dark badge borders.
-- [ ] Inspect actual renders for crossing routes and motion endpoints.
+- [x] Keep baseline images and hash the old program.
+- [x] Implement contrasted/clipped paths, direction cues, ivory target arrows and dark badge borders.
+- [x] Inspect actual renders for crossing routes and motion endpoints.
 
 ### Task 2: Focus and timeline
 
 Files: `LearningHubUI.cs`.
 Interfaces: consume renderer focus argument and hit test. Focus belongs only to this UI; clear on record/page changes.
-- [ ] Add click-to-focus and reset with clear text, plus timeline pass ticks.
-- [ ] Update legends to match the rendered meanings.
-- [ ] Validate selecting, clearing and record switching using native input; run four existing suites (138 checks).
+- [x] Add click-to-focus and reset with clear text, plus timeline pass ticks.
+- [x] Update legends to match the rendered meanings.
+- [x] Validate selecting, clearing and record switching using native input; run four existing suites (138 checks).
 
 ### Task 3: Verified local build
 
 Files: `LearningAuthoring.cs`, `ReadabilityPlayerReview.cs`, documentation.
-- [ ] Add separate release and QA build entries, QA capture matrix and functional checks for the view interactions.
-- [ ] Build/capture sequentially, visually inspect the four sizes and refine any clipping.
-- [ ] Run fresh review, verify old hashes and absence of QA in release; copy existing user records only to the local new build.
-- [ ] Record evidence and deliver local executable; retain work locally without push.
+- [x] Add separate release and QA build entries, QA capture matrix and functional checks for the view interactions.
+- [x] Build/capture sequentially, visually inspect the four sizes and refine any clipping.
+- [x] Run fresh review, verify old hashes and absence of QA in release; copy existing user records only to the local new build.
+- [x] Record evidence and deliver local executable; retain work locally without push.

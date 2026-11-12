@@ -1,0 +1,18 @@
+{
+  "sourceRevision": "39dd5bf5be8a3d1b28c79f1180af1ebfd0d83e5f",
+  "branch": "feature/replay-readability",
+  "unity": "2022.3.62f3c1",
+  "assemblySha256": "82505653FF589C655D44FA5EF4893E80FAC69D4F4A1D4D631E123A8826B26B0A",
+  "qaInstrumentationAbsent": true,
+  "file": "CourtX-Readability-20261112.zip",
+  "sha256": "9F5AC060DA4947F5DB5C68A75148CE5392F49C7BE903D9D97F3ED52E26723F55",
+  "bytes": 27935223,
+  "entries": 133,
+  "oldFilesVerified": 139,
+  "userReplayFilesCopied": 6,
+  "userReplaysExcludedFromZip": true,
+  "archivedFilesMatchBuild": true,
+  "regressionChecks": 144,
+  "visualChecks": 64,
+  "screenshots": 32
+}
