@@ -1,0 +1,127 @@
+PASS HighPost / Balanced: ten actors and separate role / possession
+PASS A complete upper-two / lower-three zone is initialized
+PASS Twelve seconds stays finite and on court
+PASS Upper zone defenders react while low defenders can retain valid positions
+PASS Same full state yields deterministic continuation
+PASS All ten actors have current contextual tasks
+PASS Ball at the right baseline activates the right low defender
+PASS HighPost / Rim: ten actors and separate role / possession
+PASS A complete upper-two / lower-three zone is initialized
+PASS Twelve seconds stays finite and on court
+PASS Upper zone defenders react while low defenders can retain valid positions
+PASS Same full state yields deterministic continuation
+PASS All ten actors have current contextual tasks
+PASS Ball at the right baseline activates the right low defender
+PASS HighPost / Perimeter: ten actors and separate role / possession
+PASS A complete upper-two / lower-three zone is initialized
+PASS Twelve seconds stays finite and on court
+PASS Upper zone defenders react while low defenders can retain valid positions
+PASS Same full state yields deterministic continuation
+PASS All ten actors have current contextual tasks
+PASS Ball at the right baseline activates the right low defender
+PASS Screen / Balanced: ten actors and separate role / possession
+PASS A complete upper-two / lower-three zone is initialized
+PASS Twelve seconds stays finite and on court
+PASS Upper zone defenders react while low defenders can retain valid positions
+PASS Same full state yields deterministic continuation
+PASS All ten actors have current contextual tasks
+PASS Ball at the right baseline activates the right low defender
+PASS Screen / Rim: ten actors and separate role / possession
+PASS A complete upper-two / lower-three zone is initialized
+PASS Twelve seconds stays finite and on court
+PASS Upper zone defenders react while low defenders can retain valid positions
+PASS Same full state yields deterministic continuation
+PASS All ten actors have current contextual tasks
+PASS Ball at the right baseline activates the right low defender
+PASS Screen / Perimeter: ten actors and separate role / possession
+PASS A complete upper-two / lower-three zone is initialized
+PASS Twelve seconds stays finite and on court
+PASS Upper zone defenders react while low defenders can retain valid positions
+PASS Same full state yields deterministic continuation
+PASS All ten actors have current contextual tasks
+PASS Ball at the right baseline activates the right low defender
+PASS Horns / Balanced: ten actors and separate role / possession
+PASS A complete upper-two / lower-three zone is initialized
+PASS Twelve seconds stays finite and on court
+PASS Upper zone defenders react while low defenders can retain valid positions
+PASS Same full state yields deterministic continuation
+PASS All ten actors have current contextual tasks
+PASS Ball at the right baseline activates the right low defender
+PASS Horns / Rim: ten actors and separate role / possession
+PASS A complete upper-two / lower-three zone is initialized
+PASS Twelve seconds stays finite and on court
+PASS Upper zone defenders react while low defenders can retain valid positions
+PASS Same full state yields deterministic continuation
+PASS All ten actors have current contextual tasks
+PASS Ball at the right baseline activates the right low defender
+PASS Horns / Perimeter: ten actors and separate role / possession
+PASS A complete upper-two / lower-three zone is initialized
+PASS Twelve seconds stays finite and on court
+PASS Upper zone defenders react while low defenders can retain valid positions
+PASS Same full state yields deterministic continuation
+PASS All ten actors have current contextual tasks
+PASS Ball at the right baseline activates the right low defender
+PASS Single pass command immediately releases without a charge phase
+PASS Second command cannot replace an airborne ball
+PASS Assisted catch transfers possession, never human role
+PASS Cannot pass to self or a defender
+PASS A valid request makes AI pass through the same ball lifecycle
+PASS Calling again rearms a failed/completed sequence
+PASS State copy owns its player and pin arrays
+PASS Fractional replay interpolates geometry without revealing future phase
+PASS A replay defender can be moved at an arbitrary timestamp
+PASS Branch continues past source end without mutating actual record
+PASS Undo after continuation returns to original edit point
+PASS Editing an earlier branch cursor discards its obsolete future
+PASS Fractional branch drag preserves all positions before its edit boundary
+PASS Exact edit timestamp selects the final edited pose
+PASS Repeated edit at same timestamp preserves the original left-hand anchor
+PASS Undo restores complete branch timeline after fractional edits
+PASS Restore returns to unmodified real replay
+PASS Airborne edit preserves ball position and progress
+PASS Airborne What-if reaches a consistent reception
+PASS Terminal success branch resumes rules from the edited positions
+PASS Terminal branch explicitly restores playable offensive possession
+PASS Terminal turnover branch resumes rules from the edited positions
+PASS Terminal branch explicitly restores playable offensive possession
+PASS Reopening success preserves an existing airborne pass and elapsed time
+PASS Actual record saves and reloads complete states
+PASS Persistence distinguishes no-flight from a real airborne state
+PASS Nonfinite coordinates are rejected before rendering or simulation
+PASS Backward record clocks are rejected
+PASS Invalid possession is rejected before array indexing
+PASS Lesson is a complete playable five-player recording
+PASS HighPost / Balanced: teaching progresses to decisions and passes
+PASS Lesson is a complete playable five-player recording
+PASS HighPost / Rim: teaching progresses to decisions and passes
+PASS Lesson is a complete playable five-player recording
+PASS HighPost / Perimeter: teaching progresses to decisions and passes
+PASS Lesson is a complete playable five-player recording
+PASS Screen / Balanced: teaching progresses to decisions and passes
+PASS Lesson is a complete playable five-player recording
+PASS Screen / Rim: teaching progresses to decisions and passes
+PASS Lesson is a complete playable five-player recording
+PASS Screen / Perimeter: teaching progresses to decisions and passes
+PASS Lesson is a complete playable five-player recording
+PASS Horns / Balanced: teaching progresses to decisions and passes
+PASS Lesson is a complete playable five-player recording
+PASS Horns / Rim: teaching progresses to decisions and passes
+PASS Lesson is a complete playable five-player recording
+PASS Horns / Perimeter: teaching progresses to decisions and passes
+PASS Court coordinates map to the actual displayed rectangle
+PASS Pointer coordinates invert the same map with letterbox offset
+PASS Overlapping badges select the topmost visible defender
+PASS Human role badge stays selectable on overlapping markers
+PASS Dragging outside cannot start by selecting an off-court player
+PASS Start playing creates an ordinary live practice
+PASS Starting 3D uses preset/role/possession, never edited 2D midgame state
+PASS Live Q action passes immediately without holding or release
+PASS Normal practice catches a pass while retaining the human role
+PASS Call can run again after a completed attempt
+PASS Call after turnover restores playable possession
+PASS Finishing opens the same board on an actual round
+PASS A normal 3D round persists reloadable ten-player states
+PASS What-if on just-finished replay cannot rewrite the saved round
+PASS Failed saves remain visibly pending across later rounds
+PASS Retry saves every pending round after multiple write failures
+Failures: 0

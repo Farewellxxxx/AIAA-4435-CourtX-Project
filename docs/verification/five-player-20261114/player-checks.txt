@@ -1,0 +1,34 @@
+PASS Startup completes with an explicitly included indicator material
+PASS New scene does not expose legacy four-page UI
+PASS Scene owns ten distinct character models
+PASS All characters have two physical front eyes
+PASS 1280x720: actual rendered resolution
+PASS 1280x720: complete court remains within window
+PASS Editable lesson uses branch state at 1280x720
+PASS Restore preserves original lesson at 1280x720
+PASS 1024x576: actual rendered resolution
+PASS 1024x576: complete court remains within window
+PASS Editable lesson uses branch state at 1024x576
+PASS Restore preserves original lesson at 1024x576
+PASS 1920x1080: actual rendered resolution
+PASS 1920x1080: complete court remains within window
+PASS Editable lesson uses branch state at 1920x1080
+PASS Restore preserves original lesson at 1920x1080
+PASS Role 0: nine NPCs and fixed human identity
+PASS Role 0: player spawns at corresponding five-player position
+PASS Role 1: nine NPCs and fixed human identity
+PASS Role 1: player spawns at corresponding five-player position
+PASS Role 2: nine NPCs and fixed human identity
+PASS Role 2: player spawns at corresponding five-player position
+PASS Role 3: nine NPCs and fixed human identity
+PASS Role 3: player spawns at corresponding five-player position
+PASS Role 4: nine NPCs and fixed human identity
+PASS Role 4: player spawns at corresponding five-player position
+PASS Single direct-pass action releases immediately in actual player
+PASS Player receives an assisted pass without charge timing
+PASS Player can call a new sequence
+PASS Actual practice returns to replay entrance
+PASS What-if on real round leaves disk evidence untouched
+PASS Saved round loads through normal history reader
+Failures: 0
+Synthetic automated QA sessions, not user performance evidence.

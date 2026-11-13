@@ -1,5 +1,9 @@
 # CourtX · 半场配合原型
 
+当前五人制入口：`Windows_FivePlayer/CourtX.exe`。战术板与即时回放共用可拖动的 2D 核心；支持三套进攻预设、整体 2–3 联防反应、悬停任务和短时渐隐轨迹。正常 3D 为 5v5，Q 按一下直接传球，E 要球，C 重新 call，V 结束并回放。没有读防守挑战，也不把 2D What-if 带入 3D。参见[五人制使用说明](docs/FIVE_PLAYER_GUIDE_ZH.md)。源码分支 `feature/five-player-workbench`，场景 `FivePlayerTraining.unity`，构建入口 `FivePlayerAuthoring.Build`。分享时复制整个程序文件夹，或解压 `CourtX_FivePlayer_20261114.zip`。
+
+以下为保留的旧版说明；旧版程序和 3v3 回放仍可独立使用。
+
 2D 轨迹优化版入口：`Windows_Readability/CourtX Learning.exe`。球员轨迹提高对比度、增加方向提示，点击圆标可聚焦单人；金色空中球路与白色虚线出手目标分开，时间轴标出传球时刻。旧程序保留。详见[轨迹阅读说明](docs/REPLAY_READABILITY.md)。本地分支 `feature/replay-readability`，构建入口 `LearningAuthoring.BuildReadability`。
 
 界面修整版入口：`Windows_LearningPolish/CourtX Learning.exe`。本轮针对文字清晰度、字号与换行、球场曲线、球员外圈和页面控件；沿用原有配合与交互逻辑。旧的 `Windows_Learning` 完整保留。详见[修整与验证记录](docs/LEARNING_POLISH.md)。源码分支 `feature/learning-visual-polish`，保留版标签 `v0.5-learning-stable-20261111`；新程序使用 `LearningAuthoring.BuildPolish` 单独构建。

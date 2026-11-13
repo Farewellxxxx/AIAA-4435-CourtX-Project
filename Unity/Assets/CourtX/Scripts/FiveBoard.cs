@@ -7,7 +7,7 @@ namespace CourtX
     {
         public FiveState State{get;private set;}=FiveRules.Create(FivePlay.HighPost,FiveDefense.Balanced,0,0);
         FiveRecording source,branch;
-        bool playing,editing,editSaved;
+        bool playing,editing,editSaved,reopened;
         float sourceTime,branchStart;
         readonly List<Snapshot> undo=new List<Snapshot>();
         sealed class Snapshot{public FiveRecording branch;public FiveState state;public float sourceTime,branchStart;}
@@ -50,18 +50,32 @@ namespace CourtX
         }
         void PrepareEdit()
         {
-            if(!editing||!editSaved)
-            {
-                Commit();undo.Add(new Snapshot{branch=branch?.Copy(),state=State.Copy(),sourceTime=sourceTime,branchStart=branchStart});
-                if(undo.Count>20)undo.RemoveAt(0);editSaved=true;
-            }
             playing=false;
+            if(editing&&editSaved)return;
+            Commit();undo.Add(new Snapshot{branch=branch?.Copy(),state=State.Copy(),sourceTime=sourceTime,branchStart=branchStart});
+            if(undo.Count>20)undo.RemoveAt(0);editSaved=true;
             if(branch==null)
             {
                 sourceTime=Time;branchStart=Time;
                 branch=new FiveRecording{name=source.name,kind="whatif",created="假设推演"};State=State.Copy();State.demo=false;
             }
-            branch.frames.RemoveAll(f=>f.time>=Time-.0001f);
+            else
+            {
+                // Two states at one timestamp encode an instantaneous edit. The first
+                // closes the old interpolation; exact-time sampling chooses the last.
+                // Repeated edits retain the original left-hand pose, not the last edit.
+                var left=State.Copy();foreach(var f in branch.frames)if(f.time==Time){left=f.Copy();break;}
+                branch.frames.RemoveAll(f=>f.time>=Time);
+                branch.frames.Add(left);branch.frames.Add(State.Copy());
+            }
+            reopened=State.success||State.turnover;
+            if(reopened)
+            {
+                State.success=State.turnover=false;State.phase=0;State.phaseAge=0;State.request=-1;State.passCooldown=.5f;
+                if(State.flight==null&&(State.holder<0||State.holder>=5))State.holder=State.lastPassFrom>=0&&State.lastPassFrom<5?State.lastPassFrom:State.controlled;
+                FiveRules.Event(State,"假设重新组织：保留当前站位，恢复进攻方配合。");
+                Notice="假设重新组织：保留站位"+(State.flight!=null?"和空中传球。":"，由 "+FiveRules.Number(State.holder)+" 持球。");
+            }
             if(!editing)editSaved=false;
         }
         public void BeginEdit(){playing=false;editing=true;editSaved=false;}
@@ -70,7 +84,7 @@ namespace CourtX
         {
             if(actor<0||actor>=10||float.IsNaN(position.x)||float.IsNaN(position.y)||float.IsInfinity(position.x)||float.IsInfinity(position.y))return;
             PrepareEdit();State.positions[actor]=FiveRules.Clamp(position);State.velocities[actor]=Vector2.zero;
-            FiveRules.Refresh(State);branch.Add(State,true);Notice="假设推演：继续播放，观察其他人的反应。原片段保持不变。";
+            FiveRules.Refresh(State);branch.Add(State,true);if(!reopened)Notice="假设推演：继续播放，观察其他人的反应。原片段保持不变。";
         }
         public void SetPinned(int actor,bool value)
         {if(actor<0||actor>=10)return;PrepareEdit();State.pinned[actor]=value;FiveRules.Refresh(State);branch.Add(State,true);Notice=value?"已固定此人，其余球员继续按规则反应。":"已释放此人，继续后参与自动跑位。";}
