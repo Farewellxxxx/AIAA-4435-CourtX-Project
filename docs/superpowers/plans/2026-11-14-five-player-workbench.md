@@ -54,7 +54,7 @@ Interfaces: `StartPractice()` always creates a fresh configured state; `FinishPr
 
 ### Task 5: Release validation and delivery
 Files: `Tools/run_five_review.ps1`, `docs/FIVE_PLAYER_GUIDE_ZH.md`, `docs/verification/five-player-20261114/*`, README.
-- [ ] All existing/new rule suites and player QA green; render 1024×576, 1280×720, 1920×1080.
-- [ ] Fresh independent whole-branch review; fix important findings with reproductions and regression checks.
-- [ ] Build release without QA code, run actual mouse/keyboard flows, inspect logs and screenshots.
-- [ ] Package EXE folder/ZIP on E:, verify source record isolation and old output hashes, write guide and evidence; commit locally, no remote publish needed.
+- [x] All existing/new rule suites and player QA green; render 1024×576, 1280×720, 1920×1080.
+- [x] Fresh independent whole-branch review; fix important findings with reproductions and regression checks.
+- [x] Build release without QA code, run actual mouse/keyboard flows, inspect logs and screenshots.
+- [x] Package EXE folder/ZIP on E:, verify source record isolation and old output hashes, write guide and evidence; commit locally, no remote publish needed.
