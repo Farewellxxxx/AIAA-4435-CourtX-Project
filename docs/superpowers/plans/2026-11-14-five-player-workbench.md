@@ -25,32 +25,32 @@
 ### Task 1: Complete five-player state and deterministic rules
 Files: new `Scripts/FiveState.cs`, `Scripts/FiveRules.cs`; tests `Editor/FivePlayerReview.cs`.
 Interfaces: `FiveRules.Create(FivePlay,FiveDefense,int role,int holder) -> FiveState`; `Step(FiveState,float,int human=-1)`; `Pass(FiveState,int) -> bool`; `Request(FiveState,int)`; `Call(FiveState)`; `Refresh(FiveState)`; `FiveState.Copy()`.
-- [ ] Run unchanged legacy baseline (reactive, recap, learning, readability).
-- [ ] Write behavioral tests for ten actors, role/holder separation, reproducibility, defensive continuity, one-click pass/catch, requests and call reset; watch RED using minimal API stubs.
-- [ ] Implement bounded deterministic motion, three play stages and zone responsibilities, pass assist and observable events.
-- [ ] Run rules GREEN and unchanged baseline; commit.
+- [x] Run unchanged legacy baseline (reactive, recap, learning, readability).
+- [x] Write behavioral tests for ten actors, role/holder separation, reproducibility, defensive continuity, one-click pass/catch, requests and call reset; watch RED using minimal API stubs.
+- [x] Implement bounded deterministic motion, three play stages and zone responsibilities, pass assist and observable events.
+- [x] Run rules GREEN and unchanged baseline; commit.
 
 ### Task 2: Shared editable timeline and durable recordings
 Files: `Scripts/FiveBoard.cs`, `Scripts/FiveRecording.cs`; extend `FivePlayerReview.cs`.
 Interfaces: `FiveRecording` stores `List<FiveState> frames`, `FiveBoard.Load(record)`, `Seek(float)`, `Tick(float)`, `Move(int,Vector2)`, `Undo()`, `Restore()`, `SetPinned(int,bool)`, `Pass(int)`, `State`, `Record`, `IsBranch`, `Playing`.
-- [ ] RED tests for fractional sampling without future events, immutable source, editing both teams, in-flight edit, undo after advancing, branching from an earlier cursor, roundtrip persistence and malformed input.
-- [ ] Implement one shared board for lessons and actual replays, branch-local clocks/frames, bounded records and atomic saves with visible failures.
-- [ ] Verify GREEN; commit.
+- [x] RED tests for fractional sampling without future events, immutable source, editing both teams, in-flight edit, undo after advancing, branching from an earlier cursor, roundtrip persistence and malformed input.
+- [x] Implement one shared board for lessons and actual replays, branch-local clocks/frames, bounded records and atomic saves with visible failures.
+- [x] Verify GREEN; commit.
 
 ### Task 3: Unified 2D workbench and reference styling
 Files: `Scripts/FiveCourtUI.cs`, `Scripts/FiveCourtView.cs`, `Scripts/FiveCourtGame.cs` board integration.
 Interfaces: `FiveCourtView.Draw(Rect,FiveBoard,int role)` and `Pick(Rect,FiveState,Vector2)` / `WorldPoint`; `FiveCourtUI.Draw(FiveCourtGame)`.
-- [ ] Add view-coordinate/hit-test behavior tests before integration; verify RED.
-- [ ] Implement two tabs, preset/role/possession/defense controls, hover tasks, compact intent, dark green enlarged court, screen marker and 2.5-second tapering trails.
-- [ ] Integrate drag/undo/restore/branch actions and playback/seek/speed/nodes without challenge UI.
-- [ ] Render small/large actual windows and inspect; adjust without superficial style tests; commit.
+- [x] Add view-coordinate/hit-test behavior tests before integration; verify RED.
+- [x] Implement two tabs, preset/role/possession/defense controls, hover tasks, compact intent, dark green enlarged court, screen marker and 2.5-second tapering trails.
+- [x] Integrate drag/undo/restore/branch actions and playback/seek/speed/nodes without challenge UI.
+- [x] Render small/large actual windows and inspect; adjust without superficial style tests; commit.
 
 ### Task 4: Normal 5v5 first-person practice and replay loop
 Files: `Scripts/FiveCourtGame.cs`, `Scripts/FiveActors.cs`, `Editor/FivePlayerAuthoring.cs`, `Tests/FivePlayerPlaytest.cs`.
 Interfaces: `StartPractice()` always creates a fresh configured state; `FinishPractice()` records and loads replay; `CallPlay()` resets sequence, all use same rules; authoring `Build` / `BuildQA`.
-- [ ] RED integration tests for ten visible actors (nine NPC + human), role mapping, immediate pass without charging, request feedback, repeated call, episode save/reload and 2D branch not seeding 3D.
-- [ ] Reuse scene/court/player driver, clone extra actors, fix labels/defense classification, add front eyes and live target highlight. Keep walk/run, Q pass, E request, C recall tactic, R restart, V finish, Esc board.
-- [ ] Run automated player cycle, inspect first-person and overview, refine reactions; commit.
+- [x] RED integration tests for ten visible actors (nine NPC + human), role mapping, immediate pass without charging, request feedback, repeated call, episode save/reload and 2D branch not seeding 3D.
+- [x] Reuse scene/court/player driver, clone extra actors, fix labels/defense classification, add front eyes and live target highlight. Keep walk/run, Q pass, E request, C recall tactic, R restart, V finish, Esc board.
+- [x] Run automated player cycle, inspect first-person and overview, refine reactions; commit.
 
 ### Task 5: Release validation and delivery
 Files: `Tools/run_five_review.ps1`, `docs/FIVE_PLAYER_GUIDE_ZH.md`, `docs/verification/five-player-20261114/*`, README.

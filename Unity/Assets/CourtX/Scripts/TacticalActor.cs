@@ -7,6 +7,7 @@ namespace CourtX
     public sealed class TacticalActor : MonoBehaviour
     {
         public int Id;
+        public int DefenseStartsAt=3;
         public ActorAction Action;
         public Vector3 Velocity { get; private set; }
         Transform[] upper,lower,thigh,leg,shin,shoe;
@@ -30,7 +31,7 @@ namespace CourtX
             previous=transform.position;float speed=Velocity.magnitude;
             gait+=Time.deltaTime*Mathf.Min(speed*3.5f,11);
             if(upper.Length!=2)return;
-            bool defense=Id>=3;bool raised=Action==ActorAction.HandsUp||Action==ActorAction.Help;
+            bool defense=Id>=DefenseStartsAt;bool raised=Action==ActorAction.HandsUp||Action==ActorAction.Help;
             for(int i=0;i<2;i++)
             {
                 float s=i==0?-1:1;
