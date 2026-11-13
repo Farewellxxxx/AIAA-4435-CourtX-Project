@@ -10,7 +10,7 @@ namespace CourtX
         public FiveFlight Copy()=>(FiveFlight)MemberwiseClone();
         public Vector2 Position=>Vector2.Lerp(origin,destination,Mathf.Clamp01(elapsed/Mathf.Max(.01f,duration)));
     }
-    [Serializable] public sealed class FiveState
+    [Serializable] public sealed class FiveState : ISerializationCallbackReceiver
     {
         public FivePlay play;public FiveDefense defense;
         public int controlled,holder,phase,eventSerial,request=-1,lastPassFrom=-1,lastPassTo=-1;
@@ -19,6 +19,9 @@ namespace CourtX
         public Vector2[] positions=new Vector2[10],velocities=new Vector2[10],targets=new Vector2[10],facing=new Vector2[10];
         public bool[] pinned=new bool[10];public string[] tasks=new string[10];
         public FiveFlight flight;public Vector2 looseBall,screenPoint;
+        [SerializeField] bool hasFlight;
+        public void OnBeforeSerialize(){hasFlight=flight!=null;}
+        public void OnAfterDeserialize(){if(!hasFlight)flight=null;}
         public int screener=4;
         public string attackIntent="",defenseIntent="",lastEvent="",phaseName="";
         public Vector2 Ball=>flight!=null?flight.Position:holder>=0&&holder<10?positions[holder]:looseBall;

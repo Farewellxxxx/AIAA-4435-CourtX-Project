@@ -37,6 +37,7 @@ namespace CourtX
             Set(s,4,new Vector2(0,5.8f),"提到罚球线附近接应，牵动中路防守。");
             if(s.play==FivePlay.HighPost)
             {
+                Set(s,0,new Vector2(-5.3f,9),"向侧翼调整传球角度，避开上沿正面的封堵。");
                 s.attackIntent=s.phase<2?"中锋提中接应，牵动联防中路；两侧保持宽度。":"让中路防守选择上提或守篮下，寻找其身后的接应空间。";
                 if(s.phase>=2){Set(s,0,new Vector2(-2.2f,4.1f),"传后向空隙切入，再观察回传线路。");Set(s,3,new Vector2(-3.4f,1.8f),"沿底线接应中路协防身后，留出传球角度。");}
             }
@@ -51,7 +52,7 @@ namespace CourtX
             else
             {
                 s.screenPoint=new Vector2(-2.3f,6.3f);
-                Set(s,4,new Vector2(2.3f,6.3f),"右高位接应，观察射手绕掩护后的窗口。");
+                Set(s,4,new Vector2(3.6f,6.1f),"从右高位向外显露接球点，观察射手绕掩护后的窗口。");
                 Set(s,3,s.phase<3?s.screenPoint:new Vector2(-1.8f,3.1f),s.phase<3?"在左高位为射手做无球掩护，先站定。":"掩护后切入，提供射手之外的第二出口。");
                 Set(s,1,s.phase==0?new Vector2(-5.8f,2.3f):s.phase==1?new Vector2(-3.1f,6.9f):new Vector2(-6,7.8f),s.phase==0?"从左侧准备绕过高位掩护。":"借高位掩护兜到外线，保持可见接球角度。");
                 s.screenActive=s.phase>=1&&s.phase<3&&(p[3]-s.screenPoint).magnitude<1.1f;
@@ -93,7 +94,7 @@ namespace CourtX
             if(s.holder>=0&&s.holder<5)
             {
                 int h=s.holder;
-                if(!s.demo||s.phase>=2||h!=0)s.targets[h]=p[h];
+                if(s.phase>=2||h!=0)s.targets[h]=p[h];
                 s.tasks[h]="当前持球：观察防守和接应角度，再决定传球或调整位置。";
             }
             if(s.flight!=null){s.targets[s.flight.to]=s.flight.destination;s.tasks[s.flight.to]="向来球位置接应，准备接球后的下一步选择。";}
@@ -145,7 +146,7 @@ namespace CourtX
             if(s.success||s.turnover)return;
             if(s.phase==0&&s.phaseAge>.65f)
             {
-                Vector2 spot=s.play==FivePlay.Screen?new Vector2(.5f,8.2f):s.play==FivePlay.Horns?new Vector2(2.3f,6.3f):new Vector2(0,5.8f);
+                Vector2 spot=s.play==FivePlay.Screen?new Vector2(.5f,8.2f):s.play==FivePlay.Horns?new Vector2(3.6f,6.1f):new Vector2(0,5.8f);
                 if(Vector2.Distance(s.positions[4],spot)<1.2f)Change(s,1);
             }
             else if(s.phase==1)
@@ -173,6 +174,14 @@ namespace CourtX
             }
             // Flexible initial ball ownership can connect to the normal initiating pair.
             if(s.phase==0&&s.phaseAge>1.4f&&s.holder!=0&&s.holder!=4)to=0;
+            if(s.phase==1&&to>=0&&Risk(s,to)==2)
+            {
+                // When the high-post entry is denied, reverse the ball before trying again.
+                int outlet=-1;float best=-100;
+                for(int i=0;i<5;i++)if(i!=s.holder&&i!=to&&i!=s.lastPassFrom&&Risk(s,i)<2)
+                {float value=Space(s,i)-Risk(s,i)*2;if(value>best){best=value;outlet=i;}}
+                if(outlet>=0)to=outlet;
+            }
             if(to>=0&&Risk(s,to)<2)Pass(s,to);
         }
         public static void Step(FiveState s,float seconds,int human=-1)

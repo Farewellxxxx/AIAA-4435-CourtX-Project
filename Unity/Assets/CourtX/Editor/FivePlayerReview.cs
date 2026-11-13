@@ -49,7 +49,7 @@ public static class FivePlayerReview
         Check(!recalled.turnover&&!recalled.success&&recalled.phase<4&&recalled.holder>=0,"Calling again rearms a failed/completed sequence");
         var copy=OpenPass();var clone=copy.Copy();clone.positions[1]=Vector2.zero;clone.pinned[3]=true;
         Check(copy.positions[1]==new Vector2(4,10)&&!copy.pinned[3],"State copy owns its player and pin arrays");
-        Finish();
+        FiveBoardReview.Run();Finish();
     }
     public static void Finish()
     {
