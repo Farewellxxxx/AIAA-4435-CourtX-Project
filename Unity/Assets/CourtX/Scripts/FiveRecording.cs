@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -11,6 +12,33 @@ namespace CourtX
         public List<FiveState> frames=new List<FiveState>();
         public float Start=>frames.Count>0?frames[0].time:0;
         public float End=>frames.Count>0?frames[frames.Count-1].time:0;
+        [NonSerialized] DateTime? legacyDateReference;
+        static readonly string[] DateFormats={"yyyy-MM-dd HH:mm:ss","yyyy-MM-dd HH:mm"};
+        public DateTime? CreatedAt(DateTime reference)
+        {
+            if(DateTime.TryParseExact(created,DateFormats,CultureInfo.InvariantCulture,DateTimeStyles.None,out var full))return full;
+            // Older recordings omit the year. Resolve at most one calendar rollover.
+            reference=legacyDateReference??reference;
+            for(int year=reference.Year;year>=Math.Max(1,reference.Year-1);year--)
+                if(DateTime.TryParseExact(year.ToString("0000",CultureInfo.InvariantCulture)+"-"+created,
+                    DateFormats,CultureInfo.InvariantCulture,DateTimeStyles.None,out var legacy)&&legacy.Date<=reference.Date)return legacy;
+            return null;
+        }
+        public string CreatedClock(DateTime reference)
+        {
+            bool seconds=created!=null&&created.IndexOf(':')!=created.LastIndexOf(':');
+            return CreatedAt(reference)?.ToString(seconds?"HH:mm:ss":"HH:mm",CultureInfo.InvariantCulture)??"时间未知";
+        }
+        public string CooperationOutcome
+        {
+            get
+            {
+                var final=frames.Count==0?null:frames[frames.Count-1];
+                if(endReason=="已完成一次战术决策"||final?.success==true)return "协作达成";
+                if(endReason=="传球被封堵"||final?.turnover==true)return "协作中断";
+                return "练习结束";
+            }
+        }
         public const int MaxFrames=6000;
         public void Add(FiveState s,bool force=false)
         {
@@ -55,7 +83,8 @@ namespace CourtX
         {
             if(new FileInfo(path).Length>45*1024*1024)throw new InvalidDataException("回放文件过大。");
             var r=JsonUtility.FromJson<FiveRecording>(File.ReadAllText(path));
-            if(!Valid(r))throw new InvalidDataException("回放文件包含无效状态。");return r;
+            if(!Valid(r))throw new InvalidDataException("回放文件包含无效状态。");
+            r.legacyDateReference=File.GetLastWriteTime(path);return r;
         }
         public static FiveRecording Lesson(FivePlay play,FiveDefense defense,int role,int holder)
         {

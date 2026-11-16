@@ -14,27 +14,53 @@ namespace CourtX
         readonly List<Snapshot> undo=new List<Snapshot>();
         sealed class Snapshot{public FiveRecording branch;public FiveState state,layoutBasis;public float sourceTime,branchStart;}
         public FiveRecording Record=>branch??source;
+        public FiveRecording TimelineRecord=>IsFrameStudy?source:Record;
+        const float ShiftHighlightSeconds=1.5f;
+        readonly float[] defenseShiftUntil=new float[5];
+        public float DefenderShiftOpacity(int actor,float now)
+            => actor>=5&&actor<10?Mathf.Clamp01((defenseShiftUntil[actor-5]-now)*3):0;
+        public int DefenderShiftMask
+        {
+            get
+            {
+                int mask=0;float now=UnityEngine.Time.realtimeSinceStartup;
+                for(int i=5;i<10;i++)if(DefenderShiftOpacity(i,now)>0)mask|=1<<i;
+                return mask;
+            }
+        }
+        void ClearDefenseShift()=>Array.Clear(defenseShiftUntil,0,defenseShiftUntil.Length);
+        void ArrangeFrame(int actor)
+        {
+            var prior=(Vector2[])State.positions.Clone();
+            FiveFrameDefense.Arrange(State,layoutBasis);
+            float until=UnityEngine.Time.realtimeSinceStartup+ShiftHighlightSeconds;
+            for(int i=5;i<10;i++)
+            {
+                if(i==actor||State.pinned[i])defenseShiftUntil[i-5]=0;
+                else if((prior[i]-State.positions[i]).sqrMagnitude>=.04f*.04f)defenseShiftUntil[i-5]=until;
+            }
+        }
         public bool IsBranch=>branch!=null;
         public bool CanUndo=>undo.Count>0;
-        public string Notice{get;private set;}="暂停后可拖动任何球员，试试另一种站位。";
+        public string Notice{get;private set;}="";
         public float Speed=1;
         public float Start=>IsFrameStudy?source.Start:Record?.Start??0;
         public float End=>IsFrameStudy?source.End:Mathf.Max(Record?.End??0,IsBranch?Time:0);
         public bool Playing
         {
             get=>playing;
-            set{if(value&&IsFrameStudy){Restore();Notice="已返回原片段播放；暂停后可以继续摆位。";}if(!value)Commit();playing=value;}
+            set{if(value&&IsFrameStudy){Restore();Notice="已恢复原站位并播放。";}if(!value)Commit();playing=value;}
         }
         public float Time=>State.time;
         public void Load(FiveRecording r)
         {
             if(!FiveRecording.Valid(r))throw new ArgumentException("无法打开不完整的五人制回放。");
-            source=r.Copy();branch=null;layoutBasis=null;undo.Clear();playing=editing=editSaved=false;sourceTime=source.Start;State=source.Sample(source.Start);
-            Notice="暂停后可拖动任何球员，试试另一种站位。";
+            source=r.Copy();branch=null;layoutBasis=null;undo.Clear();playing=editing=editSaved=false;sourceTime=source.Start;State=source.Sample(source.Start);ClearDefenseShift();
+            Notice="";
         }
         void Commit(){if(branch!=null&&State.time>=branch.End)branch.Add(State,true);}
         public void Seek(float time)
-        {if(IsFrameStudy)Restore();playing=false;Commit();State=Record.Sample(time);editing=editSaved=false;}
+        {if(IsFrameStudy)Restore();playing=false;Commit();State=Record.Sample(time);editing=editSaved=false;ClearDefenseShift();}
         public void Tick(float seconds)
         {
             if(!playing||seconds<=0||float.IsNaN(seconds)||float.IsInfinity(seconds))return;
@@ -81,13 +107,13 @@ namespace CourtX
             }
             if(!editing)editSaved=false;
         }
-        public void BeginEdit(){playing=false;editing=true;editSaved=false;}
+        public void BeginEdit(){playing=false;editing=true;editSaved=false;ClearDefenseShift();}
         public void PlaceFrame(int actor,Vector2 position)
         {
             if(actor<0||actor>=10||float.IsNaN(position.x)||float.IsNaN(position.y)||float.IsInfinity(position.x)||float.IsInfinity(position.y))return;
             PrepareEdit(true);State.positions[actor]=FiveRules.Clamp(position);State.velocities[actor]=Vector2.zero;
-            State.pinned[actor]=true;FiveFrameDefense.Arrange(State,layoutBasis);branch.Add(State,true);
-            Notice="暂停布防 · 时间不前进；已固定 "+FiveRules.Number(actor)+"，其他防守人按职责补位。";
+            State.pinned[actor]=true;ArrangeFrame(actor);branch.Add(State,true);
+            Notice="已固定 "+FiveRules.Number(actor)+" 的站位。";
         }
         public void EndEdit(){editing=editSaved=false;Commit();}
         public void Move(int actor,Vector2 position)
@@ -97,9 +123,9 @@ namespace CourtX
             FiveRules.Refresh(State);branch.Add(State,true);if(!reopened)Notice="假设推演：继续播放，观察其他人的反应。原片段保持不变。";
         }
         public void SetPinned(int actor,bool value)
-        {if(actor<0||actor>=10)return;PrepareEdit(IsFrameStudy);State.pinned[actor]=value;if(IsFrameStudy)FiveFrameDefense.Arrange(State,layoutBasis);else FiveRules.Refresh(State);branch.Add(State,true);Notice=value?"已固定此人，其余防守人重新分配职责。":"已释放此人，参与当前帧的布防调整。";}
+        {if(actor<0||actor>=10)return;PrepareEdit(IsFrameStudy);State.pinned[actor]=value;if(IsFrameStudy)ArrangeFrame(-1);else FiveRules.Refresh(State);branch.Add(State,true);Notice=value?"已固定此人站位。":"已允许此人随规则调整站位。";}
         public void SetHolder(int actor)
-        {if(actor<0||actor>=5)return;PrepareEdit(IsFrameStudy);State.holder=actor;State.flight=null;State.turnover=false;FiveRules.Event(State,"假设设置："+FiveRules.Number(actor)+" 持球。");if(IsFrameStudy)FiveFrameDefense.Arrange(State,layoutBasis);else FiveRules.Refresh(State);branch.Add(State,true);}
+        {if(actor<0||actor>=5)return;PrepareEdit(IsFrameStudy);State.holder=actor;State.flight=null;State.turnover=false;FiveRules.Event(State,"假设设置："+FiveRules.Number(actor)+" 持球。");if(IsFrameStudy)ArrangeFrame(-1);else FiveRules.Refresh(State);branch.Add(State,true);}
         public bool Pass(int actor)
         {
             if(actor<0||actor>=5||State.flight!=null||State.turnover||State.holder==actor)return false;
@@ -115,9 +141,9 @@ namespace CourtX
         public void Undo()
         {
             if(undo.Count==0)return;var s=undo[undo.Count-1];undo.RemoveAt(undo.Count-1);branch=s.branch;State=s.state;layoutBasis=s.layoutBasis;sourceTime=s.sourceTime;branchStart=s.branchStart;
-            playing=editing=editSaved=false;Notice="已撤销这次编辑，回到修改前的时刻。";
+            playing=editing=editSaved=false;ClearDefenseShift();Notice="已撤销这次编辑，回到修改前的时刻。";
         }
         public void Restore()
-        {branch=null;layoutBasis=null;undo.Clear();State=source.Sample(sourceTime);playing=editing=editSaved=false;Notice="已返回原片段，假设修改已清除。";}
+        {branch=null;layoutBasis=null;undo.Clear();State=source.Sample(sourceTime);playing=editing=editSaved=false;ClearDefenseShift();Notice="已恢复原站位。";}
     }
 }

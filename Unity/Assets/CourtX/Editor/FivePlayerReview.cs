@@ -8,6 +8,7 @@ using UnityEngine;
 public static class FivePlayerReview
 {
     public static void RunAll(){FiveBaselineReview.Run();Run();}
+    public static void RunView(){lines.Clear();failures=0;FiveViewReview.Run();Finish();}
     static readonly List<string> lines=new List<string>();
     static int failures;
     public static void Check(bool value,string name)

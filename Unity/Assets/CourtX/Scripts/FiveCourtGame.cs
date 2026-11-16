@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -43,17 +44,21 @@ namespace CourtX
             if(!Directory.Exists(RecordingFolder))return;
             try
             {
-                foreach(var file in Directory.GetFiles(RecordingFolder,"*.json").OrderByDescending(File.GetLastWriteTimeUtc).Take(60))
+                foreach(var file in Directory.GetFiles(RecordingFolder,"*.json").OrderByDescending(File.GetLastWriteTimeUtc))
                 {try{var r=FiveRecording.Read(file);if(r.kind=="actual")History.Add(r);}catch(Exception){SkippedFiles++;}}
+                var today=DateTime.Now;
+                var ordered=History.OrderByDescending(r=>r.CreatedAt(today)).ToArray();
+                History.Clear();History.AddRange(ordered);
             }
             catch(Exception e){Message="无法读取历史回放："+e.Message;}
         }
         public void LoadLesson(){Page=0;Board.Load(FiveRecording.Lesson(Play,Defense,Role,InitialHolder));}
+        public void SelectReplay(string id)=>SelectReplay(History.FindIndex(r=>r.id==id));
         public void SelectReplay(int index)
         {
             if(index<0||index>=History.Count)return;Page=1;SelectedReplayId=History[index].id;Board.Load(History[index]);var s=Board.State;
             Play=s.play;Defense=s.defense;Role=s.controlled;InitialHolder=History[index].frames[0].holder;
-            if(!SavePending)Message="已打开第 "+(index+1)+" 轮 · "+History[index].created+" · "+History[index].End.ToString("F1")+" 秒";
+            if(!SavePending)Message="已打开第 "+(index+1)+" 轮";
         }
         public void ShowPage(int page)
         {if(page==0)LoadLesson();else if(History.Count>0)SelectReplay(Mathf.Max(0,SelectedReplayIndex));else{Page=1;Board.Playing=false;}}
@@ -114,7 +119,7 @@ namespace CourtX
         {
             ArchiveRound();
             Live=FiveRules.Create(Play,Defense,Role,InitialHolder);Live.demo=false;
-            LiveRecord=new FiveRecording{name=FiveRules.Plays[(int)Play],kind="actual",created=DateTime.Now.ToString("MM-dd HH:mm:ss")};LiveRecord.Add(Live,true);
+            LiveRecord=new FiveRecording{name=FiveRules.Plays[(int)Play],kind="actual",created=DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss",CultureInfo.InvariantCulture)};LiveRecord.Add(Live,true);
             Target=-1;manualUntil=0;Practicing=true;Overview=false;Message="";Board.Playing=false;
             if(player){player.ResetView();Teleport(Live.positions[Role]);player.transform.rotation=Quaternion.LookRotation(FiveRules.World(new Vector2(0,1.575f)-Live.positions[Role]));}
             Visuals?.Apply();if(Application.isPlaying){Cursor.lockState=CursorLockMode.Locked;Cursor.visible=false;}
@@ -136,7 +141,7 @@ namespace CourtX
         {
             if(LiveRecord==null||Live==null||!string.IsNullOrEmpty(LiveRecord.endReason)||Live.time<.05f)return;
             LiveRecord.Add(Live,true);LiveRecord.endReason=Live.success?"已完成一次战术决策":Live.turnover?"传球被封堵":"结束练习";
-            var record=LiveRecord.Copy();History.Insert(0,record);if(History.Count>30)History.RemoveAt(History.Count-1);
+            var record=LiveRecord.Copy();History.Insert(0,record);
             TrySave(record);
         }
         readonly Dictionary<string,FiveRecording> unsaved=new Dictionary<string,FiveRecording>();

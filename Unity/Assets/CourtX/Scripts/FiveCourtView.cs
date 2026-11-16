@@ -71,7 +71,8 @@ namespace CourtX
             trailInk.Stroke(x,y,(2+ageA*7)*scale,(2+ageB*7)*scale,ha,hb);
             trailInk.Stroke(x,y,(.3f+ageA*3.4f)*scale,(.3f+ageB*3.4f)*scale,ca,cb);
         }
-        public static void Draw(Rect r,FiveBoard board,GUIStyle label,int hover=-1)=>Draw(r,board.Record,board.State,label,hover);
+        public static void Draw(Rect r,FiveBoard board,GUIStyle label,int hover=-1)
+            =>Draw(r,board.IsFrameStudy?null:board.Record,board.State,label,hover,board);
         public static Texture2D TrailsTexture(Vector2 size,FiveRecording record,FiveState state,int hover=-1)
         {
             CourtTexture(size);var r=new Rect(Vector2.zero,size);float t=state.time,from=t-2.5f;
@@ -87,9 +88,10 @@ namespace CourtX
             return trailInk.Texture;
         }
         public static void Draw(Rect r,FiveRecording record,FiveState state,GUIStyle label,int hover=-1)
+            =>Draw(r,record,state,label,hover,null);
+        static void Draw(Rect r,FiveRecording record,FiveState state,GUIStyle label,int hover,FiveBoard board)
         {
-            Box(new Rect(r.x-16,r.y-16,r.width+32,r.height+32),Floor);Court(r);
-            float t=state.time,from=t-2.5f;
+            Court(r);
             if(record!=null&&Event.current.type==EventType.Repaint)
             {
                 TrailsTexture(r.size,record,state,hover);DrawInk(trailInk,r);
@@ -105,6 +107,17 @@ namespace CourtX
             {
                 Vector2 a=ScreenPoint(r,state.flight.origin),b=ScreenPoint(r,state.flight.destination);var dir=(b-a).normalized;float d=Vector2.Distance(a,b);
                 for(float f=0;f<d;f+=12)Line(a+dir*f,a+dir*Mathf.Min(f+5,d),new Color(1,.88f,.61f,.35f),1.4f);
+            }
+            if(board!=null&&board.IsFrameStudy)
+            {
+                float now=Time.realtimeSinceStartup;
+                for(int i=5;i<10;i++)
+                {
+                    float a=board.DefenderShiftOpacity(i,now);if(a<=0)continue;
+                    var p=ScreenPoint(r,state.positions[i]);
+                    Disc(p,rad+6,new Color(.73f,1f,.95f,.9f*a));
+                    Disc(p,rad+3,Floor);
+                }
             }
             for(int i=0;i<10;i++)if(i!=state.controlled)Actor(r,state,i,label,hover);
             Actor(r,state,state.controlled,label,hover);

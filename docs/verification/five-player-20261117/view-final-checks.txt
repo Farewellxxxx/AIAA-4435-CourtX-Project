@@ -1,0 +1,44 @@
+PASS Court coordinates map to the actual displayed rectangle
+PASS Pointer coordinates invert the same map with letterbox offset
+PASS Overlapping badges select the topmost visible defender
+PASS Human role badge stays selectable on overlapping markers
+PASS Dragging outside cannot start by selecting an off-court player
+PASS Court has grown and retains regulation geometry at (1024, 576)
+PASS Board lanes do not overlap at (1024, 576)
+PASS Court has grown and retains regulation geometry at (1440, 900)
+PASS Board lanes do not overlap at (1440, 900)
+PASS Court has grown and retains regulation geometry at (1920, 1080)
+PASS Board lanes do not overlap at (1920, 1080)
+PASS Legacy minute-precision replay groups alongside same-day second-precision records and keeps its displayed time
+PASS Grouped history card selects the original replay index at 0.64
+PASS Grouped history card selects the original replay index at 0.64
+PASS Grouped history card selects the original replay index at 0.64
+PASS Grouped history card selects the original replay index at 0.64
+PASS Grouped history card selects the original replay index at 0.64
+PASS Date headers are outside card hit targets
+PASS Card gaps and scrollbar do not select a replay
+PASS Last recording remains reachable after scrolling through date headers
+PASS Grouped history card selects the original replay index at 0.8
+PASS Grouped history card selects the original replay index at 0.8
+PASS Grouped history card selects the original replay index at 0.8
+PASS Grouped history card selects the original replay index at 0.8
+PASS Grouped history card selects the original replay index at 0.8
+PASS Date headers are outside card hit targets
+PASS Card gaps and scrollbar do not select a replay
+PASS Last recording remains reachable after scrolling through date headers
+PASS Grouped history card selects the original replay index at 1.2
+PASS Grouped history card selects the original replay index at 1.2
+PASS Grouped history card selects the original replay index at 1.2
+PASS Grouped history card selects the original replay index at 1.2
+PASS Grouped history card selects the original replay index at 1.2
+PASS Date headers are outside card hit targets
+PASS Card gaps and scrollbar do not select a replay
+PASS Last recording remains reachable after scrolling through date headers
+PASS Only other moved defenders are emphasized and flight/time remain frozen
+PASS Highlight expiration depends on wall clock without advancing replay or flight
+PASS Starting another drag clears stale defense emphasis
+PASS Restore clears defense emphasis at the same replay time
+PASS History keeps older rounds beyond the former cap and orders by recorded date
+PASS Refreshing and reordering history preserves the open replay by ID
+PASS Returning after history refresh opens the selected recording's own role
+Failures: 0

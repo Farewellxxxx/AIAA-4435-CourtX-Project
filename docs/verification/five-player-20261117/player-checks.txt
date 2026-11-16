@@ -1,0 +1,37 @@
+PASS Startup completes with an explicitly included indicator material
+PASS New scene does not expose legacy four-page UI
+PASS Scene owns ten distinct character models
+PASS All characters have two physical front eyes
+PASS Live highlight identifies automatic defense shifts at headless
+PASS Paused edit freezes the actual player clock at headless
+PASS Other defenders rearrange immediately without playback at headless
+PASS Editable lesson uses branch state at headless
+PASS Restore preserves original lesson at headless
+PASS History selects unique recording 0
+PASS History selects unique recording 1
+PASS History selects unique recording 2
+PASS History selects unique recording 3
+PASS History selects unique recording 4
+PASS History selects unique recording 5
+PASS History selects unique recording 6
+PASS History selects unique recording 7
+PASS Selected old round survives tab changes in player
+PASS Role 0: nine NPCs and fixed human identity
+PASS Role 0: player spawns at corresponding five-player position
+PASS Role 1: nine NPCs and fixed human identity
+PASS Role 1: player spawns at corresponding five-player position
+PASS Role 2: nine NPCs and fixed human identity
+PASS Role 2: player spawns at corresponding five-player position
+PASS Role 3: nine NPCs and fixed human identity
+PASS Role 3: player spawns at corresponding five-player position
+PASS Role 4: nine NPCs and fixed human identity
+PASS Role 4: player spawns at corresponding five-player position
+PASS Single direct-pass action releases immediately in actual player
+PASS Player receives an assisted pass without charge timing
+PASS Player can call a new sequence
+PASS Actual practice returns to replay entrance
+PASS What-if on real round leaves disk evidence untouched
+PASS Saved round loads through normal history reader
+Failures: 0
+HEADLESS: native window, screenshots and resolution checks intentionally not run.
+Synthetic automated QA sessions, not user performance evidence.
