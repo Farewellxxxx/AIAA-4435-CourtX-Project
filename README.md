@@ -1,5 +1,7 @@
 # CourtX · 半场配合原型
 
+11 月 16 日修正版入口：`Windows_FivePlayer_1116/CourtX.exe`，分享包 `CourtX_FivePlayer_20261116.zip`。暂停拖动会在同一帧直接重排防守，时间/阶段/其他进攻位置不前进；历史回放支持逐条选中、高亮和记住选择；球场线和轨迹改为平滑抗锯齿绘制。参见[最新说明](docs/FIVE_PLAYER_GUIDE_ZH.md)。旧版及其记录保留。
+
 当前五人制入口：`Windows_FivePlayer/CourtX.exe`。战术板与即时回放共用可拖动的 2D 核心；支持三套进攻预设、整体 2–3 联防反应、悬停任务和短时渐隐轨迹。正常 3D 为 5v5，Q 按一下直接传球，E 要球，C 重新 call，V 结束并回放。没有读防守挑战，也不把 2D What-if 带入 3D。参见[五人制使用说明](docs/FIVE_PLAYER_GUIDE_ZH.md)。源码分支 `feature/five-player-workbench`，场景 `FivePlayerTraining.unity`，构建入口 `FivePlayerAuthoring.Build`。分享时复制整个程序文件夹，或解压 `CourtX_FivePlayer_20261114.zip`。
 
 以下为保留的旧版说明；旧版程序和 3v3 回放仍可独立使用。

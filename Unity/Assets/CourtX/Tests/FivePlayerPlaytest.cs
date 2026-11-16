@@ -10,8 +10,9 @@ using UnityEngine;
 public sealed class FivePlayerPlaytest:MonoBehaviour
 {
     FiveCourtGame game;int failures;readonly List<string> checks=new List<string>();
-    const string Folder="E:/study documents/2026 Fall/AIAA 4435 Inter/CourtX/Preview/Playtests/FivePlayer-20261114";
+    const string Folder="E:/study documents/2026 Fall/AIAA 4435 Inter/CourtX/Preview/Playtests/FivePlayer-20261116";
     static readonly List<string> runtimeErrors=new List<string>();
+    static bool Headless=>SystemInfo.graphicsDeviceType==UnityEngine.Rendering.GraphicsDeviceType.Null;
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Boot()
     {
@@ -21,6 +22,7 @@ public sealed class FivePlayerPlaytest:MonoBehaviour
     void Check(bool value,string name){checks.Add((value?"PASS ":"FAIL ")+name);if(!value)failures++;}
     IEnumerator Shot(string name)
     {
+        if(Headless)yield break;
         yield return new WaitForSecondsRealtime(.2f);yield return new WaitForEndOfFrame();
         var texture=new Texture2D(Screen.width,Screen.height,TextureFormat.RGB24,false);texture.ReadPixels(new Rect(0,0,Screen.width,Screen.height),0,0);texture.Apply();
         File.WriteAllBytes(Path.Combine(Folder,name+".png"),texture.EncodeToPNG());Destroy(texture);
@@ -29,24 +31,35 @@ public sealed class FivePlayerPlaytest:MonoBehaviour
     {
         Directory.CreateDirectory(Folder);Application.runInBackground=true;QualitySettings.vSyncCount=0;
         yield return null;game=FindObjectOfType<FiveCourtGame>();game.AcceptsInput=false;game.SaveFolder=Path.Combine(Folder,"QA-SyntheticSessions");
-        while(!UnityEngine.Rendering.SplashScreen.isFinished)yield return null;
+        while(!Headless&&!UnityEngine.Rendering.SplashScreen.isFinished)yield return null;
         Check(game.Visuals!=null&&game.indicatorMaterial!=null,"Startup completes with an explicitly included indicator material");
         Check(FindObjectsOfType<TacticalSession>().Length==0,"New scene does not expose legacy four-page UI");
         Check(game.actors.Length==10&&game.actors.All(a=>a!=null)&&game.actors.Distinct().Count()==10,"Scene owns ten distinct character models");
         Check(game.actors.All(a=>a.GetComponentsInChildren<Transform>(true).Count(t=>t.name=="Eye")==2),"All characters have two physical front eyes");
-        foreach(var size in new[]{new Vector2Int(1280,720),new Vector2Int(1024,576),new Vector2Int(1920,1080)})
+        foreach(var size in Headless?new[]{new Vector2Int(1280,720)}:new[]{new Vector2Int(1280,720),new Vector2Int(1024,576),new Vector2Int(1920,1080)})
         {
-            Screen.SetResolution(size.x,size.y,false);yield return new WaitForSecondsRealtime(.5f);string tag=size.x+"x"+size.y;
+            if(!Headless)Screen.SetResolution(size.x,size.y,false);yield return new WaitForSecondsRealtime(.5f);string tag=Headless?"headless":size.x+"x"+size.y;
             game.Play=FivePlay.Screen;game.Defense=FiveDefense.Balanced;game.LoadLesson();game.Board.Seek(1.6f);yield return Shot(tag+"-lesson");
-            Check(Screen.width==size.x&&Screen.height==size.y,tag+": actual rendered resolution");
-            var r=FiveCourtUI.CourtPixels;Check(r.x>=0&&r.y>=0&&r.xMax<=Screen.width&&r.yMax<=Screen.height,tag+": complete court remains within window");
-            string original=JsonUtility.ToJson(game.Board.Record);game.Board.Move(7,new Vector2(-5.5f,7.5f));
-            typeof(FiveCourtUI).GetField("selected",BindingFlags.Static|BindingFlags.NonPublic).SetValue(null,7);
+            if(!Headless){Check(Screen.width==size.x&&Screen.height==size.y,tag+": actual rendered resolution");
+            var r=FiveCourtUI.CourtPixels;Check(r.x>=0&&r.y>=0&&r.xMax<=Screen.width&&r.yMax<=Screen.height,tag+": complete court remains within window");}
+            string original=JsonUtility.ToJson(game.Board.Record);float frozen=game.Board.Time;var oldLayout=game.Board.State.Copy();game.Board.PlaceFrame(6,new Vector2(5.5f,10.5f));
+            typeof(FiveCourtUI).GetField("selected",BindingFlags.Static|BindingFlags.NonPublic).SetValue(null,6);
             typeof(FiveCourtUI).GetField("prior",BindingFlags.Static|BindingFlags.NonPublic).SetValue(null,game.Board.Record);
-            game.Board.StepOnce();yield return Shot(tag+"-whatif");
+            yield return Shot(tag+"-paused-layout");
+            Check(game.Board.Time==frozen&&!game.Board.Playing&&game.Board.IsFrameStudy,"Paused edit freezes the actual player clock at "+tag);
+            Check(Enumerable.Range(5,5).Any(i=>i!=6&&Vector2.Distance(game.Board.State.positions[i],oldLayout.positions[i])>.3f),"Other defenders rearrange immediately without playback at "+tag);
             Check(game.Board.IsBranch,"Editable lesson uses branch state at "+tag);game.Board.Restore();Check(JsonUtility.ToJson(game.Board.Record)==original,"Restore preserves original lesson at "+tag);
         }
-        Screen.SetResolution(1280,720,false);yield return new WaitForSecondsRealtime(.5f);
+        if(!Headless)Screen.SetResolution(1280,720,false);yield return new WaitForSecondsRealtime(.5f);
+        game.History.Clear();
+        for(int i=0;i<8;i++)
+        {
+            var record=new FiveRecording{name=FiveRules.Plays[i%3],created="11-16 12:00:"+i.ToString("00"),kind="actual"};
+            var state=FiveRules.Create((FivePlay)(i%3),FiveDefense.Balanced,0,0);record.Add(state,true);state.time=10+i*3;record.Add(state,true);game.History.Add(record);
+        }
+        for(int i=0;i<8;i++){game.SelectReplay(i);Check(game.Board.Record.id==game.History[i].id&&game.Board.End==10+i*3,"History selects unique recording "+i);}
+        game.ShowPage(0);game.ShowPage(1);Check(game.SelectedReplayIndex==7,"Selected old round survives tab changes in player");
+        game.SelectReplay(2);yield return Shot("history-selection");
         foreach(FivePlay play in System.Enum.GetValues(typeof(FivePlay)))
         {game.Play=play;game.Defense=FiveDefense.Perimeter;game.LoadLesson();game.Board.Seek(7);yield return Shot("play-"+play);}
         for(int role=0;role<5;role++)
@@ -69,11 +82,11 @@ public sealed class FivePlayerPlaytest:MonoBehaviour
         game.FinishPractice();yield return Shot("actual-replay");
         Check(game.Page==1&&!game.Practicing&&game.Board.Record.kind=="actual","Actual practice returns to replay entrance");
         var actual=game.History[0];string saved=File.ReadAllText(Path.Combine(game.RecordingFolder,actual.id+".json"));
-        game.Board.Seek(.4f);game.Board.Move(6,new Vector2(5,8));game.Board.StepOnce();yield return Shot("actual-replay-whatif");
+        game.Board.Seek(.4f);game.Board.PlaceFrame(6,new Vector2(5,8));yield return Shot("actual-replay-paused-layout");
         Check(game.Board.IsBranch&&saved==File.ReadAllText(Path.Combine(game.RecordingFolder,actual.id+".json")),"What-if on real round leaves disk evidence untouched");
         game.LoadHistory();Check(game.History.Any(r=>r.id==actual.id),"Saved round loads through normal history reader");
         foreach(string error in runtimeErrors){failures++;checks.Add("ERROR "+error);}
-        checks.Add("Failures: "+failures);checks.Add("Synthetic automated QA sessions, not user performance evidence.");
+        checks.Add("Failures: "+failures);checks.Add(Headless?"HEADLESS: native window, screenshots and resolution checks intentionally not run.":"WINDOWED: screenshots and resolution checks run.");checks.Add("Synthetic automated QA sessions, not user performance evidence.");
         File.WriteAllLines(Path.Combine(Folder,"player-checks.txt"),checks);Application.Quit(failures==0?0:1);
     }
 }

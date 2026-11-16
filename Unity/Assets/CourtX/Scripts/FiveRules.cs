@@ -12,6 +12,7 @@ namespace CourtX
         public static Vector3 World(Vector2 p,float height=0)=>new Vector3(p.x,height,-p.y);
         public static Vector2 Flat(Vector3 p)=>new Vector2(p.x,-p.z);
         static readonly Vector2 rim=new Vector2(0,1.575f);
+        public static float HelpDepth(FiveDefense defense)=>defense==FiveDefense.Rim?7.1f:defense==FiveDefense.Perimeter?4.5f:5.9f;
         static Vector2 Toward(Vector2 from,Vector2 to,float distance)=>from+(to-from).normalized*distance;
         public static void Event(FiveState s,string message){s.lastEvent=message;s.eventSerial++;}
         public static FiveState Create(FivePlay play,FiveDefense defense,int role,int holder)
@@ -66,7 +67,7 @@ namespace CourtX
             Set(s,9,new Vector2(4.1f+ball.x*.1f,2.8f),"守右侧低位，准备接应上沿被突破后的协防。");
             int upper=side<0?5:6,weakUpper=side<0?6:5,lower=side<0?7:9,weakLower=side<0?9:7;
             bool low=ball.y<4.4f&&Mathf.Abs(ball.x)>3.1f;
-            float helpDepth=s.defense==FiveDefense.Rim?7.1f:s.defense==FiveDefense.Perimeter?4.5f:5.9f;
+            float helpDepth=HelpDepth(s.defense);
             bool middle=ball.y<helpDepth&&Mathf.Abs(ball.x)<3.9f;
             if(low)
             {

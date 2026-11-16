@@ -22,6 +22,8 @@ namespace CourtX
         public int Target{get;private set;}=-1;
         public string Message="",SaveFolder="";
         public int SkippedFiles;
+        public string SelectedReplayId{get;private set;}="";
+        public int SelectedReplayIndex=>History.FindIndex(r=>r.id==SelectedReplayId);
         public bool HasPausedPractice=>!Practicing&&Live!=null&&LiveRecord!=null&&string.IsNullOrEmpty(LiveRecord.endReason);
         public bool SavePending=>unsaved.Count>0;
         public bool Overview{get;private set;}
@@ -49,19 +51,27 @@ namespace CourtX
         public void LoadLesson(){Page=0;Board.Load(FiveRecording.Lesson(Play,Defense,Role,InitialHolder));}
         public void SelectReplay(int index)
         {
-            if(index<0||index>=History.Count)return;Page=1;Board.Load(History[index]);var s=Board.State;
+            if(index<0||index>=History.Count)return;Page=1;SelectedReplayId=History[index].id;Board.Load(History[index]);var s=Board.State;
             Play=s.play;Defense=s.defense;Role=s.controlled;InitialHolder=History[index].frames[0].holder;
+            if(!SavePending)Message="已打开第 "+(index+1)+" 轮 · "+History[index].created+" · "+History[index].End.ToString("F1")+" 秒";
         }
         public void ShowPage(int page)
-        {if(page==0)LoadLesson();else if(History.Count>0)SelectReplay(0);else{Page=1;Board.Playing=false;}}
+        {if(page==0)LoadLesson();else if(History.Count>0)SelectReplay(Mathf.Max(0,SelectedReplayIndex));else{Page=1;Board.Playing=false;}}
+        public void BoardShortcut(KeyCode key,bool pointerActive)
+        {
+            if(pointerActive)return;
+            if(key==KeyCode.Space)Board.Playing=!Board.Playing;
+            if(key==KeyCode.LeftArrow)Board.Jump(-1);
+            if(key==KeyCode.RightArrow)Board.Jump(1);
+        }
         void Update()
         {
             if(!Practicing)
             {
                 Board.Tick(Time.unscaledDeltaTime);
-                if(AcceptsInput&&Input.GetKeyDown(KeyCode.Space))Board.Playing=!Board.Playing;
-                if(AcceptsInput&&Input.GetKeyDown(KeyCode.LeftArrow))Board.Jump(-1);
-                if(AcceptsInput&&Input.GetKeyDown(KeyCode.RightArrow))Board.Jump(1);
+                if(AcceptsInput&&Input.GetKeyDown(KeyCode.Space))BoardShortcut(KeyCode.Space,FiveCourtUI.Dragging);
+                if(AcceptsInput&&Input.GetKeyDown(KeyCode.LeftArrow))BoardShortcut(KeyCode.LeftArrow,FiveCourtUI.Dragging);
+                if(AcceptsInput&&Input.GetKeyDown(KeyCode.RightArrow))BoardShortcut(KeyCode.RightArrow,FiveCourtUI.Dragging);
                 return;
             }
             float dt=Mathf.Min(Time.deltaTime,.05f);
@@ -104,7 +114,7 @@ namespace CourtX
         {
             ArchiveRound();
             Live=FiveRules.Create(Play,Defense,Role,InitialHolder);Live.demo=false;
-            LiveRecord=new FiveRecording{name=FiveRules.Plays[(int)Play],kind="actual",created=DateTime.Now.ToString("MM-dd HH:mm")};LiveRecord.Add(Live,true);
+            LiveRecord=new FiveRecording{name=FiveRules.Plays[(int)Play],kind="actual",created=DateTime.Now.ToString("MM-dd HH:mm:ss")};LiveRecord.Add(Live,true);
             Target=-1;manualUntil=0;Practicing=true;Overview=false;Message="";Board.Playing=false;
             if(player){player.ResetView();Teleport(Live.positions[Role]);player.transform.rotation=Quaternion.LookRotation(FiveRules.World(new Vector2(0,1.575f)-Live.positions[Role]));}
             Visuals?.Apply();if(Application.isPlaying){Cursor.lockState=CursorLockMode.Locked;Cursor.visible=false;}

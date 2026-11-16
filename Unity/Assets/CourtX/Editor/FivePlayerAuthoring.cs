@@ -9,8 +9,8 @@ using UnityEngine;
 public static class FivePlayerAuthoring
 {
     public const string Scene="Assets/CourtX/Scenes/FivePlayerTraining.unity";
-    public const string Delivery="E:/study documents/2026 Fall/AIAA 4435 Inter/CourtX/Windows_FivePlayer";
-    public const string Evidence="E:/study documents/2026 Fall/AIAA 4435 Inter/CourtX/Preview/Playtests/FivePlayer-20261114";
+    public const string Delivery="E:/study documents/2026 Fall/AIAA 4435 Inter/CourtX/Windows_FivePlayer_1116";
+    public const string Evidence="E:/study documents/2026 Fall/AIAA 4435 Inter/CourtX/Preview/Playtests/FivePlayer-20261116";
     public static void Generate()
     {
         var scene=EditorSceneManager.OpenScene(TacticalAuthoring.Scene);

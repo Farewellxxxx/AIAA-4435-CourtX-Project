@@ -1,0 +1,3 @@
+PASS 5 existing rounds independently load by identity and duration, remember tab selection, support frozen-frame edits and restore.
+PASS Original files unchanged.
+No native pointer actions were performed.
