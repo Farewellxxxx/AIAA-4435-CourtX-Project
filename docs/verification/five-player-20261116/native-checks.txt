@@ -1,0 +1,19 @@
+Native release acceptance, 2026-11-16 Asia/Shanghai
+Executable: E:/study documents/2026 Fall/AIAA 4435 Inter/CourtX/Windows_FivePlayer_1116/CourtX.exe
+Method: Computer Use real mouse/key input; observed live window screenshots (1536 x 824 including title bar).
+PASS Mouse selection of all 5 actual historical rounds: selected highlight, round header, duration and footer agree (20.3, 26.4, 13.7, 37.1, 31.5 seconds).
+PASS Leaving replay for the tactical board and returning preserves selected round 5.
+PASS Click round 4, then Down selects round 5.
+PASS Timeline drag selects 12.0 / 31.5 seconds on round 5.
+PASS Drag X2 away: X1 covers ball side, X4 protects rim; other offense stays in place; time remains 12.0 seconds.
+PASS Drag offense 03 in the same frame: prior manual X2 stays fixed, free defender coverage updates, time remains 12.0 seconds.
+PASS Undo restores the previous full layout, including 03 and defender coverage.
+PASS Return to original restores the original round-5 layout at 12.0 seconds.
+PASS Original replay plays forward (observed 15.0 seconds) and pauses again (observed 20.2 seconds).
+PASS Tactical board drag of ball holder 05: X4 covers ball side, X5 protects rim, clock stays at 0.0 seconds.
+PASS Switching historical rounds remains responsive after frame editing.
+PASS Repeated round-5 X2 drag produces the same visible defensive response.
+PASS All 5 original files and their new-release copies retain baseline SHA256 hashes after UI actions; no test rounds added.
+PASS Current player log has no Exception, Error, Assertion or Crash entries.
+No code change required. Player left open at round 5, 12.0 seconds, with X2 manually repositioned.
+Not covered by this native pass: overflowing history scroll, quantitative GPU frame rate, 3D gameplay, other window sizes.
