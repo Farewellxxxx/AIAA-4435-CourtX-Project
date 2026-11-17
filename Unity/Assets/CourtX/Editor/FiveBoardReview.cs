@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using CourtX;
 using UnityEngine;
 public static class FiveBoardReview
@@ -62,8 +63,111 @@ public static class FiveBoardReview
         foreach(FivePlay play in Enum.GetValues(typeof(FivePlay)))foreach(FiveDefense defense in Enum.GetValues(typeof(FiveDefense)))
         {
             var lesson=FiveRecording.Lesson(play,defense,0,0);
-            FivePlayerReview.Check(FiveRecording.Valid(lesson)&&lesson.End>8,"Lesson is a complete playable five-player recording");
+            FivePlayerReview.Check(FiveRecording.Valid(lesson)&&lesson.End>0,"Lesson is a complete playable five-player recording");
             FivePlayerReview.Check(lesson.frames.Any(f=>f.phase>=2)&&lesson.frames.Any(f=>f.flight!=null),play+" / "+defense+": teaching progresses to decisions and passes");
+        }
+    }
+
+    public static void RunLessonTiming()
+    {
+        const string complete="演练结束 · 配合达成", intercepted="演练结束 · 配合被截断", timeout="演练结束 · 未形成机会";
+        var method=typeof(FiveRecording).GetMethod("RecordLesson",BindingFlags.NonPublic|BindingFlags.Static);
+        if(method==null)
+        {
+            FivePlayerReview.Check(false,"Lesson generator supports outcome-aware recording instead of fixed 25-second playback");
+            return;
+        }
+        FiveRecording Record(FiveState state)=>(FiveRecording)method.Invoke(null,new object[]{state});
+        FiveState PassFixture(float time,bool success)
+        {
+            var state=FivePlayerReview.OpenPass();
+            state.time=time;
+            state.phase=success?2:0;
+            state.positions[1]=new Vector2(0,13);
+            state.positions[2]=new Vector2(4,10);
+            state.pinned[2]=true;
+            FiveRules.Pass(state,2);
+            return state;
+        }
+        bool Tail(FiveRecording record,float seconds)
+        {
+            var settled=record.frames.FindIndex(f=>f.flight==null);
+            return settled>0&&Mathf.Abs(record.End-record.frames[settled].time-seconds)<.001f
+                &&record.frames.Skip(settled).All(f=>f.flight==null&&f.eventSerial==record.frames[settled].eventSerial);
+        }
+
+        var success=PassFixture(2,true);
+        success.request=3;success.requestUntil=8;
+        var settled=Record(success);
+        FivePlayerReview.Check(success.success&&settled.endReason==complete&&settled.frames.Last().holder==2&&Tail(settled,1.5f),
+            "Provisional success plays through the catch plus 1.5 seconds without a second pass");
+        var blocked=PassFixture(2,true);
+        blocked.positions[5]=(blocked.flight.origin+blocked.flight.destination)*.5f;
+        var failure=Record(blocked);
+        FivePlayerReview.Check(blocked.success&&failure.frames.Last().turnover&&failure.endReason==intercepted&&Tail(failure,1.2f),
+            "Interception overrides provisional success and holds the settled failure for 1.2 seconds");
+        var expired=FivePlayerReview.OpenPass();
+        expired.time=24.9f;
+        expired.passCooldown=20;
+        var noResult=Record(expired);
+        FivePlayerReview.Check(noResult.End==25&&noResult.endReason==timeout&&noResult.frames.Last().flight==null,
+            "A lesson without a result or airborne ball stops at exactly 25 seconds");
+        var finalTick=FivePlayerReview.OpenPass();
+        finalTick.time=25-1f/60;finalTick.phase=2;finalTick.phaseAge=1;
+        var wouldPass=finalTick.Copy();FiveRules.Step(wouldPass,1f/60);
+        var atDeadline=Record(finalTick);
+        FivePlayerReview.Check(wouldPass.flight!=null&&atDeadline.End==25&&atDeadline.frames.Last().flight==null,
+            "The cutoff tick does not release an otherwise available new pass");
+        var late=Record(PassFixture(24.9f,false));
+        FivePlayerReview.Check(late.Sample(25).flight!=null&&late.End>25&&late.End<26.5f&&late.endReason==timeout
+            &&late.frames.Last().holder==2&&Tail(late,0),"A non-scoring deadline pass settles before the no-opportunity verdict");
+        var lateScore=Record(PassFixture(24.9f,true));
+        FivePlayerReview.Check(lateScore.Sample(25).flight!=null&&lateScore.endReason==complete&&Tail(lateScore,1.5f),
+            "A scoring deadline pass retains the settled outcome and full success tail");
+
+        var board=new FiveBoard();
+        board.Load(failure);board.Seek(failure.End-1.2f+.01f);
+        var presentation=typeof(FiveBoard).GetProperty("LessonEnding");
+        var detail=typeof(FiveBoard).GetProperty("LessonEndingDetail");
+        FivePlayerReview.Check((string)presentation?.GetValue(board)==intercepted&&((string)detail?.GetValue(board))?.Contains("X1")==true,
+            "The failure reason is visible for the settled observation tail");
+        board.Seek(failure.Start);
+        FivePlayerReview.Check(string.IsNullOrEmpty((string)presentation?.GetValue(board)),
+            "A provisional success in the air does not reveal any terminal copy");
+        board.Load(settled);board.Seek(settled.End-1.49f);
+        FivePlayerReview.Check((string)presentation?.GetValue(board)==complete,"Settled success is visible throughout its observation tail");
+        board.Load(noResult);board.Seek(24.95f);
+        FivePlayerReview.Check(string.IsNullOrEmpty((string)presentation?.GetValue(board)),"Timeout is hidden during the ordinary phase");
+        board.Seek(25);
+        FivePlayerReview.Check((string)presentation?.GetValue(board)==timeout,"Timeout is shown at the lesson endpoint");
+        var actual=new FiveRecording{name="actual repeated call",endReason="结束练习"};
+        var state=FivePlayerReview.OpenPass();
+        actual.Add(state,true);state.time=18;state.success=true;actual.Add(state,true);
+        state.time=25;FiveRules.Call(state);actual.Add(state,true);
+        state.time=68;actual.Add(state,true);
+        var original=JsonUtility.ToJson(actual);
+        board.Load(actual);board.Seek(50);board.Playing=true;for(int i=0;i<4;i++)board.Tick(5);
+        FivePlayerReview.Check(board.End==68&&board.Time==68&&!board.Playing&&!board.Record.Sample(25).success
+            &&string.IsNullOrEmpty((string)presentation?.GetValue(board))&&JsonUtility.ToJson(actual)==original,
+            "Actual replay retains its entire 68 seconds and repeated call without a lesson terminal message");
+
+        foreach(FivePlay play in Enum.GetValues(typeof(FivePlay)))
+        foreach(FiveDefense defense in Enum.GetValues(typeof(FiveDefense)))
+        {
+            bool valid=true;int successes=0,turnovers=0,timeouts=0;float min=float.PositiveInfinity,max=0;
+            for(int role=0;role<5;role++)
+            for(int holder=0;holder<5;holder++)
+            {
+                var lesson=FiveRecording.Lesson(play,defense,role,holder);
+                var final=lesson.frames.Last();
+                if(role==0&&((play==FivePlay.HighPost&&defense==FiveDefense.Balanced)||(play==FivePlay.Horns&&defense==FiveDefense.Rim)))
+                    Debug.Log($"LESSON PRESET {play}/{defense} holder={FiveRules.Number(holder)} {lesson.End:F2}s {lesson.endReason}");
+                min=Mathf.Min(min,lesson.End);max=Mathf.Max(max,lesson.End);
+                if(final.turnover)turnovers++;else if(final.success)successes++;else timeouts++;
+                valid&=FiveRecording.Valid(lesson)&&final.flight==null&&lesson.End>0&&lesson.End<=28.02f
+                    &&lesson.endReason==(final.turnover?intercepted:final.success?complete:timeout);
+            }
+            FivePlayerReview.Check(valid,$"{play}/{defense}: 25 role/holder combinations settle at {min:F2}–{max:F2}s, {successes} success, {turnovers} interruption, {timeouts} timeout");
         }
     }
 }

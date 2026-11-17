@@ -9,6 +9,7 @@ public static class FivePlayerReview
 {
     public static void RunAll(){FiveBaselineReview.Run();Run();}
     public static void RunView(){lines.Clear();failures=0;FiveViewReview.Run();Finish();}
+    public static void RunTiming(){lines.Clear();failures=0;FiveBoardReview.RunLessonTiming();Finish();}
     static readonly List<string> lines=new List<string>();
     static int failures;
     public static void Check(bool value,string name)
@@ -50,7 +51,7 @@ public static class FivePlayerReview
         Check(!recalled.turnover&&!recalled.success&&recalled.phase<4&&recalled.holder>=0,"Calling again rearms a failed/completed sequence");
         var copy=OpenPass();var clone=copy.Copy();clone.positions[1]=Vector2.zero;clone.pinned[3]=true;
         Check(copy.positions[1]==new Vector2(4,10)&&!copy.pinned[3],"State copy owns its player and pin arrays");
-        FiveBoardReview.Run();FiveViewReview.Run();FivePracticeReview.Run();FiveFrameReview.Run();Finish();
+        FiveBoardReview.Run();FiveBoardReview.RunLessonTiming();FiveViewReview.Run();FivePracticeReview.Run();FiveFrameReview.Run();Finish();
     }
     public static void Finish()
     {

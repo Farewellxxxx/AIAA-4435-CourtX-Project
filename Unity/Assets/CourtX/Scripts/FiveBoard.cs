@@ -46,6 +46,25 @@ namespace CourtX
         public float Speed=1;
         public float Start=>IsFrameStudy?source.Start:Record?.Start??0;
         public float End=>IsFrameStudy?source.End:Mathf.Max(Record?.End??0,IsBranch?Time:0);
+        public string LessonEnding
+        {
+            get
+            {
+                if(Record?.kind!="lesson")return "";
+                bool settled=State.turnover||(State.success&&State.flight==null);
+                return settled||Time>=End-.0001f?Record.endReason:"";
+            }
+        }
+        public string LessonEndingDetail
+        {
+            get
+            {
+                if(string.IsNullOrEmpty(LessonEnding)||!State.turnover)return "";
+                string reason=State.lastEvent??"";
+                int command=reason.IndexOf("C ",StringComparison.Ordinal);
+                return command<0?reason:reason.Substring(0,command).TrimEnd('。','，',' ');
+            }
+        }
         public bool Playing
         {
             get=>playing;

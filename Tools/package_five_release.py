@@ -1,4 +1,4 @@
-"""Deliver 1117, preserving local 1116 records outside the shareable ZIP."""
+"""Deliver the lesson timing update, keeping local recordings outside the shareable ZIP."""
 from pathlib import Path
 import argparse
 import hashlib
@@ -9,8 +9,8 @@ import zipfile
 
 source = Path(__file__).resolve().parents[1]
 project = Path('E:/study documents/2026 Fall/AIAA 4435 Inter/CourtX')
-release = project / 'Windows_FivePlayer_1117'
-evidence = project / 'Preview/Playtests/FivePlayer-20261117'
+release = project / 'Windows_FivePlayer_1117_Timing'
+evidence = project / 'Preview/Playtests/FivePlayer-20261117-Timing'
 
 
 def sha256(path):
@@ -19,14 +19,14 @@ def sha256(path):
 
 
 def copy_history():
-    previous = project / 'Windows_FivePlayer_1116/Replays5v5'
+    previous = project / 'Windows_FivePlayer_1117/Replays5v5'
     destination = release / 'Replays5v5'
     if not previous.is_dir():
         raise FileNotFoundError(previous)
     hashes = {p.relative_to(previous).as_posix(): sha256(p)
               for p in sorted(previous.rglob('*')) if p.is_file()}
     if not hashes:
-        raise ValueError('No 1116 history was found')
+        raise ValueError('No 1117 history was found')
     for name, digest in hashes.items():
         new = destination / name
         new.parent.mkdir(parents=True, exist_ok=True)
@@ -36,21 +36,21 @@ def copy_history():
             raise ValueError(f'History verification failed for {name}')
     evidence.mkdir(parents=True, exist_ok=True)
     (evidence / 'copied-history-sha256.json').write_text(json.dumps(hashes, indent=2) + '\n', encoding='utf-8')
-    print(f'History verified: {len(hashes)} files match 1116 SHA256 hashes.')
+    print(f'History verified: {len(hashes)} files match 1117 SHA256 hashes.')
 
 
 def package():
     if not (release / 'CourtX.exe').is_file():
-        raise FileNotFoundError('Build the 1117 production player before packaging')
+        raise FileNotFoundError('Build the 1117 Timing production player before packaging')
     assembly = (release / 'CourtX_Data/Managed/Assembly-CSharp.dll').read_bytes()
     if b'FiveCourtGame' not in assembly or b'FivePlayerPlaytest' in assembly:
         raise ValueError('Expected the five-player production assembly without the QA harness')
     copy_history()
     shutil.copyfile(source / 'docs/FIVE_PLAYER_GUIDE_ZH.md', release / '使用说明.md')
-    shutil.copyfile(source / 'docs/verification/five-player-20261117/RESULTS.md', release / '验证记录.md')
+    shutil.copyfile(source / 'docs/verification/five-player-20261117-timing/RESULTS.md', release / '验证记录.md')
     revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=source, text=True).strip()
     (release / '版本.txt').write_text(
-        f'CourtX 5v5 | 2026-11-17 | 2D 战术板与分组回放\nSource commit: {revision}\n'
+        f'CourtX 5v5 | 2026-11-17 | 教学演练按结果结束\nSource commit: {revision}\n'
         'Unity 2022.3.62f3c1 | Windows x64 | offline\n'
         '运行 CourtX.exe；分享请复制整个文件夹。\n'
         'Q 直接传球 · E 要球 · C 再 call · V 回放 · Esc 暂停\n'
@@ -64,7 +64,7 @@ def package():
         files[name] = sha256(release / name)
     manifest = release / 'SHA256SUMS.txt'
     manifest.write_text(''.join(f'{digest}  {name}\n' for name, digest in sorted(files.items())), encoding='utf-8')
-    archive = project / 'CourtX_FivePlayer_20261117.zip'
+    archive = project / 'CourtX_FivePlayer_20261117_Timing.zip'
     staging = archive.with_suffix('.zip.tmp')
     prefix = release.name + '/'
     with zipfile.ZipFile(staging, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as bundle:

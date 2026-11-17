@@ -1,0 +1,10 @@
+LESSON PRESET HighPost/Balanced holder=01 6.80s 演练结束 · 配合达成
+LESSON PRESET HighPost/Balanced holder=02 5.57s 演练结束 · 配合达成
+LESSON PRESET HighPost/Balanced holder=03 5.48s 演练结束 · 配合达成
+LESSON PRESET HighPost/Balanced holder=04 5.65s 演练结束 · 配合达成
+LESSON PRESET HighPost/Balanced holder=05 25.00s 演练结束 · 未形成机会
+LESSON PRESET Horns/Rim holder=01 7.82s 演练结束 · 配合达成
+LESSON PRESET Horns/Rim holder=02 5.48s 演练结束 · 配合被截断
+LESSON PRESET Horns/Rim holder=03 6.52s 演练结束 · 配合达成
+LESSON PRESET Horns/Rim holder=04 9.03s 演练结束 · 配合达成
+LESSON PRESET Horns/Rim holder=05 25.00s 演练结束 · 未形成机会

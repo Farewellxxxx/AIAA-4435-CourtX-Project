@@ -10,7 +10,7 @@ using UnityEngine;
 public sealed class FivePlayerPlaytest:MonoBehaviour
 {
     FiveCourtGame game;int failures;readonly List<string> checks=new List<string>();
-    const string Folder="E:/study documents/2026 Fall/AIAA 4435 Inter/CourtX/Preview/Playtests/FivePlayer-20261117";
+    const string Folder="E:/study documents/2026 Fall/AIAA 4435 Inter/CourtX/Preview/Playtests/FivePlayer-20261117-Timing";
     static readonly List<string> runtimeErrors=new List<string>();
     static bool Headless=>SystemInfo.graphicsDeviceType==UnityEngine.Rendering.GraphicsDeviceType.Null;
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]

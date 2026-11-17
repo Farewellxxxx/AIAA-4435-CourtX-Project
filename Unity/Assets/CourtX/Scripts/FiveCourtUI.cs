@@ -283,12 +283,22 @@ namespace CourtX
         static void Intent(FiveCourtGame g,Rect panel)
         {
             var b=g.Board;var s=b.State;FiveCourtView.Box(panel,White);
-            Text(1208,82,204,24,"当前阶段",small);
-            TextFit(R(1208,109,204,29),s.phaseName,heading);Box(1208,145,204,1,Border);
-            Text(1208,157,204,24,"进攻目标",small);
-            TextFit(R(1208,185,204,91),s.attackIntent?.TrimEnd('。'),body);
-            Text(1208,282,204,24,"防守反应",small);
-            TextFit(R(1208,310,204,118),s.defenseIntent?.TrimEnd('。'),body);
+            string lessonEnding=b.LessonEnding;
+            if(string.IsNullOrEmpty(lessonEnding))
+            {
+                Text(1208,82,204,24,"当前阶段",small);
+                TextFit(R(1208,109,204,29),s.phaseName,heading);Box(1208,145,204,1,Border);
+                Text(1208,157,204,24,"进攻目标",small);
+                TextFit(R(1208,185,204,91),s.attackIntent?.TrimEnd('。'),body);
+                Text(1208,282,204,24,"防守反应",small);
+                TextFit(R(1208,310,204,118),s.defenseIntent?.TrimEnd('。'),body);
+            }
+            else
+            {
+                TextFit(R(1208,85,204,64),lessonEnding,heading);
+                string detail=b.LessonEndingDetail;
+                if(!string.IsNullOrEmpty(detail))TextFit(R(1208,153,204,100),detail,body);
+            }
             Text(1201,461,216,65,"暂停拖动可看补防，时间保持不变。悬停球员查看职责。",small);
             if(selected>=0)
             {

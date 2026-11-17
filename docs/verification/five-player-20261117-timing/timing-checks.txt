@@ -1,0 +1,22 @@
+PASS Provisional success plays through the catch plus 1.5 seconds without a second pass
+PASS Interception overrides provisional success and holds the settled failure for 1.2 seconds
+PASS A lesson without a result or airborne ball stops at exactly 25 seconds
+PASS The cutoff tick does not release an otherwise available new pass
+PASS A non-scoring deadline pass settles before the no-opportunity verdict
+PASS A scoring deadline pass retains the settled outcome and full success tail
+PASS The failure reason is visible for the settled observation tail
+PASS A provisional success in the air does not reveal any terminal copy
+PASS Settled success is visible throughout its observation tail
+PASS Timeout is hidden during the ordinary phase
+PASS Timeout is shown at the lesson endpoint
+PASS Actual replay retains its entire 68 seconds and repeated call without a lesson terminal message
+PASS HighPost/Balanced: 25 role/holder combinations settle at 5.48–25.00s, 20 success, 0 interruption, 5 timeout
+PASS HighPost/Rim: 25 role/holder combinations settle at 5.48–25.00s, 20 success, 0 interruption, 5 timeout
+PASS HighPost/Perimeter: 25 role/holder combinations settle at 5.50–25.00s, 20 success, 0 interruption, 5 timeout
+PASS Screen/Balanced: 25 role/holder combinations settle at 6.92–25.00s, 20 success, 0 interruption, 5 timeout
+PASS Screen/Rim: 25 role/holder combinations settle at 6.92–25.00s, 20 success, 0 interruption, 5 timeout
+PASS Screen/Perimeter: 25 role/holder combinations settle at 6.92–25.00s, 20 success, 0 interruption, 5 timeout
+PASS Horns/Balanced: 25 role/holder combinations settle at 6.22–25.00s, 20 success, 0 interruption, 5 timeout
+PASS Horns/Rim: 25 role/holder combinations settle at 5.48–25.00s, 15 success, 5 interruption, 5 timeout
+PASS Horns/Perimeter: 25 role/holder combinations settle at 6.18–25.00s, 20 success, 0 interruption, 5 timeout
+Failures: 0

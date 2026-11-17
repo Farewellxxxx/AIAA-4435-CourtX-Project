@@ -16,7 +16,7 @@ public static class FiveSavedRoundReview
             if(count!=files.Length||count<2)throw new Exception("Expected existing selectable rounds");
             var calendar=FiveCourtUI.HistoryLayout(game.History,DateTime.Now,out _);
             if(calendar.Any(row=>row.Group=="日期未知"||row.Details.StartsWith("时间未知",StringComparison.Ordinal)))
-                throw new Exception("An existing 1116 recording lost its legacy date or time");
+                throw new Exception("An existing recording lost its legacy date or time");
             for(int i=0;i<count;i++)
             {
                 var record=game.History[i];game.SelectReplay(i);

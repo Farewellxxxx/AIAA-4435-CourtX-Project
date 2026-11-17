@@ -87,11 +87,55 @@ namespace CourtX
             r.legacyDateReference=File.GetLastWriteTime(path);return r;
         }
         public static FiveRecording Lesson(FivePlay play,FiveDefense defense,int role,int holder)
+            => RecordLesson(FiveRules.Create(play,defense,role,holder));
+
+        static FiveRecording RecordLesson(FiveState initial)
         {
-            var r=new FiveRecording{name=FiveRules.Plays[(int)play],kind="lesson",created="教学演练",endReason="教学演练结束"};
-            var s=FiveRules.Create(play,defense,role,holder);s.demo=true;r.Add(s,true);
-            for(int i=0;i<1500;i++){FiveRules.Step(s,1f/60);r.Add(s);}
-            r.Add(s,true);return r;
+            const int rate=60;
+            const float deadline=25;
+            var state=initial.Copy();
+            state.demo=true;
+            var lesson=new FiveRecording{name=FiveRules.Plays[(int)state.play],kind="lesson",created="教学演练"};
+            lesson.Add(state,true);
+
+            float start=state.time;
+            int ticks=0;
+            int deadlineTick=Mathf.Max(0,Mathf.RoundToInt((deadline-start)*rate));
+            void Tick(int heldActor=-1)
+            {
+                FiveRules.Step(state,1f/rate,heldActor);
+                state.time=start+(++ticks)/(float)rate;
+                lesson.Add(state);
+            }
+
+            // A pass can be marked successful at release and still be intercepted.
+            // After the deadline, only an existing flight can keep the lesson running.
+            while(!state.turnover && (!state.success || state.flight!=null) &&
+                  (ticks<deadlineTick || state.flight!=null))
+            {
+                // Step advances the clock before deciding whether to release a pass.
+                bool atDeadline=ticks+1==deadlineTick&&state.flight==null;
+                Tick(atDeadline?state.holder:-1);
+            }
+
+            int tailTicks=0;
+            if(state.turnover)
+            {
+                lesson.endReason="演练结束 · 配合被截断";
+                tailTicks=72;
+            }
+            else if(state.success)
+            {
+                lesson.endReason="演练结束 · 配合达成";
+                tailTicks=90;
+            }
+            else lesson.endReason="演练结束 · 未形成机会";
+
+            // Let the settled pose develop while reserving possession and blocking another pass.
+            int holder=state.holder;
+            for(int i=0;i<tailTicks;i++)Tick(holder);
+            lesson.Add(state,true);
+            return lesson;
         }
         public FiveState Sample(float time)
         {
