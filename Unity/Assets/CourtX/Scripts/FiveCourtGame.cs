@@ -33,7 +33,17 @@ namespace CourtX
         public FiveActors Visuals{get;private set;}
         int assistedBeat=-1;
         float basketDisplayLeft;
-        public string RecordingFolder=>string.IsNullOrEmpty(SaveFolder)?Path.GetFullPath(Path.Combine(Application.dataPath,"../Replays5v5")):SaveFolder;
+        public string RecordingFolder
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(SaveFolder)) return SaveFolder;
+                var root = Application.platform == RuntimePlatform.OSXPlayer
+                    ? Application.persistentDataPath
+                    : Directory.GetParent(Application.dataPath).FullName;
+                return Path.Combine(root, "Replays5v5");
+            }
+        }
         void Start()
         {
             Application.runInBackground=true;Application.targetFrameRate=60;

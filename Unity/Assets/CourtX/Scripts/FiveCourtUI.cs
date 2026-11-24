@@ -90,7 +90,7 @@ namespace CourtX
         {
             if(body!=null&&Mathf.Abs(scale-oldScale)<.001f)return;oldScale=scale;
             if(!serif)serif=Font.CreateDynamicFontFromOSFont(new[]{"SimSun","Songti SC","Noto Serif CJK SC","Georgia"},28);
-            if(!font)font=Font.CreateDynamicFontFromOSFont(new[]{"Microsoft YaHei UI","Microsoft YaHei","Arial"},20);
+            if(!font)font=Font.CreateDynamicFontFromOSFont(new[]{"Microsoft YaHei UI","Microsoft YaHei","PingFang SC","Heiti SC","Arial"},20);
             body=new GUIStyle(GUI.skin.label){font=font,fontSize=Mathf.Max(12,Mathf.RoundToInt(18*scale)),wordWrap=true,richText=false,padding=new RectOffset(0,0,0,0)};body.normal.textColor=Ink;
             small=new GUIStyle(body){fontSize=Mathf.Max(10,Mathf.RoundToInt(15*scale))};small.normal.textColor=Muted;
             heading=new GUIStyle(body){font=serif?serif:font,fontSize=Mathf.Max(13,Mathf.RoundToInt(20*scale)),fontStyle=FontStyle.Bold};

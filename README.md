@@ -2,7 +2,18 @@
 
 先在战术板看懂一次配合，再选一名进攻球员，用第一人称练习跑位、传球和投篮。中锋提中、后卫发起、射手战术各有三种 2–3 联防反应。练习结束后可以回看自己这一轮的跑位和球路。
 
-## Windows 上直接玩
+## 下载试玩
+
+选和电脑系统对应的 ZIP，完整解压即可离线玩，无需安装 Unity。[GitHub 发布页](https://github.com/Farewellxxxx/AIAA-4435-CourtX-Project/releases/tag/v0.6.0)
+
+| 系统 | 下载 | 解压后打开 |
+| --- | --- | --- |
+| Windows x64 | [Windows 试玩包（28 MB）](https://github.com/Farewellxxxx/AIAA-4435-CourtX-Project/releases/download/v0.6.0/CourtX-Windows-x64.zip) | `Start-CourtX.cmd` |
+| macOS · M 系列或 Intel | [Mac 试玩包（38 MB）](https://github.com/Farewellxxxx/AIAA-4435-CourtX-Project/releases/download/v0.6.0/CourtX-macOS-Universal.zip) | `CourtX.app` |
+
+第一次玩可以在「战术板」选择「中锋提中」，看一遍示范，再点右下角以推荐角色开始。WASD 移动，鼠标转头，持球时瞄准队友或篮筐按 Q，按 V 保存并回看。[首次打开与完整操作](docs/FIVE_PLAYER_GUIDE_ZH.md)
+
+## 从 Windows 仓库副本启动
 
 拿到仓库后，双击根目录的 **`Start-CourtX.cmd`**。仓库包含完整的 Windows x64 程序，下载完成即可离线玩，无需安装 Unity。
 
@@ -14,11 +25,11 @@ cd AIAA-4435-CourtX-Project
 
 已有 `main` 工作副本时，在仓库根目录运行 `git pull --ff-only`，再启动。也可以在 GitHub 的 `main` 页面选择 **Code → Download ZIP**，完整解压到可写目录后双击启动。实际程序在 `Player/win-x64/CourtX.exe`，练习记录保存在旁边的 `Replays5v5`。
 
-第一次玩可以在「战术板」选择「中锋提中」，看一遍示范，再点右下角以推荐角色开始。WASD 移动，鼠标转头，持球时瞄准队友或篮筐按 Q，按 V 保存并回看。[战术分支与完整操作](docs/FIVE_PLAYER_GUIDE_ZH.md)
-
 ## 用 Unity 开发
 
 Windows 上双击 **`Tools/Open-Unity.cmd`**。它会查找项目指定的 Unity 中国版 `2022.3.62f3c1`，打开 `FivePlayerTraining.unity`。首次使用会引导安装，安装完成后再双击。编辑器中按 ▶ 试玩，选 **CourtX → Build Windows Player** 构建到 `Unity/Builds/Windows/CourtX.exe`。[安装、命令行构建和规则检查](docs/FIVE_PLAYER_GUIDE_ZH.md#用-unity-开发)
+
+macOS 上在 Unity Hub 中添加仓库内的 `Unity` 文件夹，使用同版本编辑器打开工程，双击 `Assets/CourtX/Scenes/FivePlayerTraining.unity` 并按 ▶。要导出通用 Mac 应用，在 **File → Build Settings** 中选择 **macOS** 和 **Intel 64-bit + Apple silicon**，点击 **Build**。
 
 ## 历史版本
 
