@@ -13,16 +13,28 @@ namespace CourtX
         public static string Arrange(FiveState s,FiveState basis)
         {
             var template=s.Copy();for(int i=5;i<10;i++)template.pinned[i]=false;
-            FiveRules.Refresh(template);var ball=s.Ball;int side=ball.x<0?-1:1;
-            int primary=ball.y<4.4f&&Mathf.Abs(ball.x)>3.1f?(side<0?7:9):ball.y<FiveRules.HelpDepth(s.defense)&&Mathf.Abs(ball.x)<3.9f?8:(side<0?5:6);
-            int rim=primary==8?(side<0?9:7):8;
+            // Keep the recorded rotation as the starting point for a v2 frame study.
+            // The edited ball and offensive positions then determine fresh coverage jobs.
+            if(s.playbookVersion>=2)
+            {
+                for(int id=5;id<10;id++)template.targets[id]=basis.positions[id];
+            }
+            else FiveRules.Refresh(template);
+            var ball=s.Ball;int side=ball.x<0?-1:1;
+            int centerId=s.playbookVersion>=2?9:8,rightId=s.playbookVersion>=2?8:9;
+            int primary=ball.y<4.4f&&Mathf.Abs(ball.x)>3.1f?(side<0?7:rightId):ball.y<FiveRules.HelpDepth(s.defense)&&Mathf.Abs(ball.x)<3.9f?centerId:(side<0?5:6);
+            int rim=primary==centerId?(side<0?rightId:7):centerId;
             var jobs=new List<Job>();
             for(int id=5;id<10;id++)
             {
                 bool upper=id<7;int flank=id==5||id==7?-1:1;
                 var point=template.targets[id];string name=upper?"兼顾外线接应与高位":"保护短角与底线接应";
                 int priority=upper?4:3;
-                if(id==primary){priority=0;name="接管持球侧，限制进入中路";}
+                if(id==primary)
+                {
+                    priority=0;name="接管持球侧，限制进入中路";
+                    if(s.playbookVersion>=2)point=TowardRim(ball,s.defense==FiveDefense.Perimeter?.95f:1.35f);
+                }
                 else if(id==rim){priority=1;point=new Vector2(-side*.55f,2.05f);name="补篮下，保护同伴身后的空间";}
                 else
                 {
@@ -40,7 +52,7 @@ namespace CourtX
                         point.x=Mathf.Clamp(point.x,-5.8f,5.8f);
                         name="照应 "+FiveRules.Number(threat)+" 的接球点，兼顾相邻区域";
                     }
-                    if(id==8){priority=2;name="补中路连接，兼顾篮下";}
+                    if(id==centerId){priority=2;name="补中路连接，兼顾篮下";}
                     else if(upper&&flank==side)priority=2;
                 }
                 jobs.Add(new Job{home=id,priority=priority,point=FiveRules.Clamp(point),name=name});

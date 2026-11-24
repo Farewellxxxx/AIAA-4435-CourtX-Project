@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/CourtX/Scenes/HalfCourt.unity
-    guid: a1cdb52551ad75443aa04b650ebfd70c
+    path: Assets/CourtX/Scenes/FivePlayerTraining.unity
+    guid: 55a60f7c7d108fc489bc9ad68aad71ed
   m_configObjects: {}

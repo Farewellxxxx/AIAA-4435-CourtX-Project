@@ -12,6 +12,8 @@ namespace CourtX
         public List<FiveState> frames=new List<FiveState>();
         public float Start=>frames.Count>0?frames[0].time:0;
         public float End=>frames.Count>0?frames[frames.Count-1].time:0;
+        public string PlayTitle=>!string.IsNullOrWhiteSpace(name)?name:
+            frames.Count==0?"练习":frames[0].playbookVersion==2?FiveZoneBook.PlayName(frames[0].play):FiveRules.Plays[(int)frames[0].play];
         [NonSerialized] DateTime? legacyDateReference;
         static readonly string[] DateFormats={"yyyy-MM-dd HH:mm:ss","yyyy-MM-dd HH:mm"};
         public DateTime? CreatedAt(DateTime reference)
@@ -34,6 +36,11 @@ namespace CourtX
             get
             {
                 var final=frames.Count==0?null:frames[frames.Count-1];
+                if(final?.madeBasket==true)
+                {
+                    var shot=frames.FindLast(frame=>frame.flight?.shot==true)?.flight;
+                    return shot==null?"投篮命中":FiveRules.Number(shot.from)+" 命中";
+                }
                 if(endReason=="已完成一次战术决策"||final?.success==true)return "协作达成";
                 if(endReason=="传球被封堵"||final?.turnover==true)return "协作中断";
                 return "练习结束";
@@ -64,11 +71,19 @@ namespace CourtX
             foreach(var s in r.frames)
             {
                 if(s==null||!Finite(s.time)||s.time<prior||s.time<0||s.time>3600||!Finite(s.phaseAge)||!Finite(s.passCooldown)||!Finite(s.requestUntil))return false;prior=s.time;
-                if((int)s.play<0||(int)s.play>2||(int)s.defense<0||(int)s.defense>2||s.controlled<0||s.controlled>4||s.holder< -1||s.holder>9||s.phase<0||s.phase>4||s.screener<0||s.screener>4||s.request< -1||s.request>4)return false;
+                if((int)s.play<0||(int)s.play>2||(int)s.defense<0||(int)s.defense>2||s.controlled<0||s.controlled>4||s.holder< -1||s.holder>9||s.phase<0||s.screener>4||s.request< -1||s.request>4)return false;
+                if(s.playbookVersion==2)
+                {
+                    if(s.branch<0||s.branch>2||s.phase>=FiveZoneBook.Count(s.play,s.branch)||s.screener< -1||s.routePoint<0||!Finite(s.settledAge)||s.settledAge<0)return false;
+                }
+                else if(s.playbookVersion!=0||s.phase>4||s.screener<0)return false;
                 if(s.positions==null||s.positions.Length!=10||s.velocities==null||s.velocities.Length!=10||s.targets==null||s.targets.Length!=10||s.facing==null||s.facing.Length!=10||s.pinned==null||s.pinned.Length!=10||s.tasks==null||s.tasks.Length!=10)return false;
                 if(s.positions.Any(p=>!Point(p))||s.velocities.Any(p=>!Point(p))||s.targets.Any(p=>!Point(p))||s.facing.Any(p=>!Point(p))||!Point(s.looseBall)||!Point(s.screenPoint))return false;
                 if(s.tasks.Any(t=>t!=null&&t.Length>2000))return false;
-                var f=s.flight;if(f!=null&&(s.holder!=-1||f.from<0||f.from>4||f.to<0||f.to>4||f.from==f.to||!Point(f.origin)||!Point(f.destination)||!Finite(f.elapsed)||!Finite(f.duration)||f.duration<=0||f.duration>10||f.elapsed<0||f.elapsed>f.duration+.06f))return false;
+                var f=s.flight;
+                if(f==null)continue;
+                bool validTarget=f.shot?f.to==-1&&Vector2.Distance(f.destination,FiveFlight.Rim)<.01f:f.to>=0&&f.to<5&&f.from!=f.to;
+                if(s.holder!=-1||f.from<0||f.from>4||!validTarget||!Point(f.origin)||!Point(f.destination)||!Finite(f.elapsed)||!Finite(f.duration)||f.duration<=0||f.duration>10||f.elapsed<0||f.elapsed>f.duration+.06f)return false;
             }
             return true;
         }
@@ -88,14 +103,16 @@ namespace CourtX
         }
         public static FiveRecording Lesson(FivePlay play,FiveDefense defense,int role,int holder)
             => RecordLesson(FiveRules.Create(play,defense,role,holder));
+        public static FiveRecording GuidedLesson(FivePlay play,int role,int branch=0)
+            => RecordLesson(FiveCoach.Create(play,role,branch));
 
         static FiveRecording RecordLesson(FiveState initial)
         {
             const int rate=60;
-            const float deadline=25;
+            float deadline=initial.playbookVersion==2?90:25;
             var state=initial.Copy();
             state.demo=true;
-            var lesson=new FiveRecording{name=FiveRules.Plays[(int)state.play],kind="lesson",created="教学演练"};
+            var lesson=new FiveRecording{name=state.playbookVersion==2?FiveZoneBook.PlayName(state.play):FiveRules.Plays[(int)state.play],kind="lesson",created="教学演练"};
             lesson.Add(state,true);
 
             float start=state.time;
@@ -126,7 +143,7 @@ namespace CourtX
             }
             else if(state.success)
             {
-                lesson.endReason="演练结束 · 配合达成";
+                lesson.endReason=state.madeBasket?"演练结束 · 投篮命中":"演练结束 · 配合达成";
                 tailTicks=90;
             }
             else lesson.endReason="演练结束 · 未形成机会";

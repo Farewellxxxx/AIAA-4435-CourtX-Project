@@ -12,6 +12,8 @@ Unity/[Rr]ecordings/
 Unity/.vs/
 Unity/*.slnx
 Windows*/
+Player/win-x64/Replays5v5/
+Unity/Replays5v5/
 Preview/Backups/
 Preview/Playtests/
 *.mp4

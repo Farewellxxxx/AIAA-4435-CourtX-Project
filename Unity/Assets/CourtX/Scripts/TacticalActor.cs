@@ -45,6 +45,8 @@ namespace CourtX
                     elbow=new Vector3(s*.40f,raised?1.68f:1.26f,.08f);
                     wrist=new Vector3(s*(raised?.38f:.64f),raised?2.04f+wave:1.30f+wave,.16f);
                 }
+                else if(Action==ActorAction.Shoot)
+                {elbow=new Vector3(s*.22f,1.72f,.19f);wrist=new Vector3(s*.14f,2.00f,.34f);}
                 else if(Action==ActorAction.Signal&&i==1)
                 {elbow=new Vector3(.34f,1.6f,.1f);wrist=new Vector3(.30f,1.98f,.18f);}
                 else if(Action==ActorAction.Receive||Action==ActorAction.Screen)

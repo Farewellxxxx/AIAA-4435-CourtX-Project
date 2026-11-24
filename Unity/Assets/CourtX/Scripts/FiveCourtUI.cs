@@ -8,7 +8,7 @@ namespace CourtX
     public static class FiveCourtUI
     {
         static readonly Color Paper=new Color(.967f,.961f,.935f),White=new Color(.998f,.994f,.978f),Ink=new Color(.10f,.21f,.18f),Muted=new Color(.40f,.46f,.41f),Border=new Color(.85f,.86f,.80f),Green=new Color(.20f,.35f,.25f);
-        static Font font;static GUIStyle body,small,title,heading,button,badge;
+        static Font font,serif;static GUIStyle body,small,title,heading,button,badge,possession;
         static float scale,oldScale,historyScroll;static Vector2 offset;
         static int hover=-1,selected=-1,drag=-1;static float hoverSince;static Vector2 dragStart;
         static bool moved;static FiveRecording prior;
@@ -89,11 +89,13 @@ namespace CourtX
         static void Init()
         {
             if(body!=null&&Mathf.Abs(scale-oldScale)<.001f)return;oldScale=scale;
+            if(!serif)serif=Font.CreateDynamicFontFromOSFont(new[]{"SimSun","Songti SC","Noto Serif CJK SC","Georgia"},28);
             if(!font)font=Font.CreateDynamicFontFromOSFont(new[]{"Microsoft YaHei UI","Microsoft YaHei","Arial"},20);
             body=new GUIStyle(GUI.skin.label){font=font,fontSize=Mathf.Max(12,Mathf.RoundToInt(18*scale)),wordWrap=true,richText=false,padding=new RectOffset(0,0,0,0)};body.normal.textColor=Ink;
             small=new GUIStyle(body){fontSize=Mathf.Max(10,Mathf.RoundToInt(15*scale))};small.normal.textColor=Muted;
-            heading=new GUIStyle(body){fontSize=Mathf.Max(13,Mathf.RoundToInt(20*scale)),fontStyle=FontStyle.Bold};
+            heading=new GUIStyle(body){font=serif?serif:font,fontSize=Mathf.Max(13,Mathf.RoundToInt(20*scale)),fontStyle=FontStyle.Bold};
             title=new GUIStyle(heading){fontSize=Mathf.RoundToInt(28*scale)};
+            possession=new GUIStyle(body){alignment=TextAnchor.MiddleCenter,fontStyle=FontStyle.Bold,wordWrap=false};
             button=new GUIStyle(body){alignment=TextAnchor.MiddleCenter,wordWrap=true};button.normal.background=button.hover.background=button.active.background=null;
             badge=new GUIStyle(body){fontSize=Mathf.Max(12,Mathf.RoundToInt(18*scale)),fontStyle=FontStyle.Bold,alignment=TextAnchor.MiddleCenter};
         }
@@ -129,8 +131,9 @@ namespace CourtX
             }
             if(prior!=b.Record){ResetSelection();prior=b.Record;}
             FiveCourtView.Box(layout.Canvas,FiveCourtView.Floor);
+            Box(224,68,962,32,new Color(.085f,.19f,.15f));
             Color old=heading.normal.textColor;heading.normal.textColor=White;
-            Text(242,76,520,27,FiveRules.Plays[(int)b.State.play],heading);
+            Text(242,75,750,28,b.Record.PlayTitle+BranchSuffix(b.State),heading);
             heading.normal.textColor=old;
             var oldSmall=small.normal.textColor;small.normal.textColor=FiveCourtView.Accent;
             Text(1035,79,140,24,b.IsFrameStudy?"暂停布防":b.IsBranch?"假设推演":g.Page==0?"教学演练":"回放 · 第 "+(g.SelectedReplayIndex+1)+" 轮",small);small.normal.textColor=oldSmall;
@@ -151,18 +154,22 @@ namespace CourtX
         static void Settings(FiveCourtGame g)
         {
             Text(18,77,194,28,"进攻战术",heading);
-            for(int i=0;i<3;i++)if(Button(18,112+i*48,194,41,FiveRules.Plays[i],(int)g.Play==i)){g.Play=(FivePlay)i;g.LoadLesson();}
-            Text(18,273,194,28,"整体防守",heading);
-            for(int i=0;i<3;i++)if(Button(18,307+i*44,194,37,FiveRules.Defenses[i],(int)g.Defense==i)){g.Defense=(FiveDefense)i;g.LoadLesson();}
-            if(Button(18,456,194,38,practiceSettings?"练习设置  ▾":"练习设置  ▸",practiceSettings))practiceSettings=!practiceSettings;
-            Text(20,504,190,24,"你： "+FiveRules.Number(g.Role)+" "+FiveRules.Roles[g.Role],small);
-            Text(20,529,190,24,g.InitialHolder<0?"开局：球在空中":"开局： "+FiveRules.Number(g.InitialHolder)+" 持球",small);
-            if(!practiceSettings)return;
-            Text(20,573,188,24,"你控制谁");
-            for(int i=0;i<5;i++)if(Button(18+i*40,602,34,34,FiveRules.Number(i),g.Role==i)){g.Role=i;g.LoadLesson();}
-            Text(20,660,188,24,"开局谁持球");
-            for(int i=0;i<5;i++)if(Button(18+i*40,689,34,34,FiveRules.Number(i),g.InitialHolder==i)){g.InitialHolder=i;g.LoadLesson();}
+            for(int i=0;i<3;i++)if(Button(18,112+i*48,194,41,FiveZoneBook.PlayName((FivePlay)i),(int)g.Play==i)){g.SelectPlay((FivePlay)i);practiceSettings=false;}
+            Box(18,269,194,1,Border);
+            Text(18,286,194,30,"战术分支",heading);
+            for(int i=0;i<3;i++)
+                if(Button(18,324+i*44,194,38,FiveZoneBook.BranchName(g.Play,i),g.Branch==i)&&g.Branch!=i)
+                {g.SelectBranch(i);ResetSelection();}
+            Box(18,467,194,1,Border);
+            Text(18,484,194,30,"我的角色",heading);
+            Text(18,523,194,38,FiveRules.Number(g.Role)+" "+FiveRules.Roles[g.Role]+(FiveCoach.Recommended(g.Play)==g.Role?" · 推荐":""),body);
+            if(Button(18,565,105,35,practiceSettings?"收起":"换角色"))practiceSettings=!practiceSettings;
+            if(practiceSettings)
+                for(int i=0;i<5;i++)
+                    if(Button(18,611+i*40,194,35,FiveRules.Number(i)+" "+FiveRules.Roles[i],g.Role==i))
+                    {g.Role=i;g.LoadLesson();practiceSettings=false;}
         }
+        static string BranchSuffix(FiveState s)=>s.playbookVersion==2?"  /  "+FiveZoneBook.BranchName(s.play,s.branch):"";
         static void History(FiveCourtGame g)
         {
             Text(18,77,200,27,"练习记录 · "+g.History.Count,heading);Text(18,106,200,21,"点击回合查看原片段",small);
@@ -202,8 +209,8 @@ namespace CourtX
                 FiveCourtView.Box(box,active?Green:hit==i?new Color(.90f,.93f,.86f):White);
                 var start=r.frames[0];heading.normal.textColor=body.normal.textColor=active?White:Ink;
                 small.normal.textColor=active?new Color(.83f,.88f,.78f):previousSmall;
-                GUI.Label(Local(9,5,170,25),FiveRules.Plays[(int)start.play],heading);
-                GUI.Label(Local(9,31,170,23),FiveRules.Number(start.controlled)+"  "+r.CooperationOutcome,body);
+                TextFit(Local(9,5,170,25),r.PlayTitle,heading);
+                GUI.Label(Local(9,31,170,23),"我控 "+FiveRules.Number(start.controlled)+" · "+r.CooperationOutcome,body);
                 GUI.Label(Local(9,55,170,22),row.Details,small);
             }
             small.normal.textColor=previousSmall;body.normal.textColor=previousBody;heading.normal.textColor=previousHeading;
@@ -275,8 +282,11 @@ namespace CourtX
                 GUI.enabled=!b.Playing;
                 if(Button(663,847,150,29,"设为持球者"))b.SetHolder(selected);
                 var s=b.State;
-                GUI.enabled=!b.IsFrameStudy&&!b.Playing&&s.holder>=0&&s.holder<5&&s.holder!=selected&&s.flight==null&&!s.turnover;
-                if(Button(821,847,141,29,"传给 "+FiveRules.Number(selected))){b.Pass(selected);b.Playing=true;}
+                if(s.playbookVersion!=2)
+                {
+                    GUI.enabled=!b.IsFrameStudy&&!b.Playing&&s.holder>=0&&s.holder<5&&s.holder!=selected&&s.flight==null&&!s.turnover;
+                    if(Button(821,847,141,29,"传给 "+FiveRules.Number(selected))&&b.Pass(selected))b.Playing=true;
+                }
             }
             GUI.enabled=true;
         }
@@ -286,12 +296,19 @@ namespace CourtX
             string lessonEnding=b.LessonEnding;
             if(string.IsNullOrEmpty(lessonEnding))
             {
-                Text(1208,82,204,24,"当前阶段",small);
-                TextFit(R(1208,109,204,29),s.phaseName,heading);Box(1208,145,204,1,Border);
-                Text(1208,157,204,24,"进攻目标",small);
-                TextFit(R(1208,185,204,91),s.attackIntent?.TrimEnd('。'),body);
-                Text(1208,282,204,24,"防守反应",small);
-                TextFit(R(1208,310,204,118),s.defenseIntent?.TrimEnd('。'),body);
+                Text(1208,82,204,24,s.playbookVersion==2?"阶段  "+(s.phase+1)+" / "+FiveZoneBook.Count(s.play,s.branch):"当前阶段",small);
+                float titleHeight=Mathf.Max(29,heading.CalcHeight(new GUIContent(s.phaseName),204*scale)/scale);
+                Text(1208,109,204,titleHeight,s.phaseName,heading);
+                float ruleY=116+titleHeight;Box(1208,ruleY,204,1,Border);
+                Text(1208,ruleY+10,204,24,"进攻目标",small);
+                var intent=s.playbookVersion==2?FiveZoneBook.Frame(s.play,s.branch,s.phase).cue:s.attackIntent;
+                TextFit(R(1208,ruleY+36,204,81),intent?.TrimEnd('。'),body);
+                if(!string.IsNullOrEmpty(s.defenseIntent))
+                {
+                    float defenseY=ruleY+122;
+                    Text(1208,defenseY,204,24,"防守反应",small);
+                    TextFit(R(1208,defenseY+26,204,Mathf.Max(45,432-defenseY-26)),s.defenseIntent?.TrimEnd('。'),body);
+                }
             }
             else
             {
@@ -299,7 +316,8 @@ namespace CourtX
                 string detail=b.LessonEndingDetail;
                 if(!string.IsNullOrEmpty(detail))TextFit(R(1208,153,204,100),detail,body);
             }
-            Text(1201,461,216,65,"暂停拖动可看补防，时间保持不变。悬停球员查看职责。",small);
+            Box(1198,461,224,1,Border);
+            Text(1201,475,216,57,"暂停后拖动球员观察补防。悬停可查看职责。",small);
             if(selected>=0)
             {
                 Text(1201,541,220,29,"已选 "+FiveRules.Number(selected)+(s.pinned[selected]?" · 已固定":""),heading);
@@ -310,11 +328,17 @@ namespace CourtX
                     GUI.enabled=true;
                 }
             }
-            if(Button(1198,788,224,54,"开始 3D 练习  →",true)){g.StartPractice();ResetSelection();}
+            bool legacyReplay=g.Page==1&&s.playbookVersion==0;
+            string startLabel=legacyReplay?"选择新版战术练习":"以 "+FiveRules.Number(g.Role)+" "+FiveRules.Roles[g.Role]+" 开始练习";
+            if(Button(1198,788,224,54,startLabel,true))
+            {
+                if(legacyReplay)g.SelectPlay(s.play);else g.StartPractice();
+                ResetSelection();
+            }
         }
         static void HandleCourt(FiveCourtGame g)
         {
-            var b=g.Board;var e=Event.current;int hit=FiveCourtView.Pick(CourtPixels,b.State,e.mousePosition);
+            var b=g.Board;var e=Event.current;int hit=FiveCourtView.Pick(CourtPixels,b.State,e.mousePosition,b);
             if(hit!=hover){hover=hit;hoverSince=Time.realtimeSinceStartup;}
             int control=GUIUtility.GetControlID(0x51F1,FocusType.Passive);
             if(e.type==EventType.MouseDown&&e.button==0&&hit>=0)
@@ -351,26 +375,48 @@ namespace CourtX
         {
             var s=g.Live;if(s==null)return;
             Box(24,20,630,140,new Color(.97f,.97f,.93f,.94f));
-            Text(42,34,590,35,"COURTX  /  "+FiveRules.Plays[(int)s.play],heading);
-            Text(42,77,590,29,"你是 "+FiveRules.Number(s.controlled)+" "+FiveRules.Roles[s.controlled]+"    ·    "+FiveRules.Defenses[(int)s.defense],body);
-            Text(42,117,590,28,s.phaseName+"  ·  "+(s.flight!=null?"球在传递中":s.holder>=0?FiveRules.Number(s.holder)+" 持球":"回合暂停"),small);
+            Text(42,34,590,35,g.LiveRecord.PlayTitle+BranchSuffix(s),heading);
+            Text(42,77,590,29,"你是 "+FiveRules.Number(s.controlled)+" "+FiveRules.Roles[s.controlled]+"    ·    "+(s.playbookVersion==2?"2–3 联防":FiveRules.Defenses[(int)s.defense]),body);
+            Text(42,117,590,28,s.phaseName,small);
+            string ownership=s.madeBasket?"投篮命中":s.turnover?"回合结束":
+                s.flight!=null?(s.flight.shot?"投篮中":"传球中"):
+                s.holder==s.controlled?"你持球":s.holder>=0?"无球 · "+FiveRules.Number(s.holder)+" 持球":"无球 · 球权待定";
             if(g.Overview)
             {
-                Box(325,175,790,610,FiveCourtView.Floor);FiveCourtView.Draw(R(438,203,563,525),g.LiveRecord,s,badge);
-                var color=small.normal.textColor;small.normal.textColor=White;Text(365,751,720,26,"实时俯视 · 松开 Tab 回到第一人称 · 场上继续运行",small);small.normal.textColor=color;
+                Box(325,163,790,569,FiveCourtView.Floor);
+                FiveCourtView.Draw(R(457.5f,214,525,490),g.LiveRecord,s,badge,overviewHeading:g.ViewHeading);
             }
             else
             {
-                var p=new Vector2(Screen.width*.5f,Screen.height*.5f);Color c=g.Target>=0?FiveCourtView.Accent:Color.white;
+                var center=FiveActors.Crosshair(g.player?g.player.eyes:null);
+                var p=new Vector2(center.x,Screen.height-center.y);Color c=g.Target>=0?FiveCourtView.Accent:Color.white;
                 FiveCourtView.Line(p-new Vector2(7,0),p+new Vector2(7,0),c,2);FiveCourtView.Line(p-new Vector2(0,7),p+new Vector2(0,7),c,2);
-                Box(485,510,470,47,new Color(.97f,.97f,.93f,.9f));
-                string target=s.holder==s.controlled?g.Target>=0?"Q  直接传给 "+FiveRules.Number(g.Target):"指向队友，或按 1–5 选择目标":"E  向持球队友要球";
-                Text(502,520,436,30,target,heading);
             }
+            var aim=FiveActors.Crosshair(g.player?g.player.eyes:null);
+            float tagWidth=Mathf.Max(95*scale,possession.CalcSize(new GUIContent(ownership)).x+24*scale);
+            float tagHeight=Mathf.Max(26*scale,possession.lineHeight+7*scale);
+            var tag=g.Overview?R(780,166,210,25):new Rect(aim.x-tagWidth*.5f,Screen.height-aim.y+27*scale,tagWidth,tagHeight);
+            FiveCourtView.Box(tag,new Color(.06f,.15f,.12f,.97f));
+            possession.normal.textColor=s.holder==s.controlled&&s.flight==null?new Color(1,.83f,.53f):White;
+            GUI.Label(tag,ownership,possession);
             Box(24,734,1392,142,new Color(.97f,.97f,.93f,.94f));
-            Text(44,750,1350,45,s.success?"决策完成：已经利用防守移动找到接应。按 C 可重新 call，V 查看这一轮。":s.lastEvent,heading);
-            Text(44,802,1340,32,"WASD 移动  ·  Shift 加速  ·  鼠标指向队友 + Q 传球  ·  E 要球  ·  Tab 俯视",body);
-            Text(44,844,1340,24,"C 重新 call 战术    R 从预设重开    V 结束并回放    Esc 暂停返回战术板",small);
+            Text(44,750,1350,40,FiveCoach.Cue(s,s.controlled),heading);
+            string hint="";
+            if(g.Overview)hint="箭头表示你的朝向。移动鼠标转向，按 W 沿箭头前进，松开 Tab 回到第一人称。";
+            else if(s.success||s.turnover)hint="V 查看本轮回放    ·    C 再练一次";
+            else if(s.holder==s.controlled&&s.flight==null&&g.Target==FiveActors.RimTarget)hint="已瞄准篮筐    ·    Q 投篮";
+            else if(s.holder==s.controlled&&s.flight==null&&g.Target>=0)hint="已瞄准 "+FiveRules.Number(g.Target)+"    ·    Q 传球";
+            else if((s.playbookVersion==2||s.phase<3)&&s.flight?.shot!=true&&!FiveCoach.InPlace(s,s.controlled))
+            {
+                Vector2 delta=s.targets[s.controlled]-s.positions[s.controlled];
+                Vector3 local=g.player.transform.InverseTransformDirection(FiveRules.World(delta));
+                string direction=(local.x<-.5f?"左":local.x>.5f?"右":"")+(local.z<-.5f?"后方":local.z>.5f?"前方":"侧");
+                hint="高亮圈在"+direction+" "+delta.magnitude.ToString("0.0")+" 米    ·    WASD 移动 或按 F 跑向高亮圈";
+            }
+            else if(s.holder==s.controlled)hint="准星对队友按 Q 传球，对篮筐按 Q 投篮";
+            else hint="按住 Tab 可查看全队站位";
+            Text(44,802,1340,32,hint,body);
+            Text(44,844,1340,24,"WASD 移动    鼠标转动视角    按住 Tab 查看全队站位    C 重新组织    V 即时回放    Esc 暂停",small);
         }
     }
 }

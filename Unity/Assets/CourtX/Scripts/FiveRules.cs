@@ -26,7 +26,7 @@ namespace CourtX
             Event(s,"选择站位，观察 2–3 联防。");Refresh(s);return s;
         }
         static void Set(FiveState s,int id,Vector2 target,string task){s.targets[id]=Clamp(target);s.tasks[id]=task;}
-        public static void Refresh(FiveState s)
+        static void FreeTargets(FiveState s)
         {
             var p=s.positions;var ball=s.Ball;float side=ball.x<0?-1:1;
             s.phaseName=new[]{"组织落位","建立连接","牵动防守","寻找出口","机会形成"}[Mathf.Clamp(s.phase,0,4)];
@@ -59,27 +59,28 @@ namespace CourtX
                 s.screenActive=s.phase>=1&&s.phase<3&&(p[3]-s.screenPoint).magnitude<1.1f;
                 s.attackIntent=s.phase<2?"双高位连接球与无球掩护，为射手创造接球角度。":"观察追防与外扑，选择射手接球或掩护后的切入。";
             }
+            int middleId=s.playbookVersion>=2?9:8,rightId=s.playbookVersion>=2?8:9;
             float front=s.defense==FiveDefense.Perimeter?.8f:s.defense==FiveDefense.Rim?-.65f:0;
             Set(s,5,new Vector2(-2.7f+ball.x*.18f,6.6f+front),"守住左上沿，兼顾持球压力与高位传球线。");
             Set(s,6,new Vector2(2.7f+ball.x*.18f,6.6f+front),"守住右上沿，随球移动并准备接管持球者。");
             Set(s,7,new Vector2(-4.1f+ball.x*.1f,2.8f),"守左侧低位，兼顾底角与沿底线切入。");
-            Set(s,8,new Vector2(ball.x*.22f,2.7f),"保持中路护筐，观察高位接应与身后切入。");
-            Set(s,9,new Vector2(4.1f+ball.x*.1f,2.8f),"守右侧低位，准备接应上沿被突破后的协防。");
-            int upper=side<0?5:6,weakUpper=side<0?6:5,lower=side<0?7:9,weakLower=side<0?9:7;
+            Set(s,middleId,new Vector2(ball.x*.22f,2.7f),"保持中路护筐，观察高位接应与身后切入。");
+            Set(s,rightId,new Vector2(4.1f+ball.x*.1f,2.8f),"守右侧低位，准备接应上沿被突破后的协防。");
+            int upper=side<0?5:6,weakUpper=side<0?6:5,lower=side<0?7:rightId,weakLower=side<0?rightId:7;
             bool low=ball.y<4.4f&&Mathf.Abs(ball.x)>3.1f;
             float helpDepth=HelpDepth(s.defense);
             bool middle=ball.y<helpDepth&&Mathf.Abs(ball.x)<3.9f;
             if(low)
             {
                 Set(s,lower,Toward(ball,rim,1.05f),"球到低处，接管底线持球者，限制直达篮下。");
-                Set(s,8,new Vector2(side*.7f,2.6f),"补球侧低位身后，保护中路接应窗口。");
+                Set(s,middleId,new Vector2(side*.7f,2.6f),"补球侧低位身后，保护中路接应窗口。");
                 Set(s,weakLower,new Vector2(-side*1.6f,2),"弱侧收回篮下，补上同伴外出的空间。");
                 Set(s,upper,new Vector2(ball.x-side*1.3f,Mathf.Max(5,ball.y+2)),"上沿下沉，限制回传和高位连接。");
                 s.defenseIntent="低位接球，另外两名低位补篮下；上沿封回传。";
             }
             else if(middle)
             {
-                Set(s,8,Toward(ball,rim,1.1f),"中路上提限制持球者，要求两翼补身后。");
+                Set(s,middleId,Toward(ball,rim,1.1f),"中路上提限制持球者，要求两翼补身后。");
                 Set(s,upper,new Vector2(ball.x+side*1.1f,ball.y+1.15f),"从侧后方压缩回传，不穿过持球者瞬移防守。");
                 Set(s,weakLower,new Vector2(-side*1.9f,2),"弱侧低位收窄，保护中路协防后的篮下。");
                 Set(s,lower,new Vector2(side*3.4f,2.4f),"兼顾短角与中路协防身后的接应者。");
@@ -98,7 +99,13 @@ namespace CourtX
                 if(s.phase>=2||h!=0)s.targets[h]=p[h];
                 s.tasks[h]="当前持球：观察防守和接应角度，再决定传球或调整位置。";
             }
-            if(s.flight!=null){s.targets[s.flight.to]=s.flight.destination;s.tasks[s.flight.to]="向来球位置接应，准备接球后的下一步选择。";}
+        }
+        public static void Refresh(FiveState s)
+        {
+            var p=s.positions;
+            if(s.guided&&s.playbookVersion>=2)FiveCoach.Describe(s);
+            else FreeTargets(s);
+            if(s.flight!=null&&!s.flight.shot){s.targets[s.flight.to]=s.flight.destination;if(!s.guided)s.tasks[s.flight.to]="向来球位置接应，准备接球后的下一步选择。";}
             for(int i=0;i<10;i++)
             {
                 if(s.success&&i<5)s.targets[i]=p[i];
@@ -117,15 +124,30 @@ namespace CourtX
             for(int i=5;i<10;i++){float u;float d=SegmentDistance(s.positions[i],s.positions[s.holder],s.positions[to],out u);if(u>.08f&&u<.94f)clearance=Mathf.Min(clearance,d);}
             float space=Space(s,to);return clearance<.55f||space<.8f?2:clearance<1.1f||space<1.65f?1:0;
         }
-        public static bool Pass(FiveState s,int to)
+        public static bool Shoot(FiveState s)
+        {
+            if(s.success||s.turnover||s.flight!=null||s.holder<0||s.holder>=5)return false;
+            int shooter=s.holder;
+            var dir=(FiveFlight.Rim-s.positions[shooter]).normalized;
+            var release=s.positions[shooter]+dir*.34f;
+            s.facing[shooter]=dir;
+            s.flight=new FiveFlight{shot=true,from=shooter,to=-1,origin=release,destination=FiveFlight.Rim,
+                duration=.85f+Vector2.Distance(release,FiveFlight.Rim)*.075f};
+            s.pendingGuidedCatch=false;s.holder=-1;s.request=-1;
+            Event(s,Number(shooter)+" 投篮出手");Refresh(s);return true;
+        }
+        public static bool Pass(FiveState s,int to,bool playerChoice=false)
         {
             if(s.turnover||s.flight!=null||s.holder<0||s.holder>=5||to<0||to>=5||to==s.holder)return false;
+            bool coached=s.guided&&s.playbookVersion>=2;
+            bool advances=coached&&FiveCoach.CanPass(s,to);
+            if(s.madeBasket||coached&&!playerChoice&&!advances)return false;
             int from=s.holder,risk=Risk(s,to);float distance=Vector2.Distance(s.positions[from],s.positions[to]);
-            s.flight=new FiveFlight{from=from,to=to,origin=s.positions[from],destination=s.positions[to],duration=Mathf.Clamp(distance/10.5f,.3f,1.5f)};
-            s.lastPassFrom=from;s.lastPassTo=to;s.holder=-1;s.request=-1;s.passCooldown=1.2f;
+            s.flight=new FiveFlight{from=from,to=to,advancesBeat=advances,origin=s.positions[from],destination=s.positions[to],duration=Mathf.Clamp(distance/10.5f,.3f,1.5f)};
+            s.pendingGuidedCatch=false;s.lastPassFrom=from;s.lastPassTo=to;s.holder=-1;s.request=-1;s.passCooldown=1.2f;
             Event(s,Number(from)+" → "+Number(to)+" 出球"+(risk==2?"：这条线路受到防守压力。":"：已选择可用的接应线路。"));
             bool outlet=s.play==FivePlay.HighPost?(to==3||to==2||to==0):s.play==FivePlay.Screen?(to==4||to==2):(to==1||to==3);
-            if(s.phase>=2&&outlet&&risk<2){s.success=true;s.phase=4;Event(s,"决策完成：利用防守移动选择了接应窗口。C 再 call 战术，或 V 复盘。");}
+            if(!s.guided&&s.phase>=2&&outlet&&risk<2){s.success=true;s.phase=4;Event(s,"决策完成：利用防守移动选择了接应窗口。C 再 call 战术，或 V 复盘。");}
             Refresh(s);return true;
         }
         public static void Request(FiveState s,int receiver)
@@ -137,9 +159,10 @@ namespace CourtX
         }
         public static void Call(FiveState s)
         {
-            s.phase=0;s.phaseAge=0;s.success=false;s.turnover=false;s.request=-1;s.passCooldown=.5f;
-            if(s.holder<0||s.holder>=5){s.holder=s.controlled;s.flight=null;}
-            Event(s,"重新组织："+Plays[(int)s.play]+"。队友按当前站位重新落位。");Refresh(s);
+            s.phase=0;s.routePoint=0;s.settledAge=0;s.pendingGuidedCatch=false;s.phaseAge=0;s.success=false;s.madeBasket=false;s.usedScreen=false;s.turnover=false;s.request=-1;s.passCooldown=.5f;
+            if(s.guided){s.holder=0;s.flight=null;}
+            else if(s.holder<0||s.holder>=5){s.holder=s.controlled;s.flight=null;}
+            Event(s,"重新组织："+(s.playbookVersion>=2?FiveZoneBook.PlayName(s.play):Plays[(int)s.play])+"。队友按当前站位重新落位。");Refresh(s);
         }
         static void Change(FiveState s,int phase){s.phase=phase;s.phaseAge=0;Event(s,"进入下一阶段："+new[]{"组织落位","建立连接","牵动防守","寻找出口","机会形成"}[phase]);}
         static void AdvancePhase(FiveState s)
@@ -189,8 +212,9 @@ namespace CourtX
         {
             if(seconds<=0||float.IsNaN(seconds)||float.IsInfinity(seconds))return;
             float dt=Mathf.Min(seconds,.05f);s.time+=dt;s.phaseAge+=dt;s.passCooldown-=dt;
-            if(s.turnover){Refresh(s);return;}
-            AdvancePhase(s);Refresh(s);Decide(s,human);
+            if(s.turnover||s.madeBasket){Refresh(s);return;}
+            if(s.guided&&s.playbookVersion>=2){FiveCoach.Tick(s,human,dt);Refresh(s);}
+            else{AdvancePhase(s);Refresh(s);Decide(s,human);}
             for(int i=0;i<10;i++)
             {
                 var p=s.positions[i];var delta=s.targets[i]-p;
@@ -199,18 +223,28 @@ namespace CourtX
                 for(int j=0;j<10;j++)if(j!=i){var away=p-s.positions[j];float d=away.magnitude;if(d<.8f&&d>.01f)desired+=away/d*(.8f-d)*3;}
                 desired=Vector2.ClampMagnitude(desired,i<5?2.65f:2.45f);
                 s.velocities[i]=Vector2.MoveTowards(s.velocities[i],desired,8*dt);
-                s.positions[i]=Clamp(p+s.velocities[i]*dt);
+                s.positions[i]=Clamp(FiveCoach.RouteDefender(s,i,p,p+s.velocities[i]*dt));
                 Vector2 face=i>=5?s.Ball-s.positions[i]:s.velocities[i].sqrMagnitude>.1f?s.velocities[i]:s.Ball-s.positions[i];
+                if(s.flight?.shot==true&&s.flight.from==i)face=FiveFlight.Rim-s.positions[i];
                 if(face.sqrMagnitude>.01f)s.facing[i]=face.normalized;
             }
             if(s.flight!=null)
             {
                 var f=s.flight;var before=f.Position;f.elapsed+=dt;var now=f.Position;int blocker=-1;
+                if(f.shot)
+                {
+                    if(f.elapsed>=f.duration)
+                    {
+                        s.flight=null;s.looseBall=FiveFlight.Rim;s.madeBasket=s.success=true;if(!s.guided||s.playbookVersion<2)s.phase=4;s.phaseAge=0;
+                        Event(s,Number(f.from)+" 投篮命中，本轮结束。");
+                    }
+                    Refresh(s);return;
+                }
                 if(f.elapsed>.09f)for(int i=5;i<10;i++){float u;if(SegmentDistance(s.positions[i],before,now,out u)<.28f){blocker=i;break;}}
                 if(blocker>=0){s.looseBall=now;s.flight=null;s.holder=blocker;s.turnover=true;Event(s,"传球线路被 "+Number(blocker)+" 封住。C 重新组织，或 V 看回放。");}
                 else if(f.elapsed>=f.duration)
                 {
-                    if(Vector2.Distance(s.positions[f.to],f.destination)<3){s.holder=f.to;Event(s,Number(f.to)+" 接到球，继续观察下一步。");}
+                    if(Vector2.Distance(s.positions[f.to],f.destination)<3){s.holder=f.to;Event(s,Number(f.to)+" 接到球，继续观察下一步。");if(s.guided&&s.playbookVersion>=2)FiveCoach.Catch(s,f);}
                     else{s.looseBall=f.destination;s.holder=-1;s.turnover=true;Event(s,"接应者离开了来球区域，C 可重新组织。");}
                     s.flight=null;
                 }

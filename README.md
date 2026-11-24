@@ -1,8 +1,39 @@
-# CourtX · 半场配合原型
+# CourtX 5v5 · 半场战术练习
+
+先在战术板看懂一次配合，再选一名进攻球员，用第一人称练习跑位、传球和投篮。中锋提中、后卫发起、射手战术各有三种 2–3 联防反应。练习结束后可以回看自己这一轮的跑位和球路。
+
+## Windows 上直接玩
+
+拿到仓库后，双击根目录的 **`Start-CourtX.cmd`**。仓库包含完整的 Windows x64 程序，下载完成即可离线玩，无需安装 Unity。
+
+```powershell
+git clone --branch main https://github.com/Farewellxxxx/AIAA-4435-CourtX-Project.git
+cd AIAA-4435-CourtX-Project
+.\Start-CourtX.cmd
+```
+
+已有 `main` 工作副本时，在仓库根目录运行 `git pull --ff-only`，再启动。也可以在 GitHub 的 `main` 页面选择 **Code → Download ZIP**，完整解压到可写目录后双击启动。实际程序在 `Player/win-x64/CourtX.exe`，练习记录保存在旁边的 `Replays5v5`。
+
+第一次玩可以在「战术板」选择「中锋提中」，看一遍示范，再点右下角以推荐角色开始。WASD 移动，鼠标转头，持球时瞄准队友或篮筐按 Q，按 V 保存并回看。[战术分支与完整操作](docs/FIVE_PLAYER_GUIDE_ZH.md)
+
+## 用 Unity 开发
+
+Windows 上双击 **`Tools/Open-Unity.cmd`**。它会查找项目指定的 Unity 中国版 `2022.3.62f3c1`，打开 `FivePlayerTraining.unity`。首次使用会引导安装，安装完成后再双击。编辑器中按 ▶ 试玩，选 **CourtX → Build Windows Player** 构建到 `Unity/Builds/Windows/CourtX.exe`。[安装、命令行构建和规则检查](docs/FIVE_PLAYER_GUIDE_ZH.md#用-unity-开发)
+
+## 历史版本
+
+<details>
+<summary>展开此前各版的本机程序路径、操作和接入说明</summary>
+
+11 月 21 日五人制版本发布在当时的本机目录 `Windows_FivePlayer_1121_Zone/CourtX.exe`。中锋提中、后卫发起、射手战术各有三种防守反应。战术板和第一人称练习按同一组 CourtLab 站位、掩护和持球顺序推进。3D 中移动鼠标转动视角，准星下方显示球权，对准队友或篮筐按 Q 传球或投篮。进球后自动保存并打开实际回放。详见[五人制使用说明](docs/FIVE_PLAYER_GUIDE_ZH.md)。
+
+上个版本保存在 `Windows_FivePlayer_1120_Finish/CourtX.exe`。
+
+11 月 18 日逐拍练习版入口为 Windows_FivePlayer_1118_Guided/CourtX.exe。
 
 11 月 17 日教学时长更新版使用 `Windows_FivePlayer_1117_Timing/CourtX.exe`，分享包为 `CourtX_FivePlayer_20261117_Timing.zip`。2D 教学演练在传球结果确定后收尾，右侧显示配合达成、中断或未形成机会。实际练习仍按原录制时长播放。参见[最新说明](docs/FIVE_PLAYER_GUIDE_ZH.md)。
 
-当前五人制入口：`Windows_FivePlayer/CourtX.exe`。战术板与即时回放共用可拖动的 2D 核心；支持三套进攻预设、整体 2–3 联防反应、悬停任务和短时渐隐轨迹。正常 3D 为 5v5，Q 按一下直接传球，E 要球，C 重新 call，V 结束并回放。没有读防守挑战，也不把 2D What-if 带入 3D。参见[五人制使用说明](docs/FIVE_PLAYER_GUIDE_ZH.md)。源码分支 `feature/five-player-workbench`，场景 `FivePlayerTraining.unity`，构建入口 `FivePlayerAuthoring.Build`。分享时复制整个程序文件夹，或解压 `CourtX_FivePlayer_20261114.zip`。
+11 月 14 日五人制入口：`Windows_FivePlayer/CourtX.exe`。战术板与即时回放共用可拖动的 2D 核心；支持三套进攻预设、整体 2–3 联防反应、悬停任务和短时渐隐轨迹。正常 3D 为 5v5，Q 按一下直接传球，E 要球，C 重新 call，V 结束并回放。没有读防守挑战，也不把 2D What-if 带入 3D。参见[五人制使用说明](docs/FIVE_PLAYER_GUIDE_ZH.md)。源码分支 `feature/five-player-workbench`，场景 `FivePlayerTraining.unity`，构建入口 `FivePlayerAuthoring.Build`。分享时复制整个程序文件夹，或解压 `CourtX_FivePlayer_20261114.zip`。
 
 以下为保留的旧版说明；旧版程序和 3v3 回放仍可独立使用。
 
@@ -89,3 +120,5 @@ Transform playerStart = layout.GetSpawn(CourtRole.BallHandler);
 首轮验场时可以先从弧顶横移两步，转头看右侧底角，再按 Tab 核对两名弱侧球员的相对位置。俯视图使用场上对象当前的位置，青色圆标为进攻方，橙色方标为防守方，号码和球衣一致。
 
 最新录像为 `Preview/Playtests/controls-20261106.mp4`，包含走路、Shift 跑步、移动中按住/松开 Tab、右手运球和 Q 蓄力抛球。录像由 Unity Play 模式的同一套控制函数逐帧驱动，直接采集场景相机。独立程序还会显示可按 F1 收起的键位提示。此前的 `final.mp4` 是 11 月 2 日版本。
+
+</details>

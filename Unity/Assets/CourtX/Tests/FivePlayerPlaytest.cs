@@ -39,7 +39,7 @@ public sealed class FivePlayerPlaytest:MonoBehaviour
         foreach(var size in Headless?new[]{new Vector2Int(1280,720)}:new[]{new Vector2Int(1280,720),new Vector2Int(1024,576),new Vector2Int(1920,1080)})
         {
             if(!Headless)Screen.SetResolution(size.x,size.y,false);yield return new WaitForSecondsRealtime(.5f);string tag=Headless?"headless":size.x+"x"+size.y;
-            game.Play=FivePlay.Screen;game.Defense=FiveDefense.Balanced;game.LoadLesson();game.Board.Seek(1.6f);yield return Shot(tag+"-lesson");
+            game.Play=FivePlay.Screen;game.LoadLesson();game.Board.Seek(1.6f);yield return Shot(tag+"-lesson");
             if(!Headless){Check(Screen.width==size.x&&Screen.height==size.y,tag+": actual rendered resolution");
             var r=FiveCourtUI.CourtPixels;var layout=new FiveCourtUI.BoardLayout(Screen.width,Screen.height);
             Check(r==layout.Court&&r.xMin>FiveCourtUI.HistoryPixels.xMax&&r.xMax<layout.Intent.xMin&&r.yMax<layout.Timeline.yMin
@@ -69,23 +69,23 @@ public sealed class FivePlayerPlaytest:MonoBehaviour
         game.ShowPage(0);game.ShowPage(1);Check(game.SelectedReplayIndex==7,"Selected old round survives tab changes in player");
         game.SelectReplay(2);yield return Shot("history-selection");
         foreach(FivePlay play in System.Enum.GetValues(typeof(FivePlay)))
-        {game.Play=play;game.Defense=FiveDefense.Perimeter;game.LoadLesson();game.Board.Seek(7);yield return Shot("play-"+play);}
+        {game.Play=play;game.LoadLesson();game.Board.Seek(7);yield return Shot("play-"+play);}
         for(int role=0;role<5;role++)
         {
-            game.Role=role;game.InitialHolder=role;game.StartPractice();yield return null;
+            game.Role=role;game.StartPractice();yield return null;
             Check(game.actors.Count(a=>a.gameObject.activeInHierarchy)==9&&!game.actors[role].gameObject.activeSelf,"Role "+role+": nine NPCs and fixed human identity");
             Check(Vector2.Distance(FiveRules.Flat(game.player.transform.position),game.Live.positions[role])<.01f,"Role "+role+": player spawns at corresponding five-player position");
         }
-        game.Role=0;game.InitialHolder=0;game.Play=FivePlay.Screen;game.StartPractice();yield return Shot("3d-first-person");
+        game.Role=0;game.Play=FivePlay.Screen;game.StartPractice();yield return Shot("3d-first-person");
         typeof(FiveCourtGame).GetField("<Overview>k__BackingField",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(game,true);yield return Shot("3d-overview");
         typeof(FiveCourtGame).GetField("<Overview>k__BackingField",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(game,false);
         var controller=game.player.GetComponent<CharacterController>();controller.enabled=false;
         game.player.transform.position=FiveRules.World(game.Live.positions[6]+game.Live.facing[6]*1.8f);
         game.player.transform.rotation=Quaternion.LookRotation(FiveRules.World(-game.Live.facing[6]));controller.enabled=true;yield return Shot("3d-eyes");
-        game.StartPractice();game.Live.positions[0]=new Vector2(-4,10);game.Live.positions[1]=new Vector2(4,10);game.Live.pinned[1]=true;
+        game.Play=FivePlay.HighPost;game.StartPractice();for(int i=0;i<5;i++)game.Live.positions[i]=game.Live.targets[i];game.Live.phaseAge=1;
         for(int i=5;i<10;i++){game.Live.positions[i]=new Vector2(i-7,2);game.Live.pinned[i]=true;}
         Check(game.DirectPass(1)&&game.Live.flight!=null,"Single direct-pass action releases immediately in actual player");
-        yield return new WaitForSecondsRealtime(1.5f);Check(game.Live.holder==1,"Player receives an assisted pass without charge timing");
+        yield return new WaitForSecondsRealtime(.7f);Check(game.Live.holder==1,"Player receives an assisted pass without charge timing");
         game.CallPlay();Check(game.Live.phase==0&&!game.Live.turnover,"Player can call a new sequence");
         game.FinishPractice();yield return Shot("actual-replay");
         Check(game.Page==1&&!game.Practicing&&game.Board.Record.kind=="actual","Actual practice returns to replay entrance");

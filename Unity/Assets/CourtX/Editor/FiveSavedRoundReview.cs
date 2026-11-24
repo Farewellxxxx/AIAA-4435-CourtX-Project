@@ -7,7 +7,7 @@ public static class FiveSavedRoundReview
 {
     public static void Run()
     {
-        string folder=Path.Combine(FivePlayerAuthoring.Delivery,"Replays5v5");
+        string folder=Path.Combine(FivePlayerAuthoring.ZoneDelivery,"Replays5v5");
         var files=Directory.GetFiles(folder,"*.json");var originals=files.ToDictionary(f=>f,File.ReadAllText);
         var root=new GameObject("saved rounds read-only acceptance");var game=root.AddComponent<FiveCourtGame>();
         try

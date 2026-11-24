@@ -15,6 +15,10 @@ public static class FiveFrameReview
             FivePlayerReview.Check(Enumerable.Range(5,5).Any(i=>i!=6&&Vector2.Distance(board.State.positions[i],state.positions[i])>.35f),play+" / "+defense+": paused defender displacement immediately reallocates other defenders");
             FivePlayerReview.Check(!board.Playing&&board.Time==9&&board.State.phase==2&&board.State.phaseAge==2,"Single-frame rearrangement never advances time or play stage");
             FivePlayerReview.Check(board.State.positions[6]==new Vector2(6.8f,12)&&board.State.pinned[6]&&Enumerable.Range(0,5).All(i=>board.State.positions[i]==state.positions[i]),"Dragged defender stays fixed and all offense stays on the frozen frame");
+            int moving=Enumerable.Range(5,5).Where(i=>i!=6).OrderByDescending(i=>Vector2.Distance(board.State.positions[i],state.positions[i])).First();
+            float now=Time.realtimeSinceStartup;
+            var start=board.DisplayPosition(moving,now-1);var middle=board.DisplayPosition(moving,now+.08f);var end=board.DisplayPosition(moving,now+2);
+            FivePlayerReview.Check(Vector2.Distance(start,state.positions[moving])<.02f&&Vector2.Distance(middle,start)>.01f&&Vector2.Distance(middle,end)>.01f&&end==board.State.positions[moving]&&board.Time==9,"Help defender moves through an intermediate position with frozen clip time");
             var once=board.State.Copy();board.BeginEdit();board.PlaceFrame(5,new Vector2(-6.5f,11));board.PlaceFrame(5,new Vector2(-6.2f,11));board.EndEdit();
             FivePlayerReview.Check(board.State.positions[6]==once.positions[6]&&board.State.positions[5]==new Vector2(-6.2f,11),"Several manually placed defenders remain where the user put them");
             board.Undo();FivePlayerReview.Check(JsonUtility.ToJson(board.State)==JsonUtility.ToJson(once),"Undo coalesces a paused layout drag with all defensive reactions");

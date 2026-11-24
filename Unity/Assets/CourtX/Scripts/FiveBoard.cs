@@ -17,6 +17,17 @@ namespace CourtX
         public FiveRecording TimelineRecord=>IsFrameStudy?source:Record;
         const float ShiftHighlightSeconds=1.5f;
         readonly float[] defenseShiftUntil=new float[5];
+        readonly Vector2[] motionFrom=new Vector2[5];
+        readonly float[] motionStart=new float[5],motionDuration=new float[5];
+        public Vector2 DisplayPosition(int actor,float now)
+        {
+            var target=State.positions[actor];
+            if(actor<5||!IsFrameStudy)return target;
+            int i=actor-5;float duration=motionDuration[i];
+            if(duration<=0)return target;
+            float u=Mathf.Clamp01((now-motionStart[i])/duration);
+            return Vector2.Lerp(motionFrom[i],target,u*(2-u));
+        }
         public float DefenderShiftOpacity(int actor,float now)
             => actor>=5&&actor<10?Mathf.Clamp01((defenseShiftUntil[actor-5]-now)*3):0;
         public int DefenderShiftMask
@@ -28,16 +39,28 @@ namespace CourtX
                 return mask;
             }
         }
-        void ClearDefenseShift()=>Array.Clear(defenseShiftUntil,0,defenseShiftUntil.Length);
+        void ClearDefenseShift()
+        {
+            Array.Clear(defenseShiftUntil,0,5);
+            Array.Clear(motionDuration,0,5);
+        }
         void ArrangeFrame(int actor)
         {
             var prior=(Vector2[])State.positions.Clone();
+            float now=UnityEngine.Time.realtimeSinceStartup;
+            var visible=new Vector2[5];
+            for(int i=5;i<10;i++)visible[i-5]=DisplayPosition(i,now);
             FiveFrameDefense.Arrange(State,layoutBasis);
-            float until=UnityEngine.Time.realtimeSinceStartup+ShiftHighlightSeconds;
+            float until=now+ShiftHighlightSeconds;
             for(int i=5;i<10;i++)
             {
-                if(i==actor||State.pinned[i])defenseShiftUntil[i-5]=0;
-                else if((prior[i]-State.positions[i]).sqrMagnitude>=.04f*.04f)defenseShiftUntil[i-5]=until;
+                int slot=i-5;
+                if(i==actor||State.pinned[i]){motionDuration[slot]=0;defenseShiftUntil[slot]=0;continue;}
+                if((prior[i]-State.positions[i]).sqrMagnitude<.000001f)continue;
+                float distance=Vector2.Distance(visible[slot],State.positions[i]);
+                motionFrom[slot]=visible[slot];motionStart[slot]=now;
+                motionDuration[slot]=Mathf.Clamp(distance/4.5f,.12f,1.1f);
+                if(distance>=.04f)defenseShiftUntil[slot]=until;
             }
         }
         public bool IsBranch=>branch!=null;
@@ -104,7 +127,7 @@ namespace CourtX
             if(branch==null)
             {
                 sourceTime=Time;branchStart=Time;
-                branch=new FiveRecording{name=source.name,kind="whatif",created="假设推演"};State=State.Copy();State.demo=false;
+                branch=new FiveRecording{name=source.name,kind="whatif",created="假设推演"};State=State.Copy();State.demo=false;State.guided=false;
             }
             else
             {
@@ -119,14 +142,14 @@ namespace CourtX
             reopened=!frameOnly&&(State.success||State.turnover);
             if(reopened)
             {
-                State.success=State.turnover=false;State.phase=0;State.phaseAge=0;State.request=-1;State.passCooldown=.5f;
+                State.success=State.turnover=State.madeBasket=false;State.phase=0;State.phaseAge=0;State.request=-1;State.passCooldown=.5f;
                 if(State.flight==null&&(State.holder<0||State.holder>=5))State.holder=State.lastPassFrom>=0&&State.lastPassFrom<5?State.lastPassFrom:State.controlled;
                 FiveRules.Event(State,"假设重新组织：保留当前站位，恢复进攻方配合。");
                 Notice="假设重新组织：保留站位"+(State.flight!=null?"和空中传球。":"，由 "+FiveRules.Number(State.holder)+" 持球。");
             }
             if(!editing)editSaved=false;
         }
-        public void BeginEdit(){playing=false;editing=true;editSaved=false;ClearDefenseShift();}
+        public void BeginEdit(){playing=false;editing=true;editSaved=false;Array.Clear(defenseShiftUntil,0,5);}
         public void PlaceFrame(int actor,Vector2 position)
         {
             if(actor<0||actor>=10||float.IsNaN(position.x)||float.IsNaN(position.y)||float.IsInfinity(position.x)||float.IsInfinity(position.y))return;
@@ -137,17 +160,18 @@ namespace CourtX
         public void EndEdit(){editing=editSaved=false;Commit();}
         public void Move(int actor,Vector2 position)
         {
+            if(State.playbookVersion==2){PlaceFrame(actor,position);return;}
             if(actor<0||actor>=10||float.IsNaN(position.x)||float.IsNaN(position.y)||float.IsInfinity(position.x)||float.IsInfinity(position.y))return;
             PrepareEdit();State.positions[actor]=FiveRules.Clamp(position);State.velocities[actor]=Vector2.zero;
             FiveRules.Refresh(State);branch.Add(State,true);if(!reopened)Notice="假设推演：继续播放，观察其他人的反应。原片段保持不变。";
         }
         public void SetPinned(int actor,bool value)
-        {if(actor<0||actor>=10)return;PrepareEdit(IsFrameStudy);State.pinned[actor]=value;if(IsFrameStudy)ArrangeFrame(-1);else FiveRules.Refresh(State);branch.Add(State,true);Notice=value?"已固定此人站位。":"已允许此人随规则调整站位。";}
+        {if(actor<0||actor>=10)return;PrepareEdit(IsFrameStudy||State.playbookVersion==2);State.pinned[actor]=value;if(IsFrameStudy)ArrangeFrame(-1);else FiveRules.Refresh(State);branch.Add(State,true);Notice=value?"已固定此人站位。":"已允许此人随规则调整站位。";}
         public void SetHolder(int actor)
-        {if(actor<0||actor>=5)return;PrepareEdit(IsFrameStudy);State.holder=actor;State.flight=null;State.turnover=false;FiveRules.Event(State,"假设设置："+FiveRules.Number(actor)+" 持球。");if(IsFrameStudy)ArrangeFrame(-1);else FiveRules.Refresh(State);branch.Add(State,true);}
+        {if(actor<0||actor>=5)return;PrepareEdit(IsFrameStudy||State.playbookVersion==2);State.holder=actor;State.flight=null;State.turnover=false;FiveRules.Event(State,"假设设置："+FiveRules.Number(actor)+" 持球。");if(IsFrameStudy)ArrangeFrame(-1);else FiveRules.Refresh(State);branch.Add(State,true);}
         public bool Pass(int actor)
         {
-            if(actor<0||actor>=5||State.flight!=null||State.turnover||State.holder==actor)return false;
+            if(State.playbookVersion==2||actor<0||actor>=5||State.flight!=null||State.turnover||State.holder==actor)return false;
             PrepareEdit();bool result=FiveRules.Pass(State,actor);branch.Add(State,true);return result;
         }
         public void StepOnce(){Playing=true;float speed=Speed;Speed=1;Tick(.5f);Speed=speed;Playing=false;}

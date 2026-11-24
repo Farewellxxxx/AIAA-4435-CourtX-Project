@@ -11,6 +11,7 @@ public static class FivePlayerAuthoring
     public const string Scene="Assets/CourtX/Scenes/FivePlayerTraining.unity";
     public const string Delivery="E:/study documents/2026 Fall/AIAA 4435 Inter/CourtX/Windows_FivePlayer_1117_Timing";
     public const string Evidence="E:/study documents/2026 Fall/AIAA 4435 Inter/CourtX/Preview/Playtests/FivePlayer-20261117-Timing";
+    public static string ZoneDelivery=>Path.Combine(Path.GetDirectoryName(Delivery),"Windows_FivePlayer_1121_Zone");
     public static void Generate()
     {
         var scene=EditorSceneManager.OpenScene(TacticalAuthoring.Scene);
@@ -60,8 +61,31 @@ public static class FivePlayerAuthoring
         var eye=GameObject.CreatePrimitive(PrimitiveType.Sphere);eye.name=name;eye.transform.SetParent(parent,false);eye.transform.localPosition=position;eye.transform.localScale=size;
         UnityEngine.Object.DestroyImmediate(eye.GetComponent<Collider>());eye.GetComponent<Renderer>().sharedMaterial=mat;
     }
+    [MenuItem("CourtX/Build Windows Player")]
+    public static void BuildPortable()
+    {
+        string projectDirectory = Directory.GetParent(Application.dataPath).FullName;
+        string buildDirectory = Path.Combine(projectDirectory, "Builds", "Windows");
+        string output = Path.Combine(buildDirectory, "CourtX.exe");
+        Directory.CreateDirectory(buildDirectory);
+        var report = BuildPipeline.BuildPlayer(new[] { Scene }, output,
+            BuildTarget.StandaloneWindows64, BuildOptions.None);
+        if (report.summary.result != BuildResult.Succeeded)
+            throw new UnityEditor.Build.BuildFailedException("CourtX build failed: " + report.summary.result);
+        Debug.Log("CourtX Windows player built at " + output);
+    }
+
     public static void Build()=>BuildTo(Delivery+"/CourtX.exe",false);
     public static void BuildQA()=>BuildTo(Evidence+"/QA/CourtX QA.exe",true);
+    public static void BuildGuided()
+    {
+        FivePlayerReview.RunCoach();
+        string path=Path.Combine(ZoneDelivery,"CourtX.exe");
+        Directory.CreateDirectory(Path.GetDirectoryName(path));
+        var report=BuildPipeline.BuildPlayer(new[]{Scene},path,BuildTarget.StandaloneWindows64,BuildOptions.None);
+        if(report.summary.result!=BuildResult.Succeeded)throw new Exception("Guided build failed: "+report.summary.result);
+        Debug.Log("GUIDED BUILD SUCCEEDED: "+path);
+    }
     static void BuildTo(string output,bool qa)
     {
         Generate();Directory.CreateDirectory(Path.GetDirectoryName(output));
