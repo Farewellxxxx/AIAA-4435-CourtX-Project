@@ -2,14 +2,27 @@
 
 ## 启动
 
-从发布页下载对应系统的 ZIP，完整解压。[Windows 与 macOS 试玩包](https://github.com/Farewellxxxx/AIAA-4435-CourtX-Project/releases/tag/v0.6.0)
+Windows、macOS 和 Android 的下载都在同一发布页。桌面版先完整解压 ZIP，Android 版在手机或平板上打开 APK 安装。[v0.7.0 发布页](https://github.com/Farewellxxxx/AIAA-4435-CourtX-Project/releases/tag/v0.7.0)
 
 - **Windows x64**　双击 `Start-CourtX.cmd`。从仓库启动也可以双击根目录的同名文件。练习回放保存在 `CourtX.exe` 旁的 `Replays5v5` 文件夹。
+- **Android（64 位 ARM）**　在手机或平板上打开下载的 APK，按系统安装提示操作，然后横屏启动 CourtX。左下摇杆控制跑位，在球场空白处滑动可以转头，准星瞄准队友或篮筐后点击出球按钮。每轮保存后可从「即时回放」打开，记录在此设备的应用数据中。
 - **macOS（M 系列或 Intel）**　双击 `CourtX.app`。练习回放保存在当前用户的“资源库 → Application Support”中的游戏数据目录，文件夹名为 `Replays5v5`。首次打开时如提示无法验证开发者，可核对下载来源后按 Apple 的步骤单独允许此应用。这一版尚未经过 Apple 公证。[Apple 官方说明](https://support.apple.com/zh-cn/102445)
 
-## 两个入口
+## 当前版本的三个入口
+
 - **战术板**：左侧分别选择进攻战术和战术分支，点播放观看示范。分支表示这一轮要观察的防守反应。按右下方按钮以推荐角色开始，也可点“换角色”选择其他球员。
+- **即时演练**：点「开始演练」即可进入球场。系统分配角色并抽取回合，练习者根据场上的跑位、球权和防守自行决定如何处理球。
 - **即时回放**：查看每一轮正常 3D 练习的实际经过。
+
+### 即时演练怎么操作
+
+WASD 跑位，鼠标转头。左上角的小地图始终显示双方站位、球和你的朝向。演练前段队友自行展开配合。需要你接应或带球到关键区域时，地面会出现薄荷绿圈，上方有浮动箭头。目标在视野外时看屏幕边缘的方向提示，也可以按 F 辅助跑位。距目标中心约一米就能到位；如果已经在合适的位置，配合直接衔接。
+
+轮到你处理球后，可以带球离开原来的接应区，边移动边观察。将准星对准队友或篮筐按 Q。传给有空位的队友后，回合会继续。球权结束时会显示场上的实际结果，例如「传球被 X1 截断，本轮失败」。点「下一轮即时演练」重新抽题，或到「即时回放」查看刚才的回合。Esc 可暂停，V 可提前结束并查看回放。
+
+每轮从九个教学分支中等概率抽取一个，再独立按 50% 概率采用原防守或变体，因此允许重复抽到同一题。教学模式保留预设的传球和跑位路线。
+
+研究者可在本轮回放 JSON 的末帧查看 `drill`。其中 `variant` 记录防守条件，`chosenTarget` 为实际选择（0–4 对应 01–05，−1 表示投篮，−2 表示尚未出手），`decisionTime` 是从获得决定权到出手的场上秒数。`decisionCorrect` 记录出手时是否抓住首选机会，`reasonableChoice` 包含其他可行选项。`received`、`interceptedBy`、`nextPassFrom`、`nextPassTo` 与 `outcome` 记录实际后续。截球人 5–9 对应 X1–X5。普通教学回放不参与这组判定。
 
 角色是你代入的进攻球员，球权转移不会改变这个身份。五名进攻编号 01–05，五名防守编号 X1–X5。三套教学都由 01 开球。X1、X2 在上线，X3、X4 分守左、右侧下线，X5 居中护筐。战术板和第一人称使用同一份十人逐拍站位。
 
@@ -57,9 +70,9 @@
 
 用 WASD 跑向高亮圈，或按 F 辅助跑到本拍位置。进入练习后，准星固定在屏幕中央。移动鼠标就能转头、抬头或低头。持球时，把准星对准队友，看到“已瞄准”及队友号码后按 Q 传球。准星对准篮筐时按 Q 即可投篮。瞄空时按 Q 会继续持球。每次投篮都命中，球入网后本轮自动保存并打开即时回放。最后的机会由 AI 拿到时会自动出手，由玩家拿到时会等待玩家瞄筐按 Q。传球仍可能被截断。
 
-按住 Tab 查看全队站位。俯视图中的球场方向固定，左右移动鼠标会转动自己角色的朝向箭头。WASD 会按新的朝向移动，松开 Tab 后会沿刚才的方向和仰俯角回到第一人称。Esc 暂停并释放鼠标，点“继续暂停的练习”后恢复鼠标转视角。C 在当前站位重新组织并由 01 开球，R 从预设重开，V 保存本轮并查看实际回放。
+左上角的小地图同样常驻，篮筐方向固定。转头时，自己的朝向标记会随视角转动。教学中的普通跑位到过即可，随后可以调整站位。Esc 暂停并释放鼠标，点“继续暂停的练习”后恢复鼠标转视角。C 在当前站位重新组织并由 01 开球，R 从预设重开，V 保存本轮并查看实际回放。
 
-单轮练习最长 5 分钟。失误可按 C 重新组织，想独立记录下一轮可按 V 结束再开。已经出手的球会完成入网。
+教学中，队友接到传错的球时，画面会提示这一拍该由谁接应，队友会把球回传。传球被截时，提示会指出哪名防守人切断了哪条线路，按 C 即可重新组织。单轮练习最长 5 分钟，可按 V 结束并查看回放。
 
 ## 记录与旧版本
 程序会读取目录里所有有效的实际练习记录。保存失败时会提示并提供重试。无法读取的记录会跳过并显示数量。
@@ -89,3 +102,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Tools\Open-Unity.ps1 -
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Tools\run_five_review.ps1 -Method FivePlayerReview.RunCoach -Label coach
 ```
+
+**发布 macOS 或 Android 版本**
+
+- macOS 使用 `FivePlayerTraining.unity` 构建包含 Intel 和 Apple silicon 的 `CourtX.app`。仓库根目录下运行 `python Tools/package_macos.py <CourtX.app路径> CourtX-macOS-Universal.zip --version 0.7.0`，打包脚本会保留执行权限并核对架构、资源和版本号。
+- Android 需要编辑器的 Android Build Support、SDK、NDK 和 OpenJDK。发布者在本机环境设置 `COURTX_ANDROID_KEYSTORE`、`COURTX_ANDROID_KEY_ALIAS`、`COURTX_ANDROID_STORE_PASSWORD`、`COURTX_ANDROID_KEY_PASSWORD`，再用 Unity 参数 `-batchmode -quit -buildTarget Android -projectPath Unity -executeMethod FiveAndroidBuild.Build` 构建已签名的 ARM64 APK。默认输出到 `Unity/Builds/Android/CourtX-Android-arm64.apk`。

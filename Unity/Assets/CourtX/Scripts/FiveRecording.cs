@@ -10,6 +10,8 @@ namespace CourtX
     {
         public string schema="courtx.five.v1",id=Guid.NewGuid().ToString("N"),name="",kind="actual",created="",endReason="";
         public List<FiveState> frames=new List<FiveState>();
+        public bool IsDrill => frames.Count>0 && frames[0].drill!=null;
+        public string DrillSummary => IsDrill ? FiveDrill.Summary(frames[frames.Count-1]) : "";
         public float Start=>frames.Count>0?frames[0].time:0;
         public float End=>frames.Count>0?frames[frames.Count-1].time:0;
         public string PlayTitle=>!string.IsNullOrWhiteSpace(name)?name:
@@ -82,7 +84,8 @@ namespace CourtX
                 if(s.tasks.Any(t=>t!=null&&t.Length>2000))return false;
                 var f=s.flight;
                 if(f==null)continue;
-                bool validTarget=f.shot?f.to==-1&&Vector2.Distance(f.destination,FiveFlight.Rim)<.01f:f.to>=0&&f.to<5&&f.from!=f.to;
+                float rimTolerance=f.misses&&s.drill!=null?.9f:.01f;
+                bool validTarget=f.shot?f.to==-1&&Vector2.Distance(f.destination,FiveFlight.Rim)<rimTolerance:f.to>=0&&f.to<5&&f.from!=f.to;
                 if(s.holder!=-1||f.from<0||f.from>4||!validTarget||!Point(f.origin)||!Point(f.destination)||!Finite(f.elapsed)||!Finite(f.duration)||f.duration<=0||f.duration>10||f.elapsed<0||f.elapsed>f.duration+.06f)return false;
             }
             return true;

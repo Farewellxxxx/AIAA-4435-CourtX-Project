@@ -28,7 +28,12 @@ namespace CourtX
         public int SelectedReplayIndex=>History.FindIndex(r=>r.id==SelectedReplayId);
         public bool HasPausedPractice=>!Practicing&&Live!=null&&LiveRecord!=null&&string.IsNullOrEmpty(LiveRecord.endReason);
         public bool SavePending=>unsaved.Count>0;
-        public bool Overview{get;private set;}
+        public bool IsDrill => Live?.drill != null;
+        public bool ShowRunTarget => Practicing && Live != null && !Live.success && !Live.turnover &&
+            Live.flight?.shot != true && FiveCoach.NeedsRunTarget(Live);
+        public bool CanActWithBall => Practicing && Live != null && Live.holder == Live.controlled &&
+            !Live.turnover && !Live.success && (!IsDrill || FiveDrill.CanChoose(Live));
+        bool CanPassWithBall => CanActWithBall || Practicing&&FiveDrill.CanPassDuringCut(Live);
         public Vector2 ViewHeading=>player?FiveRules.Flat(player.transform.forward):Vector2.zero;
         public FiveActors Visuals{get;private set;}
         int assistedBeat=-1;
@@ -38,9 +43,13 @@ namespace CourtX
             get
             {
                 if (!string.IsNullOrEmpty(SaveFolder)) return SaveFolder;
+#if UNITY_ANDROID && !UNITY_EDITOR
+                var root = Application.persistentDataPath;
+#else
                 var root = Application.platform == RuntimePlatform.OSXPlayer
                     ? Application.persistentDataPath
                     : Directory.GetParent(Application.dataPath).FullName;
+#endif
                 return Path.Combine(root, "Replays5v5");
             }
         }
@@ -50,6 +59,8 @@ namespace CourtX
             if(player){player.enabled=false;player.acceptsInput=false;player.SetOverview(false);if(player.basketball)player.basketball.enabled=false;}
             Visuals=new FiveActors(this);
             Role=FiveCoach.Recommended(Play);LoadHistory();LoadLesson();SyncPracticeCursor();
+            if(Array.IndexOf(Environment.GetCommandLineArgs(),"-tryShooterCut")>=0)
+                BeginRound(FiveDrill.Create(FivePlay.Horns,UnityEngine.Random.Range(0,3),UnityEngine.Random.value<.5f));
         }
         public void LoadHistory()
         {
@@ -84,10 +95,16 @@ namespace CourtX
             if(!SavePending)Message="已打开第 "+(index+1)+" 轮";
         }
         public void ShowPage(int page)
-        {if(page==0)LoadLesson();else if(History.Count>0)SelectReplay(Mathf.Max(0,SelectedReplayIndex));else{Page=1;Board.Playing=false;}}
+        {if(page==2)OpenDrill();else if(page==0)LoadLesson();else if(History.Count>0)SelectReplay(Mathf.Max(0,SelectedReplayIndex));else{Page=1;Board.Playing=false;}}
+        public void OpenDrill()
+        {
+            Page=2;
+            Board.Playing=false;
+            if(!SavePending)Message="";
+        }
         public void BoardShortcut(KeyCode key,bool pointerActive)
         {
-            if(pointerActive)return;
+            if(pointerActive||Page==2)return;
             if(key==KeyCode.Space)Board.Playing=!Board.Playing;
             if(key==KeyCode.LeftArrow)Board.Jump(-1);
             if(key==KeyCode.RightArrow)Board.Jump(1);
@@ -96,13 +113,14 @@ namespace CourtX
         {
             if(!Practicing)
             {
+                if(Page==2)return;
                 Board.Tick(Time.unscaledDeltaTime);
                 if(AcceptsInput&&Input.GetKeyDown(KeyCode.Space))BoardShortcut(KeyCode.Space,FiveCourtUI.Dragging);
                 if(AcceptsInput&&Input.GetKeyDown(KeyCode.LeftArrow))BoardShortcut(KeyCode.LeftArrow,FiveCourtUI.Dragging);
                 if(AcceptsInput&&Input.GetKeyDown(KeyCode.RightArrow))BoardShortcut(KeyCode.RightArrow,FiveCourtUI.Dragging);
                 return;
             }
-            if(Live.madeBasket)
+            if(Live.madeBasket||FiveDrill.IsFinished(Live))
             {
                 basketDisplayLeft-=Time.unscaledDeltaTime;
                 if(basketDisplayLeft<=0)FinishPractice();
@@ -111,42 +129,41 @@ namespace CourtX
             float dt=Mathf.Min(Time.deltaTime,.05f);
             if(AcceptsInput)
             {
+#if UNITY_ANDROID && !UNITY_EDITOR
+                if(Input.GetKeyDown(KeyCode.Escape)){PausePractice();return;}
+                FiveTouch.Drive(this,dt);
+                if(!Practicing)return;
+#else
                 if(Input.GetKeyDown(KeyCode.V)&&Live.flight?.shot!=true){FinishPractice();return;}
                 if(Input.GetKeyDown(KeyCode.Escape)){PausePractice();return;}
-                if(Input.GetKeyDown(KeyCode.R)&&Live.flight?.shot!=true){StartPractice();return;}
-                if(Input.GetKeyDown(KeyCode.C)&&Live.flight?.shot!=true)CallPlay();
+                if(!IsDrill&&Input.GetKeyDown(KeyCode.R)&&Live.flight?.shot!=true){StartPractice();return;}
+                if(!IsDrill&&Input.GetKeyDown(KeyCode.C)&&Live.flight?.shot!=true)CallPlay();
                 var motion=new Vector2(Input.GetAxisRaw("Horizontal"),Input.GetAxisRaw("Vertical"));
                 Vector2 look=Cursor.lockState==CursorLockMode.Locked
                     ?new Vector2(Input.GetAxis("Mouse X"),Input.GetAxis("Mouse Y"))*2:Vector2.zero;
-                DrivePractice(motion,look,dt,Input.GetKey(KeyCode.Tab),
-                    Input.GetKey(KeyCode.LeftShift)||Input.GetKey(KeyCode.RightShift),Input.GetKeyDown(KeyCode.F));
-                if(Input.GetKeyDown(KeyCode.Q)&&Target>=0)
-                {
-                    if(Target==FiveActors.RimTarget){if(FiveRules.Shoot(Live))LiveRecord.Add(Live,true);}
-                    else DirectPass(Target);
-                }
+                DrivePractice(motion,look,dt,Input.GetKey(KeyCode.LeftShift)||Input.GetKey(KeyCode.RightShift),Input.GetKeyDown(KeyCode.F));
+                if(Input.GetKeyDown(KeyCode.Q)&&Target>=0)ReleaseAt(Target);
+#endif
             }
             StepPractice(dt);
             if(Live.holder!=Live.controlled||Live.turnover)Target=-1;
             Visuals?.Apply();
-            if(Live.madeBasket)basketDisplayLeft=.85f;
-            else if(Live.time>=300&&Live.flight?.shot!=true)FinishPractice();
+            if(Live.madeBasket||FiveDrill.IsFinished(Live))basketDisplayLeft=.85f;
+            else if(Live.time>=300&&Live.flight?.shot!=true)FinishPractice("回合超时");
         }
-        public void DrivePractice(Vector2 motion,Vector2 look,float seconds,bool overviewHeld,bool sprint,bool assistPressed=false)
+        public void DrivePractice(Vector2 motion,Vector2 look,float seconds,bool sprint,bool assistPressed=false)
         {
             if(!Practicing||Live==null)return;
-            Overview=overviewHeld;
             if(player)
             {
-                if(assistPressed)assistedBeat=Live.phase;
-                if(motion!=Vector2.zero||FiveCoach.InPlace(Live,Live.controlled)||Live.success||Live.turnover)assistedBeat=-1;
+                if(assistPressed&&ShowRunTarget)assistedBeat=Live.phase;
+                if(!ShowRunTarget||motion!=Vector2.zero)assistedBeat=-1;
                 if(assistedBeat==Live.phase)
                 {
-                    var direction=FiveRules.World(Live.targets[Live.controlled]-Live.positions[Live.controlled]).normalized;
+                    var direction=FiveRules.World(FiveCoach.RunTarget(Live)-Live.positions[Live.controlled]).normalized;
                     var local=player.transform.InverseTransformDirection(direction);
                     motion=new Vector2(local.x,local.z);
                 }
-                // The HUD draws the 5v5 map over the live first-person camera.
                 player.Drive(motion,look,seconds,false,sprint);
                 Vector2 actual=FiveRules.Flat(player.transform.position);
                 Vector2 position=FiveRules.Clamp(actual);
@@ -154,7 +171,7 @@ namespace CourtX
                 Live.positions[Live.controlled]=position;
                 Live.facing[Live.controlled]=ViewHeading;
             }
-            Target=!Overview&&Live.holder==Live.controlled&&!Live.turnover&&player?FiveActors.PickTarget(player.eyes,Live):-1;
+            Target=CanPassWithBall&&player?FiveActors.PickTarget(player.eyes,Live,CanActWithBall):-1;
         }
         void Teleport(Vector2 position)
         {
@@ -163,34 +180,64 @@ namespace CourtX
         }
         public void StartPractice()
         {
-            ArchiveRound();
-            Live=FiveCoach.Create(Play,Role,Branch);
-            LiveRecord=new FiveRecording{name=FiveZoneBook.PlayName(Play),kind="actual",created=DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss",CultureInfo.InvariantCulture)};LiveRecord.Add(Live,true);
-            Target=-1;assistedBeat=-1;Practicing=true;Overview=false;Message="";Board.Playing=false;
-            if(player){player.ResetView();Teleport(Live.positions[Role]);player.transform.rotation=Quaternion.LookRotation(FiveRules.World(new Vector2(0,1.575f)-Live.positions[Role]));}
+            BeginRound(FiveCoach.Create(Play,Role,Branch));
+        }
+        public void StartDrill()
+        {
+            BeginRound(FiveDrill.RandomRound());
+        }
+        void BeginRound(FiveState state)
+        {
+            ArchiveRound("开始新一轮");
+            Live=state;
+            if(IsDrill)Page=2;
+            LiveRecord=new FiveRecording{name=IsDrill?"即时演练":FiveZoneBook.PlayName(state.play),kind="actual",created=DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss",CultureInfo.InvariantCulture)};LiveRecord.Add(Live,true);
+            Target=-1;assistedBeat=-1;basketDisplayLeft=0;Practicing=true;Message="";Board.Playing=false;
+            var position=state.positions[state.controlled];
+            if(player){player.ResetView();Teleport(position);player.transform.rotation=Quaternion.LookRotation(FiveRules.World(FiveFlight.Rim-position));}
             Visuals?.Apply();SyncPracticeCursor();
         }
         void SyncPracticeCursor()
         {
             if(!Application.isPlaying)return;
+#if UNITY_ANDROID && !UNITY_EDITOR
+            FiveTouch.Reset();
+            Input.multiTouchEnabled=true;
+            Input.simulateMouseWithTouches=!Practicing;
+            Cursor.lockState=CursorLockMode.None;
+#else
             bool capture=Practicing&&AcceptsInput;
             Cursor.lockState=capture?CursorLockMode.Locked:CursorLockMode.None;
             Cursor.visible=!capture;
+#endif
         }
         public void PausePractice()
-        {if(!Practicing)return;Practicing=false;Overview=false;LiveRecord.Add(Live,true);SyncPracticeCursor();Message="练习已暂停，可以继续当前回合，或从预设开始新一轮。";}
+        {
+            if(!Practicing)return;
+            if(FiveDrill.IsFinished(Live)){FinishPractice();return;}
+            Practicing=false;LiveRecord.Add(Live,true);if(IsDrill)OpenDrill();SyncPracticeCursor();
+            Message=IsDrill?"演练已暂停。":"练习已暂停，可以继续当前回合，或从预设开始新一轮。";
+        }
         public void ResumePractice()
-        {if(!HasPausedPractice)return;Practicing=true;Overview=false;Message="";SyncPracticeCursor();}
+        {if(!HasPausedPractice)return;Practicing=true;Message="";SyncPracticeCursor();}
         public bool DirectPass(int receiver)
         {
-            if(Live==null||Live.holder!=Live.controlled)return false;
+            if(Live==null||Live.holder!=Live.controlled||(IsDrill&&!CanPassWithBall))return false;
             bool sent=FiveRules.Pass(Live,receiver,true);if(sent)LiveRecord.Add(Live,true);return sent;
         }
+        public bool ReleaseAt(int target)
+        {
+            if(!CanPassWithBall)return false;
+            if(target!=FiveActors.RimTarget)return DirectPass(target);
+            if(!CanActWithBall||!FiveRules.Shoot(Live))return false;
+            LiveRecord.Add(Live,true);
+            return true;
+        }
         public void CallPlay()
-        {if(Live==null)return;assistedBeat=-1;FiveRules.Call(Live);LiveRecord.Add(Live,true);}
+        {if(Live==null||IsDrill)return;assistedBeat=-1;FiveRules.Call(Live);LiveRecord.Add(Live,true);}
         public void StepPractice(float seconds)
         {if(!Practicing||Live==null)return;FiveRules.Step(Live,seconds,Live.controlled);LiveRecord.Add(Live);}
-        void ArchiveRound()
+        void ArchiveRound(string reason)
         {
             if(LiveRecord==null||Live==null||!string.IsNullOrEmpty(LiveRecord.endReason))return;
             if(Live.time<.05f&&Live.flight?.shot!=true&&!Live.madeBasket)return;
@@ -200,7 +247,8 @@ namespace CourtX
                 FiveRules.Step(Live,1f/60,Live.controlled);
                 LiveRecord.Add(Live);
             }
-            LiveRecord.Add(Live,true);LiveRecord.endReason=Live.madeBasket?"投篮命中":Live.success?"已完成一次战术决策":Live.turnover?"传球被封堵":"结束练习";
+            if(IsDrill&&!FiveDrill.IsFinished(Live))FiveDrill.Finish(Live,reason);
+            LiveRecord.Add(Live,true);LiveRecord.endReason=FiveDrill.IsFinished(Live)?Live.drill.outcome:Live.madeBasket?"投篮命中":Live.success?"已完成一次战术决策":Live.turnover?"传球被封堵":"结束练习";
             var record=LiveRecord.Copy();History.Insert(0,record);
             TrySave(record);
         }
@@ -211,17 +259,27 @@ namespace CourtX
             catch(Exception e){unsaved[record.id]=record;Message=unsaved.Count+" 轮尚未保存："+e.Message;Debug.LogWarning(Message);}
         }
         public void RetrySave(){foreach(var record in unsaved.Values.ToArray())TrySave(record);}
-        public void FinishPractice()
+        public void FinishPractice()=>FinishPractice("主动结束");
+        void FinishPractice(string reason)
         {
             if(Live==null)return;
+            bool showDrillResult=FiveDrill.IsFinished(Live)||(IsDrill&&reason=="回合超时");
             // Very short rounds still contain an explicit final state.
             if(Live.time<.05f){Live.time=.05f;LiveRecord.Add(Live,true);}
-            ArchiveRound();Practicing=false;Overview=false;
+            ArchiveRound(reason);Practicing=false;
             SyncPracticeCursor();
-            if(History.Count>0)SelectReplay(0);
+            if(showDrillResult)
+            {
+                SelectedReplayId=LiveRecord.id;
+                OpenDrill();
+            }
+            else if(History.Count>0)SelectReplay(0);
         }
         void OnApplicationFocus(bool focus){if(!focus&&AcceptsInput&&Practicing)PausePractice();}
-        void OnApplicationQuit(){ArchiveRound();RetrySave();}
+#if UNITY_ANDROID && !UNITY_EDITOR
+        void OnApplicationPause(bool paused){if(paused&&AcceptsInput&&Practicing)PausePractice();}
+#endif
+        void OnApplicationQuit(){ArchiveRound("退出演练");RetrySave();}
         void OnGUI(){FiveCourtUI.Draw(this);}
     }
 }

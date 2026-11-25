@@ -16,6 +16,9 @@ Player/win-x64/Replays5v5/
 Unity/Replays5v5/
 Preview/Backups/
 Preview/Playtests/
+Preview/ShooterCut-Windows/
+*.keystore
+*.jks
 *.mp4
 *.zip
 *.log

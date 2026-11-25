@@ -7,7 +7,7 @@ namespace CourtX
     [Serializable] public sealed class FiveFlight
     {
         public int from,to;public Vector2 origin,destination;public float elapsed,duration;
-        public bool shot,advancesBeat;
+        public bool shot,advancesBeat,misses;
         public const float RimHeight=3.05f;
         public static readonly Vector2 Rim=new Vector2(0,1.575f);
         public float Progress=>Mathf.Clamp01(elapsed/Mathf.Max(.01f,duration));
@@ -33,23 +33,26 @@ namespace CourtX
         // Older recordings omit these fields and retain their original phase numbering.
         public int playbookVersion,branch,routePoint;
         public float settledAge;
-        public bool pendingGuidedCatch;
+        public bool pendingGuidedCatch,playerSpotReached;
+        [NonSerialized] public string teachingCatchCue;
+        [NonSerialized] public float teachingCatchCueUntil;
         public int controlled,holder,phase,eventSerial,request=-1,lastPassFrom=-1,lastPassTo=-1;
         public float time,phaseAge,requestUntil,passCooldown;
         public bool success,turnover,demo,screenActive,guided,madeBasket,usedScreen;
         public Vector2[] positions=new Vector2[10],velocities=new Vector2[10],targets=new Vector2[10],facing=new Vector2[10];
         public bool[] pinned=new bool[10];public string[] tasks=new string[10];
         public FiveFlight flight;public Vector2 looseBall,screenPoint;
-        [SerializeField] bool hasFlight;
-        public void OnBeforeSerialize(){hasFlight=flight!=null;}
-        public void OnAfterDeserialize(){if(!hasFlight)flight=null;}
+        public FiveDrillRound drill;
+        [SerializeField] bool hasFlight,hasDrill;
+        public void OnBeforeSerialize(){hasFlight=flight!=null;hasDrill=drill!=null;}
+        public void OnAfterDeserialize(){if(!hasFlight)flight=null;if(!hasDrill)drill=null;}
         public int screener=4;
         public string attackIntent="",defenseIntent="",lastEvent="",phaseName="";
         public Vector2 Ball=>flight!=null?flight.Position:holder>=0&&holder<10?positions[holder]:looseBall;
         public FiveState Copy()
         {
             var s=(FiveState)MemberwiseClone();s.positions=(Vector2[])positions.Clone();s.velocities=(Vector2[])velocities.Clone();
-            s.targets=(Vector2[])targets.Clone();s.facing=(Vector2[])facing.Clone();s.pinned=(bool[])pinned.Clone();s.tasks=(string[])tasks.Clone();s.flight=flight?.Copy();return s;
+            s.targets=(Vector2[])targets.Clone();s.facing=(Vector2[])facing.Clone();s.pinned=(bool[])pinned.Clone();s.tasks=(string[])tasks.Clone();s.flight=flight?.Copy();s.drill=drill?.Copy();return s;
         }
     }
 }

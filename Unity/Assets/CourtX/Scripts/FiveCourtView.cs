@@ -5,6 +5,9 @@ namespace CourtX
     {
         public static readonly Color Floor=new Color(.105f,.235f,.185f),Offense=new Color(.94f,.80f,.62f),Defense=new Color(.94f,.65f,.61f),Accent=new Color(.82f,.91f,.57f);
         static readonly Color[] jerseys={Offense,new Color(.74f,.86f,.78f),new Color(.69f,.83f,.89f),new Color(.88f,.77f,.88f),new Color(.94f,.87f,.57f)};
+        public static readonly Color MapOffense=new Color(.81f,.92f,.88f),MapDefense=new Color(.92f,.55f,.45f),MapBall=new Color(1f,.60f,.16f);
+        static readonly string[] MapNumbers={"1","2","3","4","5"};
+        static readonly Color MapDefenseFill=new Color(.34f,.17f,.15f);
         static Texture2D disc;
         static GUIStyle holderCaption;
         static FiveCourtInk courtInk,trailInk;static Vector2 inkSize;static FiveRecording tailRecord;static float tailTime;static int tailFocus;
@@ -77,8 +80,8 @@ namespace CourtX
             trailInk.Stroke(x,y,(2+ageA*7)*scale,(2+ageB*7)*scale,ha,hb);
             trailInk.Stroke(x,y,(.3f+ageA*3.4f)*scale,(.3f+ageB*3.4f)*scale,ca,cb);
         }
-        public static void Draw(Rect r,FiveBoard board,GUIStyle label,int hover=-1)
-            =>Draw(r,board.IsFrameStudy?null:board.Record,board.State,label,hover,board,Vector2.zero);
+        public static void Draw(Rect r,FiveBoard board,GUIStyle label,int hover=-1,bool showTacticalOverlays=true)
+            =>Draw(r,board.IsFrameStudy?null:board.Record,board.State,label,hover,board,Vector2.zero,showTacticalOverlays);
         public static Texture2D TrailsTexture(Vector2 size,FiveRecording record,FiveState state,int hover=-1)
         {
             CourtTexture(size);var r=new Rect(Vector2.zero,size);float t=state.time,from=t-2.5f;
@@ -93,9 +96,9 @@ namespace CourtX
             }
             return trailInk.Texture;
         }
-        public static void Draw(Rect r,FiveRecording record,FiveState state,GUIStyle label,int hover=-1,Vector2 overviewHeading=default)
-            =>Draw(r,record,state,label,hover,null,overviewHeading);
-        static void Draw(Rect r,FiveRecording record,FiveState state,GUIStyle label,int hover,FiveBoard board,Vector2 overviewHeading)
+        public static void Draw(Rect r,FiveRecording record,FiveState state,GUIStyle label,int hover=-1,Vector2 overviewHeading=default,bool showTacticalOverlays=true)
+            =>Draw(r,record,state,label,hover,null,overviewHeading,showTacticalOverlays);
+        static void Draw(Rect r,FiveRecording record,FiveState state,GUIStyle label,int hover,FiveBoard board,Vector2 overviewHeading,bool showTacticalOverlays)
         {
             Court(r);
             if(record!=null&&Event.current.type==EventType.Repaint)
@@ -113,10 +116,13 @@ namespace CourtX
                 for(float d=rad;d<length-rad;d+=rad*.7f)
                     Line(start+direction*d,start+direction*Mathf.Min(d+rad*.28f,length-rad),tint,Mathf.Max(1,rad*.07f));
             }
-            DefensiveLink(5,6);
-            int middle=state.playbookVersion==2?9:8;
-            DefensiveLink(7,middle);DefensiveLink(middle,middle==9?8:9);
-            if(state.screenActive)
+            if(showTacticalOverlays)
+            {
+                DefensiveLink(5,6);
+                int middle=state.playbookVersion==2?9:8;
+                DefensiveLink(7,middle);DefensiveLink(middle,middle==9?8:9);
+            }
+            if(showTacticalOverlays&&state.screenActive)
             {
                 var center=ScreenPoint(r,state.screenPoint);
                 Vector2 direction=Vector2.down;
@@ -134,7 +140,7 @@ namespace CourtX
                 Line(center,stop,Accent,Mathf.Max(2,rad*.16f));
                 Line(stop-cross,stop+cross,Accent,Mathf.Max(2,rad*.18f));
             }
-            if(state.flight!=null)
+            if(showTacticalOverlays&&state.flight!=null)
             {
                 Vector2 a=ScreenPoint(r,state.flight.origin),b=ScreenPoint(r,state.flight.destination);var dir=(b-a).normalized;float d=Vector2.Distance(a,b);
                 Color path=state.flight.shot?new Color(1,.66f,.24f,.82f):new Color(1,.88f,.61f,.35f);
@@ -154,7 +160,7 @@ namespace CourtX
             for(int i=0;i<10;i++)if(i!=state.controlled)Actor(r,state,i,Position(i),label,hover);
             Actor(r,state,state.controlled,Position(state.controlled),label,hover);
             if(overviewHeading!=Vector2.zero)
-                DrawHeading(r,Position(state.controlled),overviewHeading);
+                DrawHeading(r,Position(state.controlled),overviewHeading,rad);
             bool held=state.flight==null&&state.holder>=0&&state.holder<10;
             var player=held?ScreenPoint(r,Position(state.holder)):Vector2.zero;
             var ball=held?player+new Vector2(rad*1.12f,-rad*.68f):ScreenPoint(r,state.Ball);
@@ -178,12 +184,47 @@ namespace CourtX
                 Box(tag,new Color(.07f,.15f,.11f,.95f));GUI.Label(tag,"持球",holderCaption);
             }
         }
-        static void DrawHeading(Rect court,Vector2 position,Vector2 heading)
+        public static void DrawMiniCourt(Rect court,FiveState state,Vector2 heading,GUIStyle numeral)
+        {
+            if(Event.current.type!=EventType.Repaint)return;
+            Court(court);
+            float radius=Mathf.Clamp(court.width*.034f,3.3f,14f);
+            bool showNumbers=radius>=4.8f;
+            numeral.fontSize=Mathf.RoundToInt(radius*1.45f);
+            void Player(int id)
+            {
+                var point=ScreenPoint(court,state.positions[id]);
+                bool mine=id==state.controlled;
+                if(mine)
+                {
+                    Disc(point,radius*1.55f,Accent);
+                    Disc(point,radius*1.27f,Floor);
+                }
+                Disc(point,radius+1,id<5?Floor:MapDefense);
+                Disc(point,radius,id<5?(mine?Accent:MapOffense):MapDefenseFill);
+                if(!showNumbers)return;
+                numeral.normal.textColor=id<5?Floor:Color.white;
+                GUI.Label(new Rect(point.x-radius,point.y-radius*1.5f,radius*2,radius*3),MapNumbers[id%5],numeral);
+            }
+            for(int i=0;i<10;i++)if(i!=state.controlled)Player(i);
+            Player(state.controlled);
+            if(heading.sqrMagnitude>.001f)DrawHeading(court,state.positions[state.controlled],heading,radius);
+
+            var ball=ScreenPoint(court,state.Ball);
+            if(state.flight==null&&state.holder>=0&&state.holder<10)
+            {
+                var side=new Vector2(ball.x<court.center.x?1:-1,-.55f).normalized;
+                if(state.holder==state.controlled&&Vector2.Dot(side,heading.normalized)>.45f)
+                    side=new Vector2(-side.y,side.x);
+                ball+=side*radius*1.46f;
+            }
+            DrawBasketball(ball,Mathf.Max(2.5f,radius*.62f));
+        }
+        static void DrawHeading(Rect court,Vector2 position,Vector2 heading,float radius)
         {
             var center=ScreenPoint(court,position);
             var forward=(ScreenPoint(court,position+heading)-center).normalized;
             var right=new Vector2(-forward.y,forward.x);
-            float radius=Radius(court);
             var tip=center+forward*radius*2.6f;
             var leftWing=center+(forward*1.67f-right*.64f)*radius;
             var rightWing=center+(forward*1.67f+right*.64f)*radius;

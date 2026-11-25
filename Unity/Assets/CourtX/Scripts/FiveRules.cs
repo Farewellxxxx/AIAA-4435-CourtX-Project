@@ -103,7 +103,8 @@ namespace CourtX
         public static void Refresh(FiveState s)
         {
             var p=s.positions;
-            if(s.guided&&s.playbookVersion>=2)FiveCoach.Describe(s);
+            if(s.drill!=null)FiveDrill.Describe(s);
+            else if(s.guided&&s.playbookVersion>=2)FiveCoach.Describe(s);
             else FreeTargets(s);
             if(s.flight!=null&&!s.flight.shot){s.targets[s.flight.to]=s.flight.destination;if(!s.guided)s.tasks[s.flight.to]="向来球位置接应，准备接球后的下一步选择。";}
             for(int i=0;i<10;i++)
@@ -124,15 +125,18 @@ namespace CourtX
             for(int i=5;i<10;i++){float u;float d=SegmentDistance(s.positions[i],s.positions[s.holder],s.positions[to],out u);if(u>.08f&&u<.94f)clearance=Mathf.Min(clearance,d);}
             float space=Space(s,to);return clearance<.55f||space<.8f?2:clearance<1.1f||space<1.65f?1:0;
         }
-        public static bool Shoot(FiveState s)
+        public static bool Shoot(FiveState s)=>ReleaseShot(s,false);
+        internal static bool ReleaseShot(FiveState s,bool followUp)
         {
             if(s.success||s.turnover||s.flight!=null||s.holder<0||s.holder>=5)return false;
+            if(s.drill!=null&&!FiveDrill.MayShoot(s,followUp))return false;
             int shooter=s.holder;
             var dir=(FiveFlight.Rim-s.positions[shooter]).normalized;
             var release=s.positions[shooter]+dir*.34f;
             s.facing[shooter]=dir;
             s.flight=new FiveFlight{shot=true,from=shooter,to=-1,origin=release,destination=FiveFlight.Rim,
                 duration=.85f+Vector2.Distance(release,FiveFlight.Rim)*.075f};
+            if(s.drill!=null)FiveDrill.ShotReleased(s,shooter);
             s.pendingGuidedCatch=false;s.holder=-1;s.request=-1;
             Event(s,Number(shooter)+" 投篮出手");Refresh(s);return true;
         }
@@ -140,18 +144,23 @@ namespace CourtX
         {
             if(s.turnover||s.flight!=null||s.holder<0||s.holder>=5||to<0||to>=5||to==s.holder)return false;
             bool coached=s.guided&&s.playbookVersion>=2;
-            bool advances=coached&&FiveCoach.CanPass(s,to);
-            if(s.madeBasket||coached&&!playerChoice&&!advances)return false;
+            bool advances=coached&&(s.drill!=null?FiveDrill.AdvancesPrefix(s,to):FiveCoach.CanPass(s,to));
+            if(s.madeBasket)return false;
+            if(s.drill!=null){if(!FiveDrill.MayPass(s,to,playerChoice,advances))return false;}
+            else if(coached&&!playerChoice&&!advances)return false;
             int from=s.holder,risk=Risk(s,to);float distance=Vector2.Distance(s.positions[from],s.positions[to]);
             s.flight=new FiveFlight{from=from,to=to,advancesBeat=advances,origin=s.positions[from],destination=s.positions[to],duration=Mathf.Clamp(distance/10.5f,.3f,1.5f)};
+            if(from==s.controlled)s.teachingCatchCueUntil=0;
+            if(s.drill!=null)FiveDrill.PassReleased(s,from,to,playerChoice);
             s.pendingGuidedCatch=false;s.lastPassFrom=from;s.lastPassTo=to;s.holder=-1;s.request=-1;s.passCooldown=1.2f;
-            Event(s,Number(from)+" → "+Number(to)+" 出球"+(risk==2?"：这条线路受到防守压力。":"：已选择可用的接应线路。"));
+            Event(s,Number(from)+" → "+Number(to)+" 出球"+(s.drill!=null?"。":risk==2?"：这条线路受到防守压力。":"：已选择可用的接应线路。"));
             bool outlet=s.play==FivePlay.HighPost?(to==3||to==2||to==0):s.play==FivePlay.Screen?(to==4||to==2):(to==1||to==3);
             if(!s.guided&&s.phase>=2&&outlet&&risk<2){s.success=true;s.phase=4;Event(s,"决策完成：利用防守移动选择了接应窗口。C 再 call 战术，或 V 复盘。");}
             Refresh(s);return true;
         }
         public static void Request(FiveState s,int receiver)
         {
+            if(s.drill!=null)return;
             if(receiver<0||receiver>=5||s.turnover)return;
             if(s.holder==receiver){Event(s,"你已经持球，指向队友后按 Q 直接传球。");return;}
             s.request=receiver;s.requestUntil=s.time+4;
@@ -159,7 +168,10 @@ namespace CourtX
         }
         public static void Call(FiveState s)
         {
+            if(s.drill!=null)return;
             s.phase=0;s.routePoint=0;s.settledAge=0;s.pendingGuidedCatch=false;s.phaseAge=0;s.success=false;s.madeBasket=false;s.usedScreen=false;s.turnover=false;s.request=-1;s.passCooldown=.5f;
+            s.playerSpotReached=false;
+            s.teachingCatchCueUntil=0;
             if(s.guided){s.holder=0;s.flight=null;}
             else if(s.holder<0||s.holder>=5){s.holder=s.controlled;s.flight=null;}
             Event(s,"重新组织："+(s.playbookVersion>=2?FiveZoneBook.PlayName(s.play):Plays[(int)s.play])+"。队友按当前站位重新落位。");Refresh(s);
@@ -211,9 +223,11 @@ namespace CourtX
         public static void Step(FiveState s,float seconds,int human=-1)
         {
             if(seconds<=0||float.IsNaN(seconds)||float.IsInfinity(seconds))return;
+            if(FiveDrill.IsFinished(s))return;
             float dt=Mathf.Min(seconds,.05f);s.time+=dt;s.phaseAge+=dt;s.passCooldown-=dt;
             if(s.turnover||s.madeBasket){Refresh(s);return;}
-            if(s.guided&&s.playbookVersion>=2){FiveCoach.Tick(s,human,dt);Refresh(s);}
+            if(s.drill!=null){FiveDrill.Tick(s,dt);Refresh(s);}
+            else if(s.guided&&s.playbookVersion>=2){FiveCoach.Tick(s,human,dt);Refresh(s);}
             else{AdvancePhase(s);Refresh(s);Decide(s,human);}
             for(int i=0;i<10;i++)
             {
@@ -221,6 +235,7 @@ namespace CourtX
                 if(i==human||s.pinned[i]){s.velocities[i]=Vector2.zero;continue;}
                 Vector2 desired=Vector2.ClampMagnitude(delta*3, i<5?2.65f:2.45f);
                 for(int j=0;j<10;j++)if(j!=i){var away=p-s.positions[j];float d=away.magnitude;if(d<.8f&&d>.01f)desired+=away/d*(.8f-d)*3;}
+                if(s.drill!=null)desired=FiveDrill.AvoidPlayer(s,i,desired);
                 desired=Vector2.ClampMagnitude(desired,i<5?2.65f:2.45f);
                 s.velocities[i]=Vector2.MoveTowards(s.velocities[i],desired,8*dt);
                 s.positions[i]=Clamp(FiveCoach.RouteDefender(s,i,p,p+s.velocities[i]*dt));
@@ -235,17 +250,32 @@ namespace CourtX
                 {
                     if(f.elapsed>=f.duration)
                     {
-                        s.flight=null;s.looseBall=FiveFlight.Rim;s.madeBasket=s.success=true;if(!s.guided||s.playbookVersion<2)s.phase=4;s.phaseAge=0;
-                        Event(s,Number(f.from)+" 投篮命中，本轮结束。");
+                        s.flight=null;s.looseBall=f.destination;s.madeBasket=s.success=!f.misses;if(!s.guided||s.playbookVersion<2)s.phase=4;s.phaseAge=0;
+                        Event(s,Number(f.from)+(f.misses?" 投篮未中，本轮结束。":" 投篮命中，本轮结束。"));
+                        if(s.drill!=null)FiveDrill.Finish(s,f.misses?"投篮未中":"投篮命中");
                     }
                     Refresh(s);return;
                 }
-                if(f.elapsed>.09f)for(int i=5;i<10;i++){float u;if(SegmentDistance(s.positions[i],before,now,out u)<.28f){blocker=i;break;}}
-                if(blocker>=0){s.looseBall=now;s.flight=null;s.holder=blocker;s.turnover=true;Event(s,"传球线路被 "+Number(blocker)+" 封住。C 重新组织，或 V 看回放。");}
+                float reach=s.drill!=null&&s.drill.stage==FiveDrillStage.Resolve?.45f:.28f;
+                if(f.elapsed>.09f)for(int i=5;i<10;i++){float u;if(SegmentDistance(s.positions[i],before,now,out u)<reach){blocker=i;break;}}
+                if(blocker>=0)
+                {
+                    s.looseBall=now;s.flight=null;s.holder=blocker;s.turnover=true;
+                    if(s.drill!=null)
+                    {
+                        s.drill.interceptedBy=blocker;
+                        Event(s,"传球被 "+Number(blocker)+" 截断。");
+                        FiveDrill.Finish(s,Number(blocker)+" 截球");
+                    }
+                    else if(s.guided&&s.playbookVersion>=2&&!s.demo)
+                        Event(s,Number(blocker)+" 切断了 "+Number(f.from)+" 传给 "+Number(f.to)+" 的线路。按 C 重新组织。");
+                    else Event(s,"传球线路被 "+Number(blocker)+" 封住。C 重新组织，或 V 看回放。");
+                }
                 else if(f.elapsed>=f.duration)
                 {
-                    if(Vector2.Distance(s.positions[f.to],f.destination)<3){s.holder=f.to;Event(s,Number(f.to)+" 接到球，继续观察下一步。");if(s.guided&&s.playbookVersion>=2)FiveCoach.Catch(s,f);}
-                    else{s.looseBall=f.destination;s.holder=-1;s.turnover=true;Event(s,"接应者离开了来球区域，C 可重新组织。");}
+                    if(Vector2.Distance(s.positions[f.to],f.destination)<(s.drill!=null?.95f:3f)){s.holder=f.to;Event(s,Number(f.to)+" 接到球，继续观察下一步。");if(s.drill!=null)FiveDrill.Catch(s,f);else if(s.guided&&s.playbookVersion>=2)FiveCoach.Catch(s,f);}
+                    else if(s.drill==null||!FiveDrill.RecoverOpeningFeed(s,f))
+                    {s.looseBall=f.destination;s.holder=-1;s.turnover=true;Event(s,s.drill==null?"接应者离开了来球区域，C 可重新组织。":"接应者未能接到球。");if(s.drill!=null)FiveDrill.Finish(s,"未能接球");}
                     s.flight=null;
                 }
             }

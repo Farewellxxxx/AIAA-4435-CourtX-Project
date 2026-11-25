@@ -77,8 +77,6 @@ public sealed class FivePlayerPlaytest:MonoBehaviour
             Check(Vector2.Distance(FiveRules.Flat(game.player.transform.position),game.Live.positions[role])<.01f,"Role "+role+": player spawns at corresponding five-player position");
         }
         game.Role=0;game.Play=FivePlay.Screen;game.StartPractice();yield return Shot("3d-first-person");
-        typeof(FiveCourtGame).GetField("<Overview>k__BackingField",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(game,true);yield return Shot("3d-overview");
-        typeof(FiveCourtGame).GetField("<Overview>k__BackingField",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(game,false);
         var controller=game.player.GetComponent<CharacterController>();controller.enabled=false;
         game.player.transform.position=FiveRules.World(game.Live.positions[6]+game.Live.facing[6]*1.8f);
         game.player.transform.rotation=Quaternion.LookRotation(FiveRules.World(-game.Live.facing[6]));controller.enabled=true;yield return Shot("3d-eyes");

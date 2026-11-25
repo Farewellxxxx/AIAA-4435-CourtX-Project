@@ -3,24 +3,107 @@ namespace CourtX
 {
     public sealed class FiveActors
     {
-        readonly FiveCourtGame game;readonly LineRenderer ring,guide;
+        readonly FiveCourtGame game;
+        readonly LineRenderer ring;
+        readonly Transform guide,arrow;
+        const float GroundRingRadius=.8f;
+        FiveState round;
+        Vector2 previousWaypoint;
+        bool wasApproaching;
+        float arrivalTime=float.NegativeInfinity;
+
+        public float ArrivalOpacity=>round==null?0:Mathf.Clamp01((arrivalTime+1.05f-round.time)/.45f);
+
         public FiveActors(FiveCourtGame owner)
         {
-            game=owner;if(!owner.player)return;
+            game=owner;if(!owner.player||!owner.indicatorMaterial)return;
             ring=MakeRing("Selected pass receiver",.46f,new Color(.81f,.93f,.5f));
-            guide=MakeRing("Suggested tactical area",.8f,new Color(.34f,.85f,.70f,.65f));
+            ring.gameObject.SetActive(false);
+            var material=Resources.Load<Material>("FiveRunMarker");
+            var quad=Resources.GetBuiltinResource<Mesh>("Quad.fbx");
+            guide=MakeMarker("Suggested tactical area",material,quad,true);
+            guide.localRotation=Quaternion.Euler(90,0,0);
+            // The painted target sits comfortably inside the player's arrival tolerance.
+            guide.localScale=Vector3.one*(2f*GroundRingRadius/.82f);
+            arrow=MakeMarker("Your running waypoint",material,quad,false);
         }
         LineRenderer MakeRing(string name,float radius,Color color)
         {
-            var obj=new GameObject(name);obj.transform.SetParent(game.transform);var line=obj.AddComponent<LineRenderer>();
-            var basis=game.indicatorMaterial;
-            if(!basis){Object.Destroy(obj);return null;}
-            line.sharedMaterial=new Material(basis){color=color};line.useWorldSpace=false;line.loop=true;line.positionCount=48;line.widthMultiplier=.035f;
+            var obj=new GameObject(name);
+            obj.transform.SetParent(game.transform,false);
+            var line=obj.AddComponent<LineRenderer>();
+            line.sharedMaterial=game.indicatorMaterial;
+            var tint=new MaterialPropertyBlock();
+            tint.SetColor("_Color",color);
+            line.SetPropertyBlock(tint);
+            line.useWorldSpace=false;
+            line.loop=true;
+            line.widthMultiplier=.035f;
+            line.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;
+            line.receiveShadows=false;
+            line.positionCount=48;
             for(int i=0;i<48;i++){float a=i*2*Mathf.PI/48;line.SetPosition(i,new Vector3(Mathf.Cos(a)*radius,0,Mathf.Sin(a)*radius));}return line;
+        }
+        Transform MakeMarker(string name,Material material,Mesh quad,bool onFloor)
+        {
+            var obj=new GameObject(name);
+            obj.transform.SetParent(game.transform,false);
+            obj.AddComponent<MeshFilter>().sharedMesh=quad;
+            var renderer=obj.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial=material;
+            renderer.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows=false;
+            if(onFloor)
+            {
+                var properties=new MaterialPropertyBlock();
+                properties.SetFloat("_GroundRing",1);
+                properties.SetColor("_Fill",new Color(.34f,.85f,.70f));
+                renderer.SetPropertyBlock(properties);
+            }
+            obj.SetActive(false);
+            return obj.transform;
+        }
+
+        void UpdateWaypoint(FiveState s)
+        {
+            if(!guide)return;
+            var position=s.positions[s.controlled];
+            if(round!=s)
+            {
+                round=s;
+                arrivalTime=float.NegativeInfinity;
+                wasApproaching=false;
+            }
+            // Tick can advance a via point or open the assessment decision before this view updates.
+            if(wasApproaching&&Vector2.Distance(position,previousWaypoint)<=FiveCoach.PlayerArrival)
+                arrivalTime=s.time;
+            bool show=game.ShowRunTarget;
+            wasApproaching=show;
+            guide.gameObject.SetActive(show);
+            if(!show){arrow.gameObject.SetActive(false);return;}
+            var destination=FiveCoach.RunTarget(s);
+            previousWaypoint=destination;
+            float distance=Vector2.Distance(position,destination);
+            guide.position=FiveRules.World(destination,.035f);
+            var eye=game.player.eyes;
+            arrow.position=WaypointAnchor(eye,destination,distance,s.time);
+            float depth=Vector3.Dot(arrow.position-eye.transform.position,eye.transform.forward);
+            arrow.gameObject.SetActive(depth>eye.nearClipPlane);
+            if(depth<=eye.nearClipPlane)return;
+            // A camera-parallel face has the same proportions at every pitch and bearing.
+            arrow.rotation=eye.transform.rotation;
+            float viewHeight=2f*depth*Mathf.Tan(eye.fieldOfView*.5f*Mathf.Deg2Rad);
+            arrow.localScale=Vector3.one*Mathf.Min(viewHeight*.072f,.96f);
+        }
+        public static Vector3 WaypointAnchor(Camera eye,Vector2 destination,float distance,float time)
+        {
+            float lift=Mathf.Min(distance*.095f,.74f);
+            float bob=Mathf.Min(distance*.023f,.12f)*Mathf.Sin(time*4.5f);
+            return FiveRules.World(destination,eye.transform.position.y+lift+bob);
         }
         public const int RimTarget=10;
         public static Vector2 Crosshair(Camera eye)=>eye?eye.pixelRect.center:new Vector2(Screen.width,Screen.height)*.5f;
-        public static int PickTarget(Camera eye,FiveState state)
+        public static int PickTarget(Camera eye,FiveState state,bool includeRim=true)
         {
             if(!eye||state==null)return -1;
             Vector2 cursor=Crosshair(eye);
@@ -28,7 +111,7 @@ namespace CourtX
             var hoop=eye.WorldToScreenPoint(rim);
             float radius=Vector2.Distance(hoop,eye.WorldToScreenPoint(rim+eye.transform.right*.24f));
             float best=1.001f;int chosen=-1;
-            if(hoop.z>=eye.nearClipPlane&&hoop.z<=eye.farClipPlane)
+            if(includeRim&&hoop.z>=eye.nearClipPlane&&hoop.z<=eye.farClipPlane)
             {
                 float score=Vector2.Distance(cursor,hoop)/(radius+eye.pixelHeight*.02f);
                 if(score<best){best=score;chosen=RimTarget;}
@@ -95,7 +178,7 @@ namespace CourtX
                 if(game.Target==RimTarget)ring.transform.position=FiveRules.World(FiveFlight.Rim,FiveFlight.RimHeight);
                 else if(game.Target>=0)ring.transform.position=FiveRules.World(s.positions[game.Target],.04f);
             }
-            if(guide){guide.gameObject.SetActive(s.flight?.shot!=true&&!s.success&&!s.turnover&&game.Practicing&&!FiveCoach.InPlace(s,s.controlled));guide.transform.position=FiveRules.World(s.targets[s.controlled],.035f);}
+            UpdateWaypoint(s);
         }
     }
 }

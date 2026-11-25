@@ -1,17 +1,18 @@
 # CourtX 5v5 · 半场战术练习
 
-先在战术板看懂一次配合，再选一名进攻球员，用第一人称练习跑位、传球和投篮。中锋提中、后卫发起、射手战术各有三种 2–3 联防反应。练习结束后可以回看自己这一轮的跑位和球路。
+先在战术板看懂一次配合，再选一名进攻球员，用第一人称练习跑位、传球和投篮。中锋提中、后卫发起、射手战术各有三种 2–3 联防反应。「即时演练」随机抽取其中一题，让你根据场上防守决定如何处理球。结束后可以在「即时回放」看本轮实际跑位和球路。
 
-## 下载试玩
+## 下载 v0.7.0 试玩版
 
-选和电脑系统对应的 ZIP，完整解压即可离线玩，无需安装 Unity。[GitHub 发布页](https://github.com/Farewellxxxx/AIAA-4435-CourtX-Project/releases/tag/v0.6.0)
+Windows 和 Mac 下载 ZIP 并完整解压，Android 设备下载 APK。三个版本都可以离线玩。[GitHub 发布页](https://github.com/Farewellxxxx/AIAA-4435-CourtX-Project/releases/tag/v0.7.0)
 
-| 系统 | 下载 | 解压后打开 |
+| 系统 | 下载 | 启动方式 |
 | --- | --- | --- |
-| Windows x64 | [Windows 试玩包（28 MB）](https://github.com/Farewellxxxx/AIAA-4435-CourtX-Project/releases/download/v0.6.0/CourtX-Windows-x64.zip) | `Start-CourtX.cmd` |
-| macOS · M 系列或 Intel | [Mac 试玩包（38 MB）](https://github.com/Farewellxxxx/AIAA-4435-CourtX-Project/releases/download/v0.6.0/CourtX-macOS-Universal.zip) | `CourtX.app` |
+| Windows x64 | [Windows 试玩包](https://github.com/Farewellxxxx/AIAA-4435-CourtX-Project/releases/download/v0.7.0/CourtX-Windows-x64.zip) | 双击 `Start-CourtX.cmd` |
+| macOS · M 系列或 Intel | [Mac 通用试玩包](https://github.com/Farewellxxxx/AIAA-4435-CourtX-Project/releases/download/v0.7.0/CourtX-macOS-Universal.zip) | 双击 `CourtX.app` |
+| Android · 64 位 ARM 手机或平板 | [Android 安装包](https://github.com/Farewellxxxx/AIAA-4435-CourtX-Project/releases/download/v0.7.0/CourtX-Android-arm64.apk) | 在设备上打开 APK 安装，然后横屏启动 CourtX |
 
-第一次玩可以在「战术板」选择「中锋提中」，看一遍示范，再点右下角以推荐角色开始。WASD 移动，鼠标转头，持球时瞄准队友或篮筐按 Q，按 V 保存并回看。[首次打开与完整操作](docs/FIVE_PLAYER_GUIDE_ZH.md)
+第一次玩可以在「战术板」选择「中锋提中」，看一遍示范，再点右下角以推荐角色开始。电脑上用 WASD 移动，鼠标转头，瞄准队友或篮筐后按 Q 传球或投篮。Android 上用左下摇杆移动，滑动场地转头，瞄准后点右下角的出球按钮。[首次打开与完整操作](docs/FIVE_PLAYER_GUIDE_ZH.md)
 
 ## 从 Windows 仓库副本启动
 

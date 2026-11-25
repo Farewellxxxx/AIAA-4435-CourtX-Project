@@ -7,6 +7,7 @@ namespace CourtX
     public static class FiveCoach
     {
         public const float Arrival = .48f;
+        public const float PlayerArrival = 1f;
         const float ReadSeconds = 1.15f;
         const float SettledSeconds = .72f;
 
@@ -59,16 +60,39 @@ namespace CourtX
             return frame.offense[id];
         }
 
-        public static bool InPlace(FiveState s,int id) =>
-            Vector2.Distance(s.positions[id],Destination(s,Current(s),id))<=Arrival;
+        static bool IsGuidedPlayer(FiveState s,int id) => !s.demo&&s.drill==null&&id==s.controlled;
+
+        public static Vector2 RunTarget(FiveState s) => s.drill!=null
+            ? FiveDrill.EntrySpot(s) : Destination(s,Current(s),s.controlled);
+
+        public static bool NeedsRunTarget(FiveState s)
+        {
+            if(s==null||!s.guided||s.playbookVersion<2||s.demo||s.success||s.turnover||s.flight?.shot==true)return false;
+            if(s.drill!=null)return FiveDrill.AwaitingPlayer(s)&&
+                Vector2.Distance(s.positions[s.controlled],RunTarget(s))>PlayerArrival;
+            return !InPlace(s,s.controlled);
+        }
+
+        public static bool InPlace(FiveState s,int id)
+        {
+            bool player=IsGuidedPlayer(s,id);
+            return player&&s.playerSpotReached||
+                Vector2.Distance(s.positions[id],Destination(s,Current(s),id))<=(player?PlayerArrival:Arrival);
+        }
 
         static bool Set(FiveState s,FiveZoneFrame frame)
         {
             var route=Route(frame);
             if(route!=null&&s.routePoint<route.via.Length)return false;
             for(int i=0;i<5;i++)
-                if(Vector2.Distance(s.positions[i],frame.offense[i])>Arrival ||
-                   Vector2.Distance(s.positions[5+i],frame.defense[i])>.72f)return false;
+            {
+                if(s.drill!=null)
+                {
+                    if(i!=s.controlled&&!FiveDrill.AtMark(s,i,frame.offense[i],Arrival)||
+                        !FiveDrill.AtMark(s,5+i,frame.defense[i],.72f))return false;
+                }
+                else if(!InPlace(s,i)||Vector2.Distance(s.positions[5+i],frame.defense[i])>.72f)return false;
+            }
             return true;
         }
 
@@ -83,6 +107,7 @@ namespace CourtX
             var frame=Current(s);
             if(s.turnover||s.madeBasket)return s.lastEvent;
             if(s.flight?.shot==true)return FiveRules.Number(s.flight.from)+" 已出手，观察投篮。";
+            if(id==s.controlled&&s.time<s.teachingCatchCueUntil)return s.teachingCatchCue;
             if(s.flight!=null&&s.flight.to==id)return "保持接球位置，准备接 "+FiveRules.Number(s.flight.from)+" 的传球。";
             if(s.pendingGuidedCatch&&s.holder==id)return InPlace(s,id)?"已提前接球，保持球权，等队友完成这次落位。":"已提前接球，带球到高亮圈完成落位。";
             if(s.holder==id&&s.holder!=frame.holder)return "瞄准 "+FiveRules.Number(frame.holder)+" 按 Q 回传，重新衔接当前配合。";
@@ -107,7 +132,8 @@ namespace CourtX
             var screen=Screen(s,frame);
             s.screener=screen.screener;
             s.screenActive=!stopped&&s.screener>=0&&
-                Vector2.Distance(s.positions[s.screener],screen.offense[s.screener])<=Arrival;
+                Vector2.Distance(s.positions[s.screener],screen.offense[s.screener])<=
+                    (IsGuidedPlayer(s,s.screener)?PlayerArrival:Arrival);
             if(s.screener>=0)s.screenPoint=s.positions[s.screener];
             for(int i=0;i<5;i++)
             {
@@ -142,31 +168,64 @@ namespace CourtX
             return s.screenPoint+(normal*gap+tangent*(next-from).magnitude).normalized*gap;
         }
 
-        static void Next(FiveState s)
+        internal static void Next(FiveState s)
         {
             s.phase++;
+            s.teachingCatchCueUntil=0;
             s.phaseAge=0;
             s.settledAge=0;
             s.pendingGuidedCatch=false;
+            s.playerSpotReached=false;
             s.routePoint=0;
-            FiveRules.Event(s,Current(s).title);
+            FiveRules.Event(s,s.drill==null?Current(s).title:"队友正在落位。");
         }
 
         public static void Catch(FiveState s,FiveFlight flight)
         {
-            if(flight.from!=Current(s).holder||flight.to!=Receiver(s))return;
+            if(flight.from!=Current(s).holder)return;
+            int receiver=Receiver(s);
+            if(flight.to!=receiver)
+            {
+                if(IsGuidedPlayer(s,flight.from))
+                {
+                    string step=receiver>=0?"这一拍应由 "+FiveRules.Number(receiver)+" 接应。":
+                        AtFinish(s)?"这一拍轮到你投篮。":"这一拍需要你持球完成落位。";
+                    s.teachingCatchCue=FiveRules.Number(flight.to)+" 接到了球。"+step;
+                    s.teachingCatchCueUntil=s.time+3.5f;
+                }
+                return;
+            }
             if(flight.advancesBeat)Next(s);
             else s.pendingGuidedCatch=true;
         }
 
-        public static void Tick(FiveState s,int human,float dt)
+        internal static void SettleFrame(FiveState s,float dt)
         {
-            if(s.success||s.turnover||s.flight!=null||s.holder<0)return;
             var frame=Current(s);
             var route=Route(frame);
-            if(route!=null&&s.routePoint<route.via.Length&&InPlace(s,route.player))s.routePoint++;
+            if(IsGuidedPlayer(s,s.controlled)&&InPlace(s,s.controlled))s.playerSpotReached=true;
+            if(route!=null&&s.routePoint<route.via.Length&&
+                (s.drill!=null&&route.player==s.controlled||InPlace(s,route.player)))
+            {
+                var previous=Destination(s,frame,s.controlled);
+                s.routePoint++;
+                if(previous!=Destination(s,frame,s.controlled))s.playerSpotReached=false;
+            }
             if(s.screenActive)s.usedScreen=true;
             s.settledAge=Set(s,frame)?s.settledAge+dt:0;
+        }
+
+        public static void Tick(FiveState s,int human,float dt)
+        {
+            if(s.success||s.turnover||s.holder<0||s.flight!=null)
+            {
+                // A guided player can complete an off-ball run while a pass travels.
+                if(s.flight!=null&&!s.flight.shot&&IsGuidedPlayer(s,s.controlled)&&InPlace(s,s.controlled))
+                    s.playerSpotReached=true;
+                return;
+            }
+            var frame=Current(s);
+            SettleFrame(s,dt);
             if(s.pendingGuidedCatch)
             {
                 if(Ready(s))Next(s);

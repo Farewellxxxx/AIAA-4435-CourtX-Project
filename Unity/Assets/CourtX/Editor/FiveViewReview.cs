@@ -55,10 +55,10 @@ public static class FiveViewReview
         board.PlaceFrame(5,new Vector2(-6,12));board.EndEdit();board.Restore();
         FivePlayerReview.Check(board.DefenderShiftMask==0&&board.Time==before.time,"Restore clears defense emphasis at the same replay time");
         HistoryRefresh();
-        PracticeOverview();
+        PracticeHeading();
     }
     // Exercise the same sampled inputs that Update sends to the shipped practice scene.
-    static void PracticeOverview()
+    static void PracticeHeading()
     {
         var scene=EditorSceneManager.OpenScene(FivePlayerAuthoring.Scene,OpenSceneMode.Additive);
         try
@@ -70,19 +70,19 @@ public static class FiveViewReview
             var eyes=player.eyes.transform;
             var initial=player.transform.forward;
             var start=player.transform.position;
-            game.DrivePractice(Vector2.up,new Vector2(90,15),.05f,true,false);
+            game.DrivePractice(Vector2.up,new Vector2(90,15),.05f,false);
             var turned=player.transform.forward;
             var direction=player.transform.position-start;direction.y=0;
-            FivePlayerReview.Check(game.Overview&&Vector3.Angle(initial,turned)>85&&eyes.forward.y>.2f,
-                "Held Tab accepts mouse yaw and pitch on the first-person camera");
+            FivePlayerReview.Check(Vector3.Angle(initial,turned)>85&&eyes.forward.y>.2f,
+                "The first-person camera accepts mouse yaw and pitch during live practice");
             FivePlayerReview.Check(direction.magnitude>.04f&&Vector3.Dot(direction.normalized,turned)>.95f,
-                "Forward movement while holding Tab follows the newly turned heading");
+                "Forward movement follows the newly turned heading");
             FivePlayerReview.Check(Vector2.Angle(game.ViewHeading,FiveRules.Flat(turned))<.1f,
                 "The live map arrow follows the controlled player's camera heading");
             var rotation=eyes.rotation;
-            game.DrivePractice(Vector2.zero,Vector2.zero,.016f,false,false);
-            FivePlayerReview.Check(!game.Overview&&Quaternion.Angle(rotation,eyes.rotation)<.01f,
-                "Releasing Tab retains the camera orientation set in overview");
+            game.DrivePractice(Vector2.zero,Vector2.zero,.016f,false);
+            FivePlayerReview.Check(Quaternion.Angle(rotation,eyes.rotation)<.01f,
+                "The live map and camera retain their heading when mouse input stops");
         }
         finally{EditorSceneManager.CloseScene(scene,true);}
     }

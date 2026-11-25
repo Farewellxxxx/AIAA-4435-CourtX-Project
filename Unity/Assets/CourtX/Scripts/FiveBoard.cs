@@ -127,7 +127,7 @@ namespace CourtX
             if(branch==null)
             {
                 sourceTime=Time;branchStart=Time;
-                branch=new FiveRecording{name=source.name,kind="whatif",created="假设推演"};State=State.Copy();State.demo=false;State.guided=false;
+                branch=new FiveRecording{name=source.name,kind="whatif",created="假设推演"};State=State.Copy();State.demo=false;State.guided=false;State.drill=null;
             }
             else
             {
